@@ -1,0 +1,22 @@
+# Local Cloudflare Workers preview (pnpm preview)
+# Copy to .dev.vars — never commit .dev.vars
+NEXTJS_ENV=development
+
+DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
+NEXTAUTH_SECRET="generate-a-random-secret-here"
+NEXTAUTH_URL="http://localhost:8787"
+
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+
+RESEND_API_KEY=""
+RESEND_FROM_EMAIL="orders@yourdomain.com"
+
+FIREBASE_PROJECT_ID=""
+FIREBASE_CLIENT_EMAIL=""
+FIREBASE_PRIVATE_KEY=""
+FIREBASE_STORAGE_BUCKET=""
+
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
