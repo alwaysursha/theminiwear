@@ -3,6 +3,7 @@ import { isAdminRole } from "@/lib/constants";
 import type { Role } from "@prisma/client";
 
 export const authConfig = {
+  trustHost: true,
   pages: {
     signIn: "/auth/sign-in",
   },
