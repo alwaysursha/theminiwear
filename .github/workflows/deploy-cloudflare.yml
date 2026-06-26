@@ -32,9 +32,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Build for Cloudflare
-        run: pnpm exec opennextjs-cloudflare build
-        env:
-          DATABASE_URL: postgresql://placeholder:placeholder@localhost/placeholder
+        run: NODE_ENV=production pnpm build:cloudflare
 
       - name: Deploy to Cloudflare
         run: pnpm exec opennextjs-cloudflare deploy
