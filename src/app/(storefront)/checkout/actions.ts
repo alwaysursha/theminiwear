@@ -124,7 +124,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
     addressId = address.id;
   }
 
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: session?.user?.email ?? body.guestEmail,

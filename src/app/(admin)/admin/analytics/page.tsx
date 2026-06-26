@@ -1,4 +1,4 @@
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { formatDate, subMonths, startOfMonth, endOfMonth } from "@/lib/date";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -10,7 +10,7 @@ export default async function AdminAnalyticsPage() {
   const months = Array.from({ length: 6 }, (_, i) => {
     const date = subMonths(now, 5 - i);
     return {
-      label: format(date, "MMM yyyy"),
+      label: formatDate(date, "MMM yyyy"),
       start: startOfMonth(date),
       end: endOfMonth(date),
     };

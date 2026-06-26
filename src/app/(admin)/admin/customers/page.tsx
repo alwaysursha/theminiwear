@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { DataTable } from "@/components/admin/DataTable";
@@ -76,7 +76,7 @@ export default async function AdminCustomersPage() {
           {
             key: "joined",
             header: "Joined",
-            render: (customer) => format(customer.createdAt, "MMM d, yyyy"),
+            render: (customer) => formatDate(customer.createdAt, "MMM d, yyyy"),
           },
         ]}
       />

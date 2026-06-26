@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/admin/DataTable";
 
@@ -78,7 +78,7 @@ export default async function AdminInquiriesPage() {
           {
             key: "updatedAt",
             header: "Updated",
-            render: (inquiry) => format(inquiry.updatedAt, "MMM d, yyyy"),
+            render: (inquiry) => formatDate(inquiry.updatedAt, "MMM d, yyyy"),
           },
         ]}
       />

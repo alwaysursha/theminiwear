@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { replyToInquiry } from "@/app/(storefront)/account/inquiries/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,7 +41,7 @@ export function InquiryThread({
                 {msg.isStaff ? "Support Team" : "You"}
               </p>
               <p className="text-xs text-navy/40">
-                {format(msg.createdAt, "MMM d, yyyy h:mm a")}
+                {formatDate(msg.createdAt, "MMM d, yyyy h:mm a")}
               </p>
             </div>
             <p className="mt-2 text-sm text-navy/80 whitespace-pre-wrap">

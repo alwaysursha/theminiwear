@@ -1,13 +1,15 @@
-import { Resend } from "resend";
+import type { Resend } from "resend";
 
 let resendClient: Resend | null = null;
 
-function getResend() {
+async function getResend() {
   if (!resendClient) {
     const key = process.env.RESEND_API_KEY;
     if (!key) {
       throw new Error("RESEND_API_KEY is not set");
     }
+
+    const { Resend } = await import("resend");
     resendClient = new Resend(key);
   }
   return resendClient;
@@ -29,7 +31,7 @@ export async function sendOrderConfirmationEmail({
     return;
   }
 
-  await getResend().emails.send({
+  await (await getResend()).emails.send({
     from: FROM_EMAIL,
     to,
     subject: `Order Confirmed - ${orderNumber}`,
@@ -53,7 +55,7 @@ export async function sendShippingUpdateEmail({
     return;
   }
 
-  await getResend().emails.send({
+  await (await getResend()).emails.send({
     from: FROM_EMAIL,
     to,
     subject: `Your order has shipped - ${orderNumber}`,
@@ -75,7 +77,7 @@ export async function sendInquiryReplyEmail({
     return;
   }
 
-  await getResend().emails.send({
+  await (await getResend()).emails.send({
     from: FROM_EMAIL,
     to,
     subject: `Re: ${subject}`,

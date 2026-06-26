@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { ArrowLeft } from "lucide-react";
 import { InquiryStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -76,7 +76,7 @@ export default async function AdminInquiryDetailPage({
               <span className="font-medium">
                 {message.isStaff ? "Staff" : "Customer"}
               </span>
-              <span>{format(message.createdAt, "MMM d, yyyy h:mm a")}</span>
+              <span>{formatDate(message.createdAt, "MMM d, yyyy h:mm a")}</span>
             </div>
             <p className="whitespace-pre-wrap text-sm text-slate-700">
               {message.content}

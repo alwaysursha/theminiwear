@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -94,7 +94,7 @@ export default async function AdminOrdersPage({
           {
             key: "createdAt",
             header: "Date",
-            render: (order) => format(order.createdAt, "MMM d, yyyy h:mm a"),
+            render: (order) => formatDate(order.createdAt, "MMM d, yyyy h:mm a"),
           },
         ]}
       />
