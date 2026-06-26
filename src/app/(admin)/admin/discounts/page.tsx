@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { DiscountType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -152,7 +152,7 @@ export default async function AdminDiscountsPage() {
             header: "Expires",
             render: (discount) =>
               discount.expiresAt
-                ? format(discount.expiresAt, "MMM d, yyyy")
+                ? formatDate(discount.expiresAt, "MMM d, yyyy")
                 : "—",
           },
           {

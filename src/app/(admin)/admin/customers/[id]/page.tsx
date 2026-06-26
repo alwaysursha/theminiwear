@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -75,7 +75,7 @@ export default async function AdminCustomerDetailPage({
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-500">Member since</p>
           <p className="text-2xl font-semibold text-slate-900">
-            {format(customer.createdAt, "MMM yyyy")}
+            {formatDate(customer.createdAt, "MMM yyyy")}
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default async function AdminCustomerDetailPage({
             {
               key: "date",
               header: "Date",
-              render: (order) => format(order.createdAt, "MMM d, yyyy"),
+              render: (order) => formatDate(order.createdAt, "MMM d, yyyy"),
             },
           ]}
         />
@@ -131,7 +131,7 @@ export default async function AdminCustomerDetailPage({
                 <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
                   <span>
                     {note.author.name ?? note.author.email} ·{" "}
-                    {format(note.createdAt, "MMM d, yyyy")}
+                    {formatDate(note.createdAt, "MMM d, yyyy")}
                   </span>
                   {note.tags.length > 0 && (
                     <span className="flex gap-1">

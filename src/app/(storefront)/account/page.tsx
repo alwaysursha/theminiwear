@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { Package, Heart, MapPin } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -116,7 +116,7 @@ export default async function AccountPage() {
                 <div>
                   <p className="font-semibold text-navy">{order.orderNumber}</p>
                   <p className="text-sm text-navy/60">
-                    {format(order.createdAt, "MMM d, yyyy")} · {order.items.length}{" "}
+                    {formatDate(order.createdAt, "MMM d, yyyy")} · {order.items.length}{" "}
                     item{order.items.length !== 1 ? "s" : ""}
                   </p>
                 </div>

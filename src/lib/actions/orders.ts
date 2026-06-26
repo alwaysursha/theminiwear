@@ -105,7 +105,7 @@ export async function refundOrder(orderId: string) {
   }
 
   if (order.stripePaymentId) {
-    const stripe = getStripe();
+    const stripe = await getStripe();
     await stripe.refunds.create({
       payment_intent: order.stripePaymentId,
     });

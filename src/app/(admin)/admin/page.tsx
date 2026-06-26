@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import {
   AlertTriangle,
   DollarSign,
@@ -77,7 +77,7 @@ export default async function AdminDashboardPage() {
         <StatCard
           title="Orders today"
           value={ordersToday}
-          description={format(today, "MMMM d, yyyy")}
+          description={formatDate(today, "MMMM d, yyyy")}
           icon={ShoppingCart}
         />
         <StatCard
@@ -137,7 +137,7 @@ export default async function AdminDashboardPage() {
             {
               key: "createdAt",
               header: "Date",
-              render: (order) => format(order.createdAt, "MMM d, yyyy"),
+              render: (order) => formatDate(order.createdAt, "MMM d, yyyy"),
             },
           ]}
         />

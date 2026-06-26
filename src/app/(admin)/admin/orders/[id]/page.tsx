@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { ArrowLeft } from "lucide-react";
 import { OrderStatus, ShipmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -63,7 +63,7 @@ export default async function AdminOrderDetailPage({
               {order.orderNumber}
             </h2>
             <p className="text-sm text-slate-500">
-              Placed {format(order.createdAt, "MMMM d, yyyy 'at' h:mm a")}
+              Placed {formatDate(order.createdAt, "MMMM d, yyyy 'at' h:mm a")}
             </p>
           </div>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
@@ -252,7 +252,7 @@ export default async function AdminOrderDetailPage({
           {order.statusHistory.map((entry) => (
             <li key={entry.id} className="flex gap-4 text-sm">
               <span className="shrink-0 text-slate-500">
-                {format(entry.createdAt, "MMM d, h:mm a")}
+                {formatDate(entry.createdAt, "MMM d, h:mm a")}
               </span>
               <span className="font-medium text-slate-700">{entry.status}</span>
               {entry.note && (

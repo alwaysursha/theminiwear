@@ -6,6 +6,7 @@ import {
   OrderStatus,
   PrismaClient,
   ReturnStatus,
+  ReviewStatus,
   Role,
   ShipmentStatus,
 } from "@prisma/client";
@@ -28,6 +29,7 @@ function orderNumber(n: number) {
 async function clearDatabase() {
   await prisma.inquiryMessage.deleteMany();
   await prisma.inquiry.deleteMany();
+  await prisma.productReview.deleteMany();
   await prisma.returnRequest.deleteMany();
   await prisma.orderStatusHistory.deleteMany();
   await prisma.orderItem.deleteMany();
@@ -1038,6 +1040,82 @@ async function main() {
     ],
   });
 
+  const janeDeliveredOrder = await prisma.order.findFirst({
+    where: { userId: jane.id, status: OrderStatus.DELIVERED },
+    include: {
+      items: { include: { variant: { include: { product: true } } } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const emmaDeliveredOrder = await prisma.order.findFirst({
+    where: { userId: emma.id, status: OrderStatus.DELIVERED },
+    include: {
+      items: { include: { variant: { include: { product: true } } } },
+    },
+  });
+
+  if (janeDeliveredOrder) {
+    const bodysuitItem = janeDeliveredOrder.items.find(
+      (item) => item.variant.product.slug === "cloud-soft-bodysuit",
+    );
+    const dressItem = janeDeliveredOrder.items.find(
+      (item) => item.variant.product.slug === "floral-dream-dress",
+    );
+
+    if (bodysuitItem) {
+      await prisma.productReview.create({
+        data: {
+          productId: bodysuitItem.variant.productId,
+          userId: jane.id,
+          orderId: janeDeliveredOrder.id,
+          rating: 5,
+          title: "So soft and easy for diaper changes",
+          body: "We washed this onesie several times and it stayed soft. The snaps are sturdy and the fit is true to size.",
+          status: ReviewStatus.APPROVED,
+          moderatedById: admin.id,
+          moderatedAt: subDays(new Date(), 2),
+        },
+      });
+    }
+
+    if (dressItem) {
+      await prisma.productReview.create({
+        data: {
+          productId: dressItem.variant.productId,
+          userId: jane.id,
+          orderId: janeDeliveredOrder.id,
+          rating: 4,
+          title: "Beautiful for parties",
+          body: "Lovely twirl and great quality fabric. Runs slightly generous in the shoulders but still adorable.",
+          status: ReviewStatus.PENDING,
+        },
+      });
+    }
+  }
+
+  if (emmaDeliveredOrder) {
+    const pajamaItem = emmaDeliveredOrder.items.find(
+      (item) => item.variant.product.slug === "starlight-pajama-set",
+    );
+
+    if (pajamaItem) {
+      await prisma.productReview.create({
+        data: {
+          productId: pajamaItem.variant.productId,
+          userId: emma.id,
+          orderId: emmaDeliveredOrder.id,
+          rating: 5,
+          title: "Cozy bedtime favorite",
+          body: "My daughter asks for these pajamas every night. Soft, breathable, and the print has held up well in the wash.",
+          status: ReviewStatus.APPROVED,
+          moderatedById: admin.id,
+          moderatedAt: subDays(new Date(), 5),
+        },
+      });
+    }
+  }
+
   await prisma.newsletterSubscriber.createMany({
     data: [
       { email: "newsletter@example.com" },
@@ -1060,6 +1138,7 @@ async function main() {
   console.log(`  ${createdProducts.length} products, ${allVariants.length} variants`);
   console.log(`  ${orderSeeds.length + 1} orders`);
   console.log(`  4 inquiries`);
+  console.log(`  3 product reviews`);
   console.log(`  5 wishlist items, 1 cart`);
   console.log(`  4 customer notes, 5 newsletter subscribers`);
   console.log(`  2 shipping zones, 5 discount codes`);

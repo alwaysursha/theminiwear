@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -46,7 +46,7 @@ export default async function OrdersPage() {
                     {order.orderNumber}
                   </p>
                   <p className="mt-1 text-sm text-navy/60">
-                    Placed {format(order.createdAt, "MMMM d, yyyy")}
+                    Placed {formatDate(order.createdAt, "MMMM d, yyyy")}
                   </p>
                   <p className="mt-1 text-sm text-navy/60">
                     {order.items.length} item{order.items.length !== 1 ? "s" : ""}

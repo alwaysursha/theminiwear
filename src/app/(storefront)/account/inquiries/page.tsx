@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,7 @@ export default async function InquiriesPage() {
                     {inquiry.messages[0]?.content ?? "No messages"}
                   </p>
                   <p className="mt-2 text-xs text-navy/40">
-                    Updated {format(inquiry.updatedAt, "MMM d, yyyy")}
+                    Updated {formatDate(inquiry.updatedAt, "MMM d, yyyy")}
                   </p>
                 </div>
                 <Badge variant={statusVariant[inquiry.status] ?? "default"}>

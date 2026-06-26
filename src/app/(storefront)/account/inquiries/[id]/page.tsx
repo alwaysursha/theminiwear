@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ export default async function InquiryDetailPage({
               {inquiry.subject}
             </h1>
             <p className="mt-1 text-sm text-navy/60">
-              Opened {format(inquiry.createdAt, "MMMM d, yyyy")}
+              Opened {formatDate(inquiry.createdAt, "MMMM d, yyyy")}
             </p>
           </div>
           <Badge variant={inquiry.status === "RESOLVED" ? "success" : "new"}>

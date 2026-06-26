@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-  const stripe = getStripe();
+  const stripe = await getStripe();
   let event: Stripe.Event;
 
   try {

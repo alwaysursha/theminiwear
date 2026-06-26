@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date";
 import { Check, Circle, Package, Truck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -76,7 +76,7 @@ export default async function OrderDetailPage({
           Order {order.orderNumber}
         </h1>
         <p className="mt-1 text-sm text-navy/60">
-          Placed {format(order.createdAt, "MMMM d, yyyy 'at' h:mm a")}
+          Placed {formatDate(order.createdAt, "MMMM d, yyyy 'at' h:mm a")}
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export default async function OrderDetailPage({
                     </p>
                     {historyEntry && (
                       <p className="text-xs text-navy/50">
-                        {format(historyEntry.createdAt, "MMM d, yyyy h:mm a")}
+                        {formatDate(historyEntry.createdAt, "MMM d, yyyy h:mm a")}
                       </p>
                     )}
                   </div>
