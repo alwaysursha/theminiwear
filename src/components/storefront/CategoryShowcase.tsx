@@ -19,7 +19,9 @@ const categoryOrder = [
 ] as const;
 
 function sortCategories<T extends { slug: string }>(categories: T[]): T[] {
-  const rank = new Map(categoryOrder.map((slug, index) => [slug, index]));
+  const rank = new Map<string, number>(
+    categoryOrder.map((slug, index) => [slug, index]),
+  );
   return [...categories].sort(
     (a, b) => (rank.get(a.slug) ?? 99) - (rank.get(b.slug) ?? 99),
   );
