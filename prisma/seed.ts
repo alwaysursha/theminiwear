@@ -13,6 +13,7 @@ import bcrypt from "bcryptjs";
 import { subDays, subHours } from "date-fns";
 import { Pool } from "pg";
 import "dotenv/config";
+import { seedImages } from "./seed-images";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -109,49 +110,49 @@ async function main() {
         name: "Bodysuits",
         slug: "bodysuits",
         description: "Soft everyday onesies and bodysuits",
-        image: "https://images.unsplash.com/photo-1515488042361-ee00e8170dc8?w=600",
+        image: seedImages.categories.bodysuits,
       },
       {
         name: "Dresses",
         slug: "dresses",
         description: "Party dresses and everyday twirl favorites",
-        image: "https://images.unsplash.com/photo-1503454537844-420e6f123e0f?w=600",
+        image: seedImages.categories.dresses,
       },
       {
         name: "Outerwear",
         slug: "outerwear",
         description: "Jackets, coats, and layers for every season",
-        image: "https://images.unsplash.com/photo-1519238263530-99bdd554df2b?w=600",
+        image: seedImages.categories.outerwear,
       },
       {
         name: "Tops & Tees",
         slug: "tops-tees",
         description: "T-shirts, blouses, and cozy tops",
-        image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600",
+        image: seedImages.categories.topsTees,
       },
       {
         name: "Bottoms",
         slug: "bottoms",
         description: "Pants, leggings, and shorts",
-        image: "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=600",
+        image: seedImages.categories.bottoms,
       },
       {
         name: "Accessories",
         slug: "accessories",
         description: "Hats, socks, bibs, and more",
-        image: "https://images.unsplash.com/photo-1520903920243-00d45c846b5d?w=600",
+        image: seedImages.categories.accessories,
       },
       {
         name: "Sleepwear",
         slug: "sleepwear",
         description: "Pajamas and sleep sacks for sweet dreams",
-        image: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=600",
+        image: seedImages.categories.sleepwear,
       },
       {
         name: "Swimwear",
         slug: "swimwear",
         description: "Swimsuits and rash guards for sunny days",
-        image: "https://images.unsplash.com/photo-1560743468-5b3a1d4b5b0e?w=600",
+        image: seedImages.categories.swimwear,
       },
     ].map((cat) => prisma.category.create({ data: cat })),
   );
@@ -169,10 +170,7 @@ async function main() {
       isTrending: true,
       trendingScore: 95,
       categoryId: cat.bodysuits.id,
-      images: [
-        "https://images.unsplash.com/photo-1515488042361-ee00e8170dc8?w=800",
-        "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800",
-      ],
+      images: [...seedImages.products.cloudSoftBodysuit],
       variants: [
         { size: "0-3M", color: "Mint", ageGroup: "0-3M", price: 24.99, stock: 50 },
         { size: "3-6M", color: "Mint", ageGroup: "3-6M", price: 24.99, stock: 40 },
@@ -189,7 +187,7 @@ async function main() {
       isTrending: true,
       trendingScore: 88,
       categoryId: cat.dresses.id,
-      images: ["https://images.unsplash.com/photo-1503454537844-420e6f123e0f?w=800"],
+      images: [...seedImages.products.floralDreamDress],
       variants: [
         { size: "2T", color: "Pink", ageGroup: "2T", price: 38.99, stock: 25 },
         { size: "3T", color: "Pink", ageGroup: "3T", price: 38.99, stock: 20 },
@@ -209,7 +207,7 @@ async function main() {
       isClearance: true,
       salePercent: 35,
       categoryId: cat.outerwear.id,
-      images: ["https://images.unsplash.com/photo-1519238263530-99bdd554df2b?w=800"],
+      images: [...seedImages.products.cozyPufferJacket],
       variants: [
         { size: "4T", color: "Navy", ageGroup: "4T", price: 54.99, stock: 15 },
         { size: "5T", color: "Navy", ageGroup: "5T", price: 54.99, stock: 12 },
@@ -228,7 +226,7 @@ async function main() {
       isOnSale: true,
       salePercent: 25,
       categoryId: cat["tops-tees"].id,
-      images: ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800"],
+      images: [...seedImages.products.rainbowStripeTee],
       variants: [
         { size: "2T", color: "Multi", ageGroup: "2T", price: 18.99, stock: 60 },
         { size: "3T", color: "Multi", ageGroup: "3T", price: 18.99, stock: 55 },
@@ -247,7 +245,7 @@ async function main() {
       isOnSale: true,
       salePercent: 15,
       categoryId: cat.bottoms.id,
-      images: ["https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800"],
+      images: [...seedImages.products.stretchPlayLeggings],
       variants: [
         { size: "3T", color: "Purple", ageGroup: "3T", price: 22.99, stock: 45 },
         { size: "4T", color: "Purple", ageGroup: "4T", price: 22.99, stock: 40 },
@@ -264,7 +262,7 @@ async function main() {
       isTrending: true,
       trendingScore: 90,
       categoryId: cat.outerwear.id,
-      images: ["https://images.unsplash.com/photo-1519238263530-99bdd554df2b?w=800"],
+      images: [...seedImages.products.bunnyKnitCardigan],
       variants: [
         { size: "6-12M", color: "Blush", ageGroup: "6-12M", price: 42.99, stock: 22 },
         { size: "12-18M", color: "Blush", ageGroup: "12-18M", price: 42.99, stock: 20 },
@@ -281,7 +279,7 @@ async function main() {
       isTrending: true,
       trendingScore: 85,
       categoryId: cat.sleepwear.id,
-      images: ["https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800"],
+      images: [...seedImages.products.starlightPajamaSet],
       variants: [
         { size: "2T", color: "Navy", ageGroup: "2T", price: 32.99, stock: 30 },
         { size: "3T", color: "Navy", ageGroup: "3T", price: 32.99, stock: 28 },
@@ -298,7 +296,7 @@ async function main() {
       isTrending: false,
       trendingScore: 68,
       categoryId: cat.swimwear.id,
-      images: ["https://images.unsplash.com/photo-1560743468-5b3a1d4b5b0e?w=800"],
+      images: [...seedImages.products.sunSplashRashGuard],
       variants: [
         { size: "4T", color: "Blue", ageGroup: "4T", price: 28.99, stock: 35 },
         { size: "5T", color: "Blue", ageGroup: "5T", price: 28.99, stock: 32 },
@@ -315,7 +313,7 @@ async function main() {
       isTrending: true,
       trendingScore: 79,
       categoryId: cat.bottoms.id,
-      images: ["https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800"],
+      images: [...seedImages.products.littleExplorerOveralls],
       variants: [
         { size: "2T", color: "Denim", ageGroup: "2T", price: 36.99, stock: 20 },
         { size: "3T", color: "Denim", ageGroup: "3T", price: 36.99, stock: 18 },
@@ -332,7 +330,7 @@ async function main() {
       isTrending: true,
       trendingScore: 93,
       categoryId: cat.bodysuits.id,
-      images: ["https://images.unsplash.com/photo-1515488042361-ee00e8170dc8?w=800"],
+      images: [...seedImages.products.pastelPartyRomper],
       variants: [
         { size: "0-3M", color: "Lavender", ageGroup: "0-3M", price: 26.99, stock: 40 },
         { size: "3-6M", color: "Peach", ageGroup: "3-6M", price: 26.99, stock: 38 },
@@ -349,7 +347,7 @@ async function main() {
       isTrending: false,
       trendingScore: 55,
       categoryId: cat.accessories.id,
-      images: ["https://images.unsplash.com/photo-1520903920243-00d45c846b5d?w=800"],
+      images: [...seedImages.products.cozySockPack],
       variants: [
         { size: "0-12M", color: "Multi", ageGroup: "0-12M", price: 14.99, stock: 80 },
         { size: "12-24M", color: "Multi", ageGroup: "12-24M", price: 14.99, stock: 75 },
@@ -366,7 +364,7 @@ async function main() {
       isTrending: true,
       trendingScore: 97,
       categoryId: cat["tops-tees"].id,
-      images: ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800"],
+      images: [...seedImages.products.dinoRoarHoodie],
       variants: [
         { size: "3T", color: "Green", ageGroup: "3T", price: 34.99, stock: 8 },
         { size: "4T", color: "Green", ageGroup: "4T", price: 34.99, stock: 5 },
