@@ -27,7 +27,7 @@ export const seedImages = {
     bottoms: img(photos.blueShorts, 600),
     accessories: img(photos.clothesLine, 600),
     sleepwear: img(photos.sleepScene, 600),
-    swimwear: img(photos.babyNest, 600),
+    swimwear: img(photos.blueShorts, 600),
   },
   products: {
     cloudSoftBodysuit: [img(photos.onesieSet), img(photos.onesieBlue)],

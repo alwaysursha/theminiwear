@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Star, Tag } from "lucide-react";
 import { ProductCard } from "@/components/storefront/ProductCard";
+import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
@@ -53,7 +54,6 @@ export default async function HomePage() {
       }),
       prisma.category.findMany({
         orderBy: { name: "asc" },
-        take: 6,
       }),
       getSiteSaleSettings(),
       prisma.product.findMany({
@@ -121,27 +121,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <h2 className="font-display text-2xl font-bold text-navy sm:text-3xl">
-            Shop by Category
-          </h2>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
-                className="group flex flex-col items-center rounded-2xl border border-navy/10 bg-white p-6 text-center transition-all hover:border-coral/30 hover:bg-blush/30"
-              >
-                <span className="text-3xl">🧸</span>
-                <span className="mt-2 font-display text-sm font-bold text-navy group-hover:text-coral">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      <CategoryShowcase categories={categories} />
 
       {newArrivals.length > 0 && (
         <section className="bg-white py-14">
