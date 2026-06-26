@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ShopFilters } from "@/app/(storefront)/shop/ShopFilters";
 import { prisma } from "@/lib/prisma";
-import { getProductPriceRange, productInclude } from "@/lib/product-utils";
+import { getProductPriceRange, productInclude, type ProductWithRelations } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
 import type { Gender, Prisma } from "@prisma/client";
 
@@ -71,7 +71,7 @@ export default async function ShopPage({
       orderBy = { createdAt: "desc" };
   }
 
-  let products: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
+  let products: ProductWithRelations[] = [];
   let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
   let siteSale = { enabled: false, percent: 0 };
   let dbUnavailable = false;

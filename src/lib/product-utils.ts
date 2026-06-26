@@ -1,5 +1,6 @@
 import { formatPrice } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
+import type { Prisma } from "@prisma/client";
 
 type PricedVariant = {
   price: { toString(): string } | number;
@@ -124,3 +125,7 @@ export const productInclude = {
   variants: true,
   category: true,
 } as const;
+
+export type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: typeof productInclude;
+}>;

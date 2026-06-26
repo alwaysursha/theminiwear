@@ -4,17 +4,17 @@ import { ProductCard } from "@/components/storefront/ProductCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import { productInclude } from "@/lib/product-utils";
+import { productInclude, type ProductWithRelations } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let newArrivals: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
-  let trending: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
-  let onSale: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
-  let clearance: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
-  let saleFeatured: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
+  let newArrivals: ProductWithRelations[] = [];
+  let trending: ProductWithRelations[] = [];
+  let onSale: ProductWithRelations[] = [];
+  let clearance: ProductWithRelations[] = [];
+  let saleFeatured: ProductWithRelations[] = [];
   let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
   let siteSale = { enabled: false, percent: 0 };
 
