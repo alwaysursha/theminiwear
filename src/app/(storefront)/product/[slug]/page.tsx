@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { ImageGallery } from "@/components/storefront/ImageGallery";
 import { AddToCartSection } from "@/components/storefront/AddToCartSection";
+import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { prisma } from "@/lib/prisma";
 import { getProductDiscountPercent } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
@@ -74,6 +75,8 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      <ProductReviews productId={product.id} />
     </div>
   );
 }

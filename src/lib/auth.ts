@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/constants";
 import { authConfig } from "@/lib/auth.config";
 import type { Role } from "@prisma/client";
+import { Role as RoleEnum } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -73,6 +74,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers,
+  callbacks: {
+    ...authConfig.callbacks,
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub as string;
+        session.user.role = (token.role as Role) ?? RoleEnum.USER;
+      }
+
+      if (session.user?.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: { id: true, role: true },
+        });
+
+        if (dbUser) {
+          session.user.id = dbUser.id;
+          session.user.role = dbUser.role;
+        }
+      }
+
+      return session;
+    },
+  },
 });
 
 export async function requireAuth() {
@@ -89,4 +113,22 @@ export async function requireAdmin() {
     throw new Error("Forbidden");
   }
   return session;
+}
+
+export async function requireRoleAdmin() {
+  const session = await requireAdmin();
+  if (session.user.role !== RoleEnum.ADMIN) {
+    throw new Error("Forbidden");
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+
+  if (!admin) {
+    throw new Error("Session expired. Please sign in again.");
+  }
+
+  return { session, adminId: admin.id };
 }

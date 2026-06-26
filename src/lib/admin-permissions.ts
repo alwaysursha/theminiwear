@@ -9,7 +9,8 @@ type AdminSection =
   | "shipping"
   | "discounts"
   | "analytics"
-  | "settings";
+  | "settings"
+  | "reviews";
 
 const rolePermissions: Record<Role, AdminSection[]> = {
   ADMIN: [
@@ -22,6 +23,7 @@ const rolePermissions: Record<Role, AdminSection[]> = {
     "discounts",
     "analytics",
     "settings",
+    "reviews",
   ],
   ORDER_MANAGER: ["dashboard", "orders", "shipping", "analytics"],
   SUPPORT_AGENT: ["dashboard", "inquiries", "customers"],

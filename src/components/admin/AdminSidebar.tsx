@@ -10,6 +10,7 @@ import {
   Percent,
   Settings,
   ShoppingCart,
+  Star,
   Truck,
   Users,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { canAccessAdminSection } from "@/lib/admin-permissions";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, section: "dashboard" as const },
   { href: "/admin/products", label: "Products", icon: Package, section: "products" as const },
+  { href: "/admin/reviews", label: "Reviews", icon: Star, section: "reviews" as const },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart, section: "orders" as const },
   { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare, section: "inquiries" as const },
   { href: "/admin/customers", label: "Customers", icon: Users, section: "customers" as const },
