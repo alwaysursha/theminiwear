@@ -1,0 +1,3 @@
+module.exports=[63652,(a,b,c)=>{"use strict";c._=function(a){return a&&a.__esModule?a:{default:a}}},36085,a=>{"use strict";var b=a.i(53914),c=a.i(35100),d=a.i(29444);let e=(0,d.createServerReference)("40f13ce5eba730fa4fa43f360e1decf549d967f42d",d.callServer,void 0,d.findSourceMapURL,"removeFromWishlist");a.s(["RemoveWishlistButton",0,function({productId:a}){let[d,f]=(0,c.useTransition)();return(0,b.jsx)("button",{type:"button",onClick:()=>f(()=>{e(a)}),disabled:d,className:"text-sm font-semibold text-coral hover:underline disabled:opacity-50",children:d?"Removing...":"Remove"})}],36085)}];
+
+//# sourceMappingURL=_0ozpfm_._.js.map
