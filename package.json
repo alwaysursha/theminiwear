@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@ast-grep/napi-linux-x64-gnu": "0.40.5",
+    "@cloudflare/workerd-linux-64": "1.20260623.1",
     "@opennextjs/cloudflare": "^1.19.11",
     "@prisma/adapter-pg": "^7.8.0",
     "date-fns": "^4.4.0",
@@ -63,5 +64,15 @@
     "tsx": "^4.22.4",
     "typescript": "^5",
     "wrangler": "^4.104.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "workerd",
+      "@ast-grep/napi",
+      "sharp"
+    ]
   }
 }
