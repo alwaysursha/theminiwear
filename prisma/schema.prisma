@@ -58,6 +58,21 @@ enum ReviewStatus {
   REJECTED
 }
 
+enum HomepageSectionKey {
+  CATEGORIES
+  NEW_ARRIVALS
+  ON_SALE
+  CLEARANCE
+  TRENDING
+}
+
+enum HomepageSectionSort {
+  NEWEST
+  TRENDING_SCORE
+  UPDATED
+  NAME
+}
+
 enum Gender {
   BOYS
   GIRLS
@@ -403,4 +418,46 @@ model ProductReview {
   @@unique([userId, productId])
   @@index([productId, status])
   @@index([status, createdAt])
+}
+
+model HeroSettings {
+  id                 String   @id @default("default")
+  eyebrow            String
+  headline           String
+  headlineAccent     String?
+  description        String   @db.Text
+  backgroundType     String   @default("gradient")
+  backgroundImageUrl String?
+  gradientPreset     String   @default("blush-sky-mint")
+  buttons            Json
+  productTiles       Json
+  updatedAt          DateTime @updatedAt
+}
+
+model HomepageSectionConfig {
+  key                 HomepageSectionKey @id
+  enabled             Boolean            @default(true)
+  eyebrow             String?
+  title               String
+  description         String?
+  viewAllLabel        String?
+  viewAllHref         String?
+  productLimit        Int                @default(4)
+  sortBy              HomepageSectionSort @default(NEWEST)
+  includeSiteWideSale Boolean            @default(true)
+  updatedAt           DateTime           @updatedAt
+}
+
+model SitePage {
+  slug           String   @id
+  title          String
+  subtitle       String?
+  body           String   @db.Text @default("")
+  published      Boolean  @default(false)
+  showInNav      Boolean  @default(true)
+  contactEmail   String?
+  contactPhone   String?
+  contactAddress String?  @db.Text
+  contactHours   String?  @db.Text
+  updatedAt      DateTime @updatedAt
 }

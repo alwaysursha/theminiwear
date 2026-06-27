@@ -15,6 +15,11 @@ import { subDays, subHours } from "date-fns";
 import { Pool } from "pg";
 import "dotenv/config";
 import { seedImages } from "./seed-images";
+import {
+  defaultHero,
+  defaultHomepageSections,
+  defaultSitePages,
+} from "../src/lib/cms/defaults";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -49,6 +54,9 @@ async function clearDatabase() {
   await prisma.shippingZone.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
   await prisma.storeSetting.deleteMany();
+  await prisma.sitePage.deleteMany();
+  await prisma.homepageSectionConfig.deleteMany();
+  await prisma.heroSettings.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
@@ -1143,6 +1151,46 @@ async function main() {
   console.log(`  4 customer notes, 5 newsletter subscribers`);
   console.log(`  2 shipping zones, 5 discount codes`);
   console.log(`  ${usZone.name} shipping zone configured`);
+
+  await prisma.heroSettings.upsert({
+    where: { id: "default" },
+    create: {
+      id: "default",
+      ...defaultHero,
+      buttons: defaultHero.buttons,
+      productTiles: defaultHero.productTiles,
+    },
+    update: {},
+  });
+
+  for (const section of defaultHomepageSections) {
+    await prisma.homepageSectionConfig.upsert({
+      where: { key: section.key as never },
+      create: {
+        key: section.key as never,
+        enabled: section.enabled,
+        eyebrow: section.eyebrow,
+        title: section.title,
+        description: section.description,
+        viewAllLabel: section.viewAllLabel,
+        viewAllHref: section.viewAllHref,
+        productLimit: section.productLimit,
+        sortBy: section.sortBy,
+        includeSiteWideSale: section.includeSiteWideSale,
+      },
+      update: {},
+    });
+  }
+
+  for (const page of defaultSitePages) {
+    await prisma.sitePage.upsert({
+      where: { slug: page.slug },
+      create: page,
+      update: {},
+    });
+  }
+
+  console.log("  CMS defaults (hero, sections, pages)");
 }
 
 main()
