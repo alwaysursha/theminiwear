@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Code2,
   LayoutDashboard,
   MessageSquare,
   Package,
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/admin/shipping", label: "Shipping", icon: Truck, section: "shipping" as const },
   { href: "/admin/discounts", label: "Discounts", icon: Percent, section: "discounts" as const },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3, section: "analytics" as const },
+  { href: "/admin/developer", label: "Developer", icon: Code2, section: "developer" as const },
   { href: "/admin/settings", label: "Settings", icon: Settings, section: "settings" as const },
 ];
 

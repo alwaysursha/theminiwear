@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/date";
 import { Package, Heart, MapPin } from "lucide-react";
+import { ViewAllLink } from "@/components/storefront/ViewAllLink";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -91,12 +92,7 @@ export default async function AccountPage() {
           <h2 className="font-display text-lg font-bold text-navy">
             Recent Orders
           </h2>
-          <Link
-            href="/account/orders"
-            className="text-sm font-semibold text-coral hover:underline"
-          >
-            View all
-          </Link>
+          <ViewAllLink href="/account/orders">View all</ViewAllLink>
         </div>
         {orders.length === 0 ? (
           <p className="mt-4 text-sm text-navy/60">

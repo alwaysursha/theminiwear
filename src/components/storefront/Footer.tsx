@@ -15,7 +15,11 @@ const footerLinks = {
   ],
 };
 
-export function Footer() {
+type FooterProps = {
+  legalLinks?: { href: string; label: string }[];
+};
+
+export function Footer({ legalLinks = [] }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-navy/10 bg-navy text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -61,14 +65,15 @@ export function Footer() {
           <p className="text-xs text-white/50">
             &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </p>
-          <div className="flex gap-4 text-xs text-white/50">
-            <Link href="/contact" className="hover:text-white">
-              Privacy
-            </Link>
-            <Link href="/contact" className="hover:text-white">
-              Terms
-            </Link>
-          </div>
+          {legalLinks.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-4 text-xs text-white/50">
+              {legalLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="hover:text-white">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>

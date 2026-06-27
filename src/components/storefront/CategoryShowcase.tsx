@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewAllLink } from "@/components/storefront/ViewAllLink";
 
 type CategoryItem = {
   id: string;
@@ -27,43 +28,99 @@ function sortCategories<T extends { slug: string }>(categories: T[]): T[] {
   );
 }
 
-export function CategoryShowcase({ categories }: { categories: CategoryItem[] }) {
+type CategoryShowcaseProps = {
+  categories: CategoryItem[];
+  eyebrow?: string | null;
+  title?: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+};
+
+function CategoryNameLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="relative inline-block max-w-full pb-2">
+      {children}
+      <span
+        className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-navy/10"
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute -bottom-px -left-1 h-[2px] w-[calc(100%+0.5rem)] origin-left scale-x-0 rounded-full bg-gradient-to-r from-coral via-coral/85 to-mint shadow-[0_1px_8px_rgba(255,127,110,0.35)] transition-transform duration-[680ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100"
+        aria-hidden
+      />
+    </span>
+  );
+}
+
+export function CategoryShowcase({
+  categories,
+  eyebrow = "The Collection",
+  title = "Shop by category",
+  viewAllHref = "/shop",
+  viewAllLabel = "View all",
+}: CategoryShowcaseProps) {
   const sorted = sortCategories(categories);
   if (sorted.length === 0) return null;
 
   return (
-    <section className="border-y border-navy/8 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-4 border-b border-navy/8 pb-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-navy/45">
-              The Collection
-            </p>
-            <h2 className="mt-1 font-display text-lg font-medium text-navy sm:text-xl">
-              Shop by category
+    <section className="relative overflow-hidden border-y border-navy/8 bg-white">
+      <div
+        className="pointer-events-none absolute -left-24 top-0 h-40 w-72 rounded-full bg-coral/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-16 bottom-0 h-36 w-64 rounded-full bg-mint/15 blur-3xl"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between gap-4 border-b border-navy/8 pb-5">
+          <div className="relative">
+            {eyebrow && (
+              <p className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]">
+                <span
+                  className="h-px w-6 bg-gradient-to-r from-transparent via-coral/70 to-coral"
+                  aria-hidden
+                />
+                <span className="animate-heading-shimmer bg-[length:200%_auto] bg-gradient-to-r from-coral via-navy/70 to-mint bg-clip-text text-transparent">
+                  {eyebrow}
+                </span>
+              </p>
+            )}
+            <h2 className="relative mt-2 font-display text-xl font-bold tracking-tight sm:text-2xl">
+              <span className="bg-gradient-to-br from-navy via-navy to-navy/75 bg-clip-text text-transparent">
+                {title}
+              </span>
+              <span
+                className="absolute -bottom-2 left-0 h-[2px] w-24 origin-left animate-heading-line-grow rounded-full bg-gradient-to-r from-coral via-coral/85 to-mint shadow-[0_1px_8px_rgba(255,127,110,0.3)]"
+                aria-hidden
+              />
             </h2>
           </div>
-          <Link
-            href="/shop"
-            className="shrink-0 border-b border-transparent pb-px text-[10px] font-semibold uppercase tracking-[0.16em] text-navy/55 transition-colors hover:border-coral hover:text-coral"
-          >
-            View all
-          </Link>
+          <ViewAllLink href={viewAllHref} tone="muted" size="xs">
+            {viewAllLabel}
+          </ViewAllLink>
         </div>
 
         <nav aria-label="Shop by category" className="mt-1">
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {sorted.map((cat) => (
-              <li key={cat.id} className="border-b border-navy/6">
+            {sorted.map((cat, index) => (
+              <li
+                key={cat.id}
+                className="animate-category-rise border-b border-navy/6"
+                style={{ animationDelay: `${index * 70}ms` }}
+              >
                 <Link
                   href={`/shop?category=${cat.slug}`}
-                  className="group block py-3 pr-3 transition-colors sm:py-3.5"
+                  className="group block px-1 py-4 sm:py-[1.125rem]"
                 >
-                  <span className="block text-sm font-medium text-navy transition-colors group-hover:text-coral">
-                    {cat.name}
-                  </span>
+                  <CategoryNameLabel>
+                    <span className="relative z-10 block text-sm font-medium tracking-tight text-navy transition-[letter-spacing] duration-300 group-hover:tracking-wide">
+                      {cat.name}
+                    </span>
+                  </CategoryNameLabel>
                   {cat.description && (
-                    <span className="mt-0.5 block line-clamp-1 text-xs text-navy/45 transition-colors group-hover:text-navy/60">
+                    <span className="mt-1.5 block line-clamp-1 pl-0.5 text-xs leading-relaxed text-navy/40 transition-colors duration-300 group-hover:text-navy/60">
                       {cat.description}
                     </span>
                   )}

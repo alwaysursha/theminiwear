@@ -8,15 +8,17 @@ import { useCartStore } from "@/lib/cart-store";
 import { getDashboardPath, isAdminRole, SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/shop?sale=true", label: "Sale" },
   { href: "/shop?clearance=true", label: "Clearance" },
   { href: "/shop?new=true", label: "New Arrivals" },
-  { href: "/contact", label: "Contact" },
 ];
 
-export function Header() {
+export function Header({ showContact = true }: { showContact?: boolean }) {
+  const navLinks = showContact
+    ? [...baseNavLinks, { href: "/contact", label: "Contact" }]
+    : baseNavLinks;
   const [mobileOpen, setMobileOpen] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
   const { data: session } = useSession();
@@ -28,7 +30,7 @@ export function Header() {
   const accountLabel = isAdmin ? "Admin dashboard" : "Account";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-navy/10 bg-white/90 backdrop-blur-md">
+    <header className="border-b border-navy/10 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
