@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatDate } from "@/lib/date";
+import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export default async function AdminReviewDetailPage({
         <div className="mb-4 flex items-center gap-3">
           <StarRating rating={review.rating} />
           <span className="text-sm text-slate-500">
-            Submitted {formatDate(review.createdAt, "MMM d, yyyy h:mm a")}
+            Submitted {format(review.createdAt, "MMM d, yyyy h:mm a")}
           </span>
         </div>
         {review.title && (
@@ -96,7 +96,7 @@ export default async function AdminReviewDetailPage({
         <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{review.body}</p>
         {review.moderatedAt && (
           <p className="mt-4 text-xs text-slate-500">
-            Last moderated {formatDate(review.moderatedAt, "MMM d, yyyy h:mm a")}
+            Last moderated {format(review.moderatedAt, "MMM d, yyyy h:mm a")}
             {review.moderatedBy ? ` by ${review.moderatedBy.name}` : ""}
           </p>
         )}

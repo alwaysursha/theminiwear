@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/date";
+import { format } from "date-fns";
 import type { ProductReview, User } from "@prisma/client";
 import { StarRating } from "@/components/storefront/StarRating";
 import { formatReviewerName } from "@/lib/review-utils";
@@ -37,7 +37,7 @@ export function ReviewList({ reviews, currentUserId }: ReviewListProps) {
                 Verified purchaser
               </span>
               <span className="text-xs text-navy/45">
-                {formatDate(review.createdAt, "MMM d, yyyy")}
+                {format(review.createdAt, "MMM d, yyyy")}
               </span>
             </div>
             {review.title && (

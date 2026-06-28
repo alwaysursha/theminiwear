@@ -36,12 +36,10 @@ function ProductThumb({
   product,
   className,
   size = "md",
-  badgeSize = "sm",
 }: {
   product: HeroProductItem;
   className?: string;
   size?: "sm" | "md" | "lg";
-  badgeSize?: "sm" | "md";
 }) {
   return (
     <Link
@@ -51,11 +49,7 @@ function ProductThumb({
       <ProductImageFrame flush size={size} className="h-full">
         <div className="relative h-full min-h-0">
           {product.discountPercent != null && (
-            <SaleOffBadge
-              percent={product.discountPercent}
-              size={badgeSize}
-              className="right-1.5 top-1.5 z-10 scale-75 sm:scale-90"
-            />
+            <SaleOffBadge percent={product.discountPercent} size="sm" />
           )}
           {product.imageUrl ? (
             <ProductFitImage
@@ -104,7 +98,7 @@ function AdShell({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-white">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col px-4 py-2 sm:px-6 sm:py-3 lg:px-8">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col px-3 py-1.5 sm:px-6 sm:py-3 lg:px-8">
         <div
           className={cn(
             "flex h-full min-h-0 flex-col overflow-hidden rounded-xl sm:rounded-2xl",
@@ -141,49 +135,37 @@ function AdShell({
   );
 }
 
-function MiniProductCell({
-  product,
-  className,
-}: {
-  product: HeroProductItem;
-  className?: string;
-}) {
+function ShowcaseGridCell({ product }: { product: HeroProductItem }) {
   return (
     <Link
       href={`/product/${product.slug}`}
-      className={cn(
-        "group/frame flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-navy/10 bg-white transition-shadow hover:shadow-sm sm:rounded-lg",
-        className,
-      )}
+      className="group/frame relative block h-full w-full min-h-0 overflow-hidden rounded-lg border border-navy/10 bg-white transition-shadow hover:shadow-md sm:rounded-xl"
     >
-      <div className="relative min-h-0 flex-1">
-        <ProductImageFrame flush size="sm" className="h-full">
-          <div className="relative h-full min-h-0">
-            {product.discountPercent != null && (
-              <SaleOffBadge
-                percent={product.discountPercent}
-                size="sm"
-                className="absolute right-0.5 top-0.5 z-10 scale-[0.65] sm:scale-75"
-              />
-            )}
-            {product.imageUrl ? (
-              <ProductFitImage
-                src={product.imageUrl}
-                alt={product.imageAlt ?? product.name}
-                sizes="120px"
-                mode="cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-xl">👕</div>
-            )}
-          </div>
-        </ProductImageFrame>
-      </div>
-      <div className="shrink-0 border-t border-navy/10 px-1.5 py-1 sm:px-2">
-        <p className="line-clamp-1 font-display text-[9px] font-bold leading-tight text-navy sm:text-[10px]">
+      <ProductImageFrame flush size="md" className="absolute inset-0 h-full w-full">
+        <div className="relative h-full min-h-0">
+          {product.discountPercent != null && (
+            <SaleOffBadge percent={product.discountPercent} size="xs" />
+          )}
+          {product.imageUrl ? (
+            <ProductFitImage
+              src={product.imageUrl}
+              alt={product.imageAlt ?? product.name}
+              sizes="(max-width: 640px) 44vw, 200px"
+              mode="cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-blush/20 text-2xl sm:text-3xl">
+              👕
+            </div>
+          )}
+        </div>
+      </ProductImageFrame>
+
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-navy/90 via-navy/55 to-transparent px-2 pb-2 pt-6 sm:px-2.5 sm:pb-2.5 sm:pt-8">
+        <p className="line-clamp-1 font-display text-[10px] font-bold leading-tight text-white sm:text-xs">
           {product.name}
         </p>
-        <p className="font-display text-[10px] font-extrabold text-coral sm:text-xs">
+        <p className="font-display text-[11px] font-extrabold text-coral sm:text-sm">
           {product.priceDisplay}
         </p>
       </div>
@@ -209,8 +191,8 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
 
   return (
     <AdShell slide={slide}>
-      <div className="grid h-full min-h-0 grid-cols-[1fr_1.05fr] gap-2 bg-white p-2 sm:gap-3 sm:p-3">
-        <div className="relative flex min-h-0 flex-col items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-mint/35 via-mint/10 to-blush/40 px-4 py-4 sm:rounded-xl sm:px-6 sm:py-6 lg:px-8">
+      <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[auto_minmax(10rem,1fr)] gap-2 bg-white p-2 sm:grid-cols-[1fr_1.05fr] sm:grid-rows-1 sm:gap-3 sm:p-3">
+        <div className="relative flex shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-mint/35 via-mint/10 to-blush/40 px-4 py-3 sm:min-h-0 sm:rounded-xl sm:px-6 sm:py-6 lg:px-8">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-mint/40 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-coral/25 blur-xl" />
 
@@ -221,7 +203,7 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
               </p>
             )}
 
-            <h3 className="mt-2 font-display text-2xl font-extrabold leading-[1.06] text-navy sm:mt-3 sm:text-4xl lg:text-[2.75rem]">
+            <h3 className="mt-1.5 font-display text-xl font-extrabold leading-[1.06] text-navy sm:mt-3 sm:text-4xl lg:text-[2.75rem]">
               {lead}
               {accent ? (
                 <>
@@ -231,14 +213,16 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
               ) : null}
             </h3>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-5">
-              <p className="font-display text-3xl font-extrabold text-navy sm:text-4xl lg:text-5xl">
+            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-5">
+              <p className="font-display text-2xl font-extrabold text-navy sm:text-4xl lg:text-5xl">
                 {product.priceDisplay}
               </p>
               {product.discountPercent != null && (
-                <span className="rounded-full bg-coral px-3 py-1 text-xs font-bold text-white sm:text-sm">
-                  {product.discountPercent}% off
-                </span>
+                <SaleOffBadge
+                  percent={product.discountPercent}
+                  size="sm"
+                  inline
+                />
               )}
             </div>
 
@@ -246,7 +230,7 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
               href={`/product/${product.slug}`}
               className={cn(
                 buttonVariants({ size: "default" }),
-                "mt-5 h-10 w-auto self-start px-7 text-sm sm:mt-6 sm:h-11 sm:px-8 sm:text-base",
+                "mt-4 h-9 w-auto self-start px-6 text-sm sm:mt-6 sm:h-11 sm:px-8 sm:text-base",
               )}
             >
               Buy now
@@ -257,7 +241,7 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
 
         <Link
           href={`/product/${product.slug}`}
-          className="group/frame relative block min-h-0 h-full overflow-hidden rounded-lg sm:rounded-xl"
+          className="group/frame relative block h-full min-h-[10rem] overflow-hidden rounded-lg sm:min-h-0 sm:rounded-xl"
         >
           <ProductImageFrame flush size="lg" className="absolute inset-0 h-full w-full">
             <div className="relative h-full min-h-0">
@@ -265,7 +249,7 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
                 <ProductFitImage
                   src={product.imageUrl}
                   alt={product.imageAlt ?? product.name}
-                  sizes="(max-width: 768px) 50vw, 480px"
+                  sizes="(max-width: 640px) 100vw, 480px"
                   mode="cover"
                 />
               ) : (
@@ -347,11 +331,7 @@ function ShowcaseTopPickCard({ product }: { product: HeroProductItem }) {
       <ProductImageFrame flush size="lg" className="absolute inset-0 h-full w-full">
         <div className="relative h-full min-h-0">
           {product.discountPercent != null && (
-            <SaleOffBadge
-              percent={product.discountPercent}
-              size="md"
-              className="absolute right-2 top-2 z-20 scale-90 sm:scale-100"
-            />
+            <SaleOffBadge percent={product.discountPercent} size="md" />
           )}
           {product.imageUrl ? (
             <ProductFitImage
@@ -389,27 +369,29 @@ function ShowcaseLayout({ slide }: { slide: HeroShowcaseSlide }) {
 
   return (
     <AdShell slide={slide}>
-      <div className="grid h-full min-h-0 grid-cols-[1.05fr_0.95fr] gap-2 bg-white p-2 sm:gap-3 sm:p-3">
-        <article className="relative min-h-0 h-full overflow-hidden rounded-lg sm:rounded-xl">
+      <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[minmax(8rem,0.82fr)_minmax(0,1.18fr)] gap-2 bg-white p-2 sm:grid-cols-[0.9fr_1.1fr] sm:grid-rows-1 sm:gap-3 sm:p-3">
+        <article className="relative h-full min-h-0 overflow-hidden rounded-lg sm:rounded-xl">
           <ShowcaseTopPickCard product={slide.topPick} />
         </article>
 
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-1 sm:rounded-xl sm:p-1.5">
+        <div className="flex min-h-0 flex-col justify-center overflow-hidden rounded-lg p-1 sm:h-full sm:justify-center sm:rounded-xl sm:p-1.5">
           <p className="shrink-0 px-0.5 text-[8px] font-bold uppercase tracking-[0.18em] text-navy/55 sm:text-[9px]">
             {slide.gridLabel}
           </p>
-          <div className="mt-1 grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-1.5 sm:mt-1.5 sm:gap-2">
-            {gridSlots.map((product, index) =>
-              product ? (
-                <MiniProductCell key={product.slug} product={product} />
-              ) : (
-                <div
-                  key={`empty-${index}`}
-                  className="h-full min-h-0 rounded-md border border-dashed border-navy/10 bg-white sm:rounded-lg"
-                  aria-hidden
-                />
-              ),
-            )}
+          <div className="mt-1.5 flex w-full min-h-0 flex-1 items-center justify-center sm:mt-2">
+            <div className="grid aspect-square w-full max-h-full min-h-0 max-w-full grid-cols-2 grid-rows-2 gap-2 sm:gap-2.5">
+              {gridSlots.map((product, index) =>
+                product ? (
+                  <ShowcaseGridCell key={product.slug} product={product} />
+                ) : (
+                  <div
+                    key={`empty-${index}`}
+                    className="h-full w-full rounded-lg border border-dashed border-navy/10 bg-white sm:rounded-xl"
+                    aria-hidden
+                  />
+                ),
+              )}
+            </div>
           </div>
         </div>
       </div>
