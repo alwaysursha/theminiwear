@@ -44,14 +44,18 @@ function whereForSection(
 
 export async function getHomepageSectionProducts(
   key: Exclude<HomepageSectionKey, "CATEGORIES">,
+  options?: { minimum?: number },
 ): Promise<ProductWithRelations[]> {
   const config = await getHomepageSection(key);
   const siteSale = await getSiteSaleSettings();
+  const take = options?.minimum
+    ? Math.max(config.productLimit, options.minimum)
+    : config.productLimit;
 
   let products = await prisma.product.findMany({
     where: whereForSection(key),
     include: productInclude,
-    take: config.productLimit,
+    take,
     orderBy: orderByForSection(key, config.sortBy),
   });
 
@@ -59,7 +63,7 @@ export async function getHomepageSectionProducts(
     key === "ON_SALE" &&
     config.includeSiteWideSale &&
     siteSale.enabled &&
-    products.length < config.productLimit
+    products.length < take
   ) {
     const existingIds = new Set(products.map((p) => p.id));
     const filler = await prisma.product.findMany({
@@ -68,7 +72,7 @@ export async function getHomepageSectionProducts(
         id: { notIn: [...existingIds] },
       },
       include: productInclude,
-      take: config.productLimit - products.length,
+      take: take - products.length,
       orderBy: { updatedAt: "desc" },
     });
     products = [...products, ...filler];

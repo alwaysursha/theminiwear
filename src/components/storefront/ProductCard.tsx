@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
 import { getProductPriceRange } from "@/lib/product-utils";
 import { formatPrice } from "@/lib/utils";
@@ -26,31 +26,31 @@ export function ProductCard({
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+      className="group/frame flex flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-sky/30">
-        {image ? (
-          <Image
-            src={image.url}
-            alt={image.alt ?? product.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-4xl">
-            👕
+      <div className="relative aspect-[4/5] p-2 sm:p-2.5">
+        <ProductImageFrame tone="neutral" size="lg" className="h-full">
+          <div className="relative h-full">
+            {image ? (
+              <ProductFitImage
+                src={image.url}
+                alt={image.alt ?? product.name}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                fit="lg"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-4xl">👕</div>
+            )}
+            {pricing.maxDiscountPercent != null && (
+              <SaleOffBadge percent={pricing.maxDiscountPercent} />
+            )}
+            <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
+              {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
+              {product.isNewArrival && <Badge variant="new">New</Badge>}
+              {product.isTrending && <Badge variant="trending">Trending</Badge>}
+            </div>
           </div>
-        )}
-        {pricing.maxDiscountPercent != null && (
-          <SaleOffBadge percent={pricing.maxDiscountPercent} />
-        )}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
-          {product.isNewArrival && <Badge variant="new">New</Badge>}
-          {product.isTrending && <Badge variant="trending">Trending</Badge>}
-        </div>
+        </ProductImageFrame>
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         {product.category && (
