@@ -47,7 +47,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   return (
     <div className="bg-white">
       <section
-        className="group/slider relative h-[min(62vh,27rem)] overflow-hidden sm:h-[min(64vh,29rem)] lg:h-[min(66vh,34rem)]"
+        className="group/slider relative h-[min(80vh,38rem)] overflow-hidden sm:h-[min(64vh,29rem)] lg:h-[min(66vh,34rem)]"
         aria-roledescription="carousel"
         aria-label="Featured highlights"
         onMouseEnter={() => setPaused(true)}

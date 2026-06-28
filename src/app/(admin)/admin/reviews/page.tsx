@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate } from "@/lib/date";
+import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/admin/DataTable";
 import { StarRating } from "@/components/storefront/StarRating";
@@ -88,7 +88,7 @@ export default async function AdminReviewsPage() {
           {
             key: "submitted",
             header: "Submitted",
-            render: (review) => formatDate(review.createdAt, "MMM d, yyyy"),
+            render: (review) => format(review.createdAt, "MMM d, yyyy"),
           },
         ]}
       />

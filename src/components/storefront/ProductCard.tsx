@@ -28,21 +28,23 @@ export function ProductCard({
       href={`/product/${product.slug}`}
       className="group/frame flex flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="relative aspect-[4/5] p-2 sm:p-2.5">
-        <ProductImageFrame tone="neutral" size="lg" className="h-full">
+      <div className="relative aspect-[4/5] overflow-hidden">
+        <ProductImageFrame flush size="lg" className="h-full">
           <div className="relative h-full">
             {image ? (
               <ProductFitImage
                 src={image.url}
                 alt={image.alt ?? product.name}
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                fit="lg"
+                mode="cover"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-4xl">👕</div>
+              <div className="flex h-full items-center justify-center bg-neutral-100 text-4xl">
+                👕
+              </div>
             )}
             {pricing.maxDiscountPercent != null && (
-              <SaleOffBadge percent={pricing.maxDiscountPercent} />
+              <SaleOffBadge percent={pricing.maxDiscountPercent} size="md" />
             )}
             <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {product.isClearance && <Badge variant="clearance">Clearance</Badge>}

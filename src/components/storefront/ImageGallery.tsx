@@ -29,7 +29,7 @@ export function ImageGallery({
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-blush/20">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-100">
         <Image
           src={current.url}
           alt={current.alt ?? productName}
@@ -39,7 +39,7 @@ export function ImageGallery({
           priority
         />
         {discountPercent != null && discountPercent > 0 && (
-          <SaleOffBadge percent={discountPercent} size="lg" className="right-4 top-4" />
+          <SaleOffBadge percent={discountPercent} size="lg" className="right-3 top-3 sm:right-4 sm:top-4" />
         )}
       </div>
       {images.length > 1 && (
@@ -50,7 +50,7 @@ export function ImageGallery({
               type="button"
               onClick={() => setSelected(i)}
               className={cn(
-                "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-colors",
+                "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-neutral-100 transition-colors",
                 selected === i ? "border-coral" : "border-transparent",
               )}
             >

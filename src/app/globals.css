@@ -99,6 +99,289 @@
   }
 }
 
+/* —— Homepage product section scroll reveals —— */
+
+@keyframes reveal-new-header {
+  from {
+    opacity: 0;
+    transform: translateY(2.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-new-card {
+  from {
+    opacity: 0;
+    transform: translateY(2.75rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reveal-sale-header {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-sale-card {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(1.5rem);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.04) translateY(-0.25rem);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes reveal-sale-shimmer {
+  from {
+    transform: translateX(-120%) skewX(-12deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+@keyframes reveal-clearance-panel {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-clearance-header {
+  from {
+    opacity: 0;
+    transform: translateY(1.75rem);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes reveal-clearance-card {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes reveal-trending-header {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-trending-card-left {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5rem) rotate(-1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes reveal-trending-card-right {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem) rotate(1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes reveal-trending-orb {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes reveal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.section-reveal {
+  --reveal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-stagger: 90ms;
+}
+
+.section-reveal .section-reveal-header,
+.section-reveal .section-reveal-card,
+.section-reveal .section-reveal-icon,
+.section-reveal .section-reveal-view-all,
+.section-reveal .section-reveal-sale-shimmer,
+.section-reveal .section-reveal-trending-orb {
+  opacity: 0;
+}
+
+.section-reveal[data-reveal="clearance"] .section-reveal-inner {
+  opacity: 0;
+}
+
+/* New Arrivals — soft cascade rise */
+.section-reveal-visible[data-reveal="new-arrivals"] .section-reveal-header {
+  animation: reveal-new-header 0.85s var(--reveal-ease) forwards;
+}
+
+.section-reveal-visible[data-reveal="new-arrivals"] .section-reveal-card {
+  animation: reveal-new-card 0.8s var(--reveal-ease) both;
+  animation-delay: calc(var(--reveal-i) * var(--reveal-stagger) + 120ms);
+}
+
+.section-reveal-visible[data-reveal="new-arrivals"] .section-reveal-view-all {
+  animation: reveal-fade-in 0.6s ease 0.35s forwards;
+}
+
+/* On Sale — punchy pop + shimmer sweep */
+.section-reveal-visible[data-reveal="on-sale"] .section-reveal-sale-shimmer {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 127, 110, 0.25) 52%,
+    transparent 70%
+  );
+  animation: reveal-sale-shimmer 1.1s ease-out forwards;
+}
+
+.section-reveal-visible[data-reveal="on-sale"] .section-reveal-icon {
+  animation: reveal-sale-card 0.7s var(--reveal-ease) 0.1s both;
+}
+
+.section-reveal-visible[data-reveal="on-sale"] .section-reveal-header {
+  animation: reveal-sale-header 0.75s var(--reveal-ease) 0.05s forwards;
+}
+
+.section-reveal-visible[data-reveal="on-sale"] .section-reveal-card {
+  animation: reveal-sale-card 0.75s var(--reveal-ease) both;
+  animation-delay: calc(var(--reveal-i) * var(--reveal-stagger) + 180ms);
+}
+
+.section-reveal-visible[data-reveal="on-sale"] .section-reveal-view-all {
+  animation: reveal-fade-in 0.6s ease forwards;
+  animation-delay: 0.35s;
+}
+
+/* Clearance — cinematic unveil + de-blur */
+.section-reveal-visible[data-reveal="clearance"] .section-reveal-inner {
+  animation: reveal-clearance-panel 0.95s var(--reveal-ease) forwards;
+}
+
+.section-reveal-visible[data-reveal="clearance"] .section-reveal-header {
+  animation: reveal-clearance-header 0.8s var(--reveal-ease) 0.2s forwards;
+}
+
+.section-reveal-visible[data-reveal="clearance"] .section-reveal-card {
+  animation: reveal-clearance-card 0.85s var(--reveal-ease) both;
+  animation-delay: calc(var(--reveal-i) * var(--reveal-stagger) + 280ms);
+}
+
+.section-reveal-visible[data-reveal="clearance"] .section-reveal-view-all {
+  animation: reveal-fade-in 0.6s ease 0.45s forwards;
+}
+
+/* Trending — alternating momentum slide */
+.section-reveal-visible[data-reveal="trending"] .section-reveal-trending-orb {
+  animation: reveal-trending-orb 1.1s var(--reveal-ease) forwards;
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-trending-orb:last-of-type {
+  animation-delay: 0.15s;
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-icon {
+  animation: reveal-trending-card-left 0.7s var(--reveal-ease) 0.1s both;
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-header {
+  animation: reveal-trending-header 0.8s var(--reveal-ease) 0.05s forwards;
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-card-alt-left {
+  animation: reveal-trending-card-left 0.8s var(--reveal-ease) both;
+  animation-delay: calc(var(--reveal-i) * var(--reveal-stagger) + 150ms);
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-card-alt-right {
+  animation: reveal-trending-card-right 0.8s var(--reveal-ease) both;
+  animation-delay: calc(var(--reveal-i) * var(--reveal-stagger) + 150ms);
+}
+
+.section-reveal-visible[data-reveal="trending"] .section-reveal-view-all {
+  animation: reveal-fade-in 0.6s ease 0.4s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal .section-reveal-header,
+  .section-reveal .section-reveal-card,
+  .section-reveal .section-reveal-icon,
+  .section-reveal .section-reveal-view-all,
+  .section-reveal .section-reveal-sale-shimmer,
+  .section-reveal .section-reveal-trending-orb,
+  .section-reveal[data-reveal="clearance"] .section-reveal-inner {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+  }
+}
+
 :root {
   --background: #fffaf9;
   --foreground: #1e2a4a;
