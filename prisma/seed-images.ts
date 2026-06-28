@@ -16,6 +16,7 @@ const photos = {
   sleepScene: "1587654780291-39c9404d746b",
   assortedClothes: "1566454544259-f4b94c3d758c",
   closetRack: "1622218286192-95f6a20083c7",
+  kidsSweater: "1519458067894-ff9796f8742b",
 } as const;
 
 export const seedImages = {
@@ -42,5 +43,9 @@ export const seedImages = {
     pastelPartyRomper: [img(photos.onesieBlue)],
     cozySockPack: [img(photos.closetRack)],
     dinoRoarHoodie: [img(photos.whiteTee)],
+    mintMeadowSundress: [img(photos.girlDress)],
+    cloudKnitBeanieSet: [img(photos.kidsSweater), img(photos.closetRack)],
+    peachPocketTee: [img(photos.whiteTee)],
+    miniFleeceJoggerSet: [img(photos.leggings), img(photos.blueShorts)],
   },
 } as const;

@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { HeroSection } from "@/components/storefront/HeroSection";
 import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
+import { HeroSlider } from "@/components/storefront/HeroSlider";
 import { HomepageProductSection } from "@/components/storefront/HomepageProductSection";
 import { getHeroSettings, getHomepageSection } from "@/lib/cms";
 import { getHomepageSectionProducts } from "@/lib/cms/products";
+import { buildHeroSlides } from "@/lib/hero-slider";
 import { prisma } from "@/lib/prisma";
 import { getSiteSaleSettings } from "@/lib/settings";
 
@@ -34,17 +34,30 @@ export default async function HomePage() {
       prisma.category.findMany({ orderBy: { name: "asc" } }),
       getSiteSaleSettings(),
       getHomepageSectionProducts("NEW_ARRIVALS"),
-      getHomepageSectionProducts("ON_SALE"),
+      getHomepageSectionProducts("ON_SALE", { minimum: 5 }),
       getHomepageSectionProducts("CLEARANCE"),
-      getHomepageSectionProducts("TRENDING"),
+      getHomepageSectionProducts("TRENDING", { minimum: 5 }),
     ]);
 
     const showSaleSection =
       saleSection.enabled && (siteSale.enabled || onSale.length > 0);
 
+    const heroSlides = buildHeroSlides(hero, {
+      newArrivals,
+      onSale,
+      trending,
+      siteSale,
+      saleViewAllHref: saleSection.viewAllHref ?? "/shop?sale=true",
+      saleViewAllLabel: saleSection.viewAllLabel ?? "View all on sale",
+      trendingViewAllHref: trendingSection.viewAllHref ?? "/shop?sort=trending",
+      trendingViewAllLabel: trendingSection.viewAllLabel ?? "View all",
+      newArrivalViewAllHref: newSection.viewAllHref ?? "/shop?new=true",
+      newArrivalViewAllLabel: newSection.viewAllLabel ?? "View all",
+    });
+
     return (
       <div>
-        <HeroSection hero={hero} />
+        <HeroSlider slides={heroSlides} />
 
         {categoriesSection.enabled && (
           <CategoryShowcase

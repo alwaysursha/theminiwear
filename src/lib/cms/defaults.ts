@@ -54,7 +54,7 @@ export const defaultHomepageSections: HomepageSectionData[] = [
     description: "Limited-time deals",
     viewAllLabel: "View all",
     viewAllHref: "/shop?sale=true",
-    productLimit: 4,
+    productLimit: 6,
     sortBy: "UPDATED",
     includeSiteWideSale: true,
   },
