@@ -2,6 +2,7 @@ import { AnnouncementTicker } from "@/components/storefront/AnnouncementTicker";
 import { Footer } from "@/components/storefront/Footer";
 import { Header } from "@/components/storefront/Header";
 import { Providers } from "@/components/storefront/Providers";
+import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
 
@@ -34,6 +35,7 @@ export default async function StorefrontLayout({
         <PageTransition>{children}</PageTransition>
       </main>
       <Footer legalLinks={legalLinks} />
+      <WhatsAppChatButton />
     </Providers>
   );
 }
