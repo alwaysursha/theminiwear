@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewsletterForm } from "@/components/storefront/NewsletterForm";
+import { SiteLogo } from "@/components/storefront/SiteLogo";
 import { SITE_NAME } from "@/lib/constants";
 
 const footerLinks = {
@@ -21,17 +22,22 @@ type FooterProps = {
 
 export function Footer({ legalLinks = [] }: FooterProps) {
   return (
-    <footer className="mt-auto border-t border-navy/10 bg-navy text-white">
+    <footer className="mt-auto border-t border-white/10 bg-[#967BB6] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
-            <p className="font-display text-2xl font-extrabold text-mint">
-              {SITE_NAME}
-            </p>
-            <p className="mt-2 max-w-sm text-sm text-white/70">
-              Adorable, comfortable kids clothing for every adventure. Soft
-              fabrics, playful prints, and sizes for growing explorers.
-            </p>
+            <div className="flex flex-col items-start gap-0.5">
+              <Link
+                href="/"
+                className="shrink-0 transition-opacity hover:opacity-90"
+              >
+                <SiteLogo variant="footer" />
+              </Link>
+              <p className="max-w-md text-sm leading-relaxed text-white/70">
+                Adorable, comfortable kids clothing for every adventure. Soft
+                fabrics, playful prints, and sizes for growing explorers.
+              </p>
+            </div>
             <div className="mt-6">
               <p className="mb-2 text-sm font-semibold text-mint">
                 Join our newsletter

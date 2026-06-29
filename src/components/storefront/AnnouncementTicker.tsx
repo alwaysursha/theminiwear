@@ -2,7 +2,7 @@
 
 const SP = " ".repeat(20);
 
-const ANNOUNCEMENT = `Free shipping on orders over €100${SP}/${SP}Orders processed and shipped within 2-5 business days${SP}/${SP}`;
+const ANNOUNCEMENT = `Free shipping on orders over $100${SP}/${SP}Orders processed and shipped within 2-5 business days${SP}/${SP}`;
 
 const REPEATS_PER_TRACK = 10;
 
