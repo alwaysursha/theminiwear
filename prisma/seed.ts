@@ -20,6 +20,10 @@ import {
   defaultHomepageSections,
   defaultSitePages,
 } from "../src/lib/cms/defaults";
+import {
+  resolveProductCategorySlug,
+  SHOP_CATEGORY_SEED_DATA,
+} from "../src/lib/shop-categories";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -115,56 +119,7 @@ async function main() {
   const [jane, david, maria, emma, james] = customers;
 
   const categories = await Promise.all(
-    [
-      {
-        name: "Bodysuits",
-        slug: "bodysuits",
-        description: "Soft everyday onesies and bodysuits",
-        image: seedImages.categories.bodysuits,
-      },
-      {
-        name: "Dresses",
-        slug: "dresses",
-        description: "Party dresses and everyday twirl favorites",
-        image: seedImages.categories.dresses,
-      },
-      {
-        name: "Outerwear",
-        slug: "outerwear",
-        description: "Jackets, coats, and layers for every season",
-        image: seedImages.categories.outerwear,
-      },
-      {
-        name: "Tops & Tees",
-        slug: "tops-tees",
-        description: "T-shirts, blouses, and cozy tops",
-        image: seedImages.categories.topsTees,
-      },
-      {
-        name: "Bottoms",
-        slug: "bottoms",
-        description: "Pants, leggings, and shorts",
-        image: seedImages.categories.bottoms,
-      },
-      {
-        name: "Accessories",
-        slug: "accessories",
-        description: "Hats, socks, bibs, and more",
-        image: seedImages.categories.accessories,
-      },
-      {
-        name: "Sleepwear",
-        slug: "sleepwear",
-        description: "Pajamas and sleep sacks for sweet dreams",
-        image: seedImages.categories.sleepwear,
-      },
-      {
-        name: "Swimwear",
-        slug: "swimwear",
-        description: "Swimsuits and rash guards for sunny days",
-        image: seedImages.categories.swimwear,
-      },
-    ].map((cat) => prisma.category.create({ data: cat })),
+    SHOP_CATEGORY_SEED_DATA.map((cat) => prisma.category.create({ data: cat })),
   );
 
   const cat = Object.fromEntries(categories.map((c) => [c.slug, c]));
@@ -179,7 +134,6 @@ async function main() {
       isNewArrival: true,
       isTrending: true,
       trendingScore: 95,
-      categoryId: cat.bodysuits.id,
       images: [...seedImages.products.cloudSoftBodysuit],
       variants: [
         { size: "0-3M", color: "Mint", ageGroup: "0-3M", price: 24.99, stock: 50 },
@@ -196,7 +150,6 @@ async function main() {
       isNewArrival: true,
       isTrending: true,
       trendingScore: 88,
-      categoryId: cat.dresses.id,
       images: [...seedImages.products.floralDreamDress],
       variants: [
         { size: "2T", color: "Pink", ageGroup: "2T", price: 38.99, stock: 25 },
@@ -216,7 +169,6 @@ async function main() {
       isOnSale: true,
       isClearance: true,
       salePercent: 35,
-      categoryId: cat.outerwear.id,
       images: [...seedImages.products.cozyPufferJacket],
       variants: [
         { size: "4T", color: "Navy", ageGroup: "4T", price: 54.99, stock: 15 },
@@ -235,7 +187,6 @@ async function main() {
       trendingScore: 82,
       isOnSale: true,
       salePercent: 25,
-      categoryId: cat["tops-tees"].id,
       images: [...seedImages.products.rainbowStripeTee],
       variants: [
         { size: "2T", color: "Multi", ageGroup: "2T", price: 18.99, stock: 60 },
@@ -254,7 +205,6 @@ async function main() {
       trendingScore: 74,
       isOnSale: true,
       salePercent: 15,
-      categoryId: cat.bottoms.id,
       images: [...seedImages.products.stretchPlayLeggings],
       variants: [
         { size: "3T", color: "Purple", ageGroup: "3T", price: 22.99, stock: 45 },
@@ -271,7 +221,6 @@ async function main() {
       isNewArrival: true,
       isTrending: true,
       trendingScore: 90,
-      categoryId: cat.outerwear.id,
       images: [...seedImages.products.bunnyKnitCardigan],
       variants: [
         { size: "6-12M", color: "Blush", ageGroup: "6-12M", price: 42.99, stock: 22 },
@@ -288,7 +237,6 @@ async function main() {
       isNewArrival: false,
       isTrending: true,
       trendingScore: 85,
-      categoryId: cat.sleepwear.id,
       images: [...seedImages.products.starlightPajamaSet],
       variants: [
         { size: "2T", color: "Navy", ageGroup: "2T", price: 32.99, stock: 30 },
@@ -305,7 +253,6 @@ async function main() {
       isNewArrival: true,
       isTrending: false,
       trendingScore: 68,
-      categoryId: cat.swimwear.id,
       images: [...seedImages.products.sunSplashRashGuard],
       variants: [
         { size: "4T", color: "Blue", ageGroup: "4T", price: 28.99, stock: 35 },
@@ -322,7 +269,6 @@ async function main() {
       isNewArrival: false,
       isTrending: true,
       trendingScore: 79,
-      categoryId: cat.bottoms.id,
       images: [...seedImages.products.littleExplorerOveralls],
       variants: [
         { size: "2T", color: "Denim", ageGroup: "2T", price: 36.99, stock: 20 },
@@ -339,7 +285,6 @@ async function main() {
       isNewArrival: true,
       isTrending: true,
       trendingScore: 93,
-      categoryId: cat.bodysuits.id,
       images: [...seedImages.products.pastelPartyRomper],
       variants: [
         { size: "0-3M", color: "Lavender", ageGroup: "0-3M", price: 26.99, stock: 40 },
@@ -356,7 +301,6 @@ async function main() {
       isNewArrival: false,
       isTrending: false,
       trendingScore: 55,
-      categoryId: cat.accessories.id,
       images: [...seedImages.products.cozySockPack],
       variants: [
         { size: "0-12M", color: "Multi", ageGroup: "0-12M", price: 14.99, stock: 80 },
@@ -373,7 +317,6 @@ async function main() {
       isNewArrival: true,
       isTrending: true,
       trendingScore: 97,
-      categoryId: cat["tops-tees"].id,
       images: [...seedImages.products.dinoRoarHoodie],
       variants: [
         { size: "3T", color: "Green", ageGroup: "3T", price: 34.99, stock: 8 },
@@ -392,7 +335,6 @@ async function main() {
       trendingScore: 71,
       isOnSale: true,
       salePercent: 28,
-      categoryId: cat.dresses.id,
       images: [...seedImages.products.mintMeadowSundress],
       variants: [
         { size: "2T", color: "Mint", ageGroup: "2T", price: 29.99, stock: 28 },
@@ -411,7 +353,6 @@ async function main() {
       trendingScore: 63,
       isOnSale: true,
       salePercent: 22,
-      categoryId: cat.accessories.id,
       images: [...seedImages.products.cloudKnitBeanieSet],
       variants: [
         { size: "0-12M", color: "Cream", ageGroup: "0-12M", price: 19.99, stock: 45 },
@@ -430,7 +371,6 @@ async function main() {
       trendingScore: 68,
       isOnSale: true,
       salePercent: 20,
-      categoryId: cat["tops-tees"].id,
       images: [...seedImages.products.peachPocketTee],
       variants: [
         { size: "2T", color: "Peach", ageGroup: "2T", price: 17.99, stock: 32 },
@@ -449,7 +389,6 @@ async function main() {
       trendingScore: 76,
       isOnSale: true,
       salePercent: 24,
-      categoryId: cat.bottoms.id,
       images: [...seedImages.products.miniFleeceJoggerSet],
       variants: [
         { size: "3T", color: "Heather", ageGroup: "3T", price: 34.99, stock: 22 },
@@ -466,9 +405,14 @@ async function main() {
 
   for (const def of productDefs) {
     const { images, variants, ...data } = def;
+    const categorySlug = resolveProductCategorySlug(
+      data.gender,
+      variants.map((variant) => variant.ageGroup),
+    );
     const product = await prisma.product.create({
       data: {
         ...data,
+        categoryId: cat[categorySlug].id,
         images: {
           create: images.map((url, i) => ({
             url,

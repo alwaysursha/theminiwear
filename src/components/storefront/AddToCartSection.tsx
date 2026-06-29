@@ -7,34 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { SizeGuideModal } from "@/components/storefront/SizeGuideModal";
 import { useCartStore } from "@/lib/cart-store";
 import { getVariantPricing } from "@/lib/product-utils";
+import type { CartProduct } from "@/lib/product-utils";
 import { formatPrice } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
-type Variant = {
-  id: string;
-  size: string;
-  color: string;
-  ageGroup: string;
-  price: { toString(): string };
-  salePrice?: { toString(): string } | null;
-  stock: number;
-};
-
 type AddToCartSectionProps = {
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    isNewArrival: boolean;
-    isTrending: boolean;
-    isOnSale: boolean;
-    isClearance: boolean;
-    salePercent?: number | null;
-    saleEndsAt?: Date | null;
-    variants: Variant[];
-    images: { url: string }[];
-  };
+  product: CartProduct;
   siteSale?: SiteSaleSettings;
 };
 

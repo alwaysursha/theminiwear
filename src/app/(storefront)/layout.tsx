@@ -2,6 +2,7 @@ import { AnnouncementTicker } from "@/components/storefront/AnnouncementTicker";
 import { Footer } from "@/components/storefront/Footer";
 import { Header } from "@/components/storefront/Header";
 import { Providers } from "@/components/storefront/Providers";
+import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
 
 export default async function StorefrontLayout({
@@ -29,7 +30,9 @@ export default async function StorefrontLayout({
         <AnnouncementTicker />
         <Header showContact={showContact} />
       </div>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer legalLinks={legalLinks} />
     </Providers>
   );

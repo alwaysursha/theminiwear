@@ -4,6 +4,11 @@ import { ShopFilters } from "@/app/(storefront)/shop/ShopFilters";
 import { prisma } from "@/lib/prisma";
 import { getProductPriceRange, productInclude, type ProductWithRelations } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
+import {
+  buildShopCategoryWhere,
+  getShopCategoryBySlug,
+  sortShopCategories,
+} from "@/lib/shop-categories";
 import type { Gender, Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +41,12 @@ export default async function ShopPage({
   }
 
   if (params.category) {
-    where.category = { slug: params.category };
+    const categoryWhere = buildShopCategoryWhere(params.category);
+    if (categoryWhere) {
+      Object.assign(where, categoryWhere);
+    } else {
+      where.category = { slug: params.category };
+    }
   }
 
   if (params.gender && ["BOYS", "GIRLS", "UNISEX"].includes(params.gender)) {
@@ -111,6 +121,13 @@ export default async function ShopPage({
     return filteredProducts;
   })();
 
+  const categoryMeta = params.category
+    ? getShopCategoryBySlug(params.category)
+    : null;
+  const dbCategory = params.category
+    ? categories.find((category) => category.slug === params.category)
+    : null;
+
   const title =
     params.clearance === "true"
       ? "Clearance"
@@ -120,9 +137,12 @@ export default async function ShopPage({
           : "On Sale"
         : params.new === "true"
           ? "New Arrivals"
-          : params.category
-            ? categories.find((c) => c.slug === params.category)?.name ?? "Shop"
-            : "Shop All";
+          : categoryMeta?.name ?? dbCategory?.name ?? "Shop All";
+
+  const categoryDescription =
+    categoryMeta?.description ?? dbCategory?.description ?? null;
+
+  const sortedCategories = sortShopCategories(categories);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -136,17 +156,22 @@ export default async function ShopPage({
             start PostgreSQL and seed mock data.
           </p>
         ) : (
-          <p className="mt-2 text-navy/60">
-            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""}{" "}
-            found
-          </p>
+          <>
+            {categoryDescription && (
+              <p className="mt-2 max-w-2xl text-navy/60">{categoryDescription}</p>
+            )}
+            <p className="mt-2 text-navy/60">
+              {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""}{" "}
+              found
+            </p>
+          </>
         )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside>
           <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-blush/30" />}>
-            <ShopFilters categories={categories} siteSale={siteSale} />
+            <ShopFilters categories={sortedCategories} siteSale={siteSale} />
           </Suspense>
         </aside>
 

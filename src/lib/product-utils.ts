@@ -11,7 +11,7 @@ type SaleProduct = {
   isOnSale: boolean;
   isClearance: boolean;
   salePercent?: number | null;
-  saleEndsAt?: Date | null;
+  saleEndsAt?: Date | string | null;
 };
 
 export type VariantPricing = {
@@ -26,7 +26,13 @@ function toNumber(value: { toString(): string } | number) {
 
 function isSaleActive(product: SaleProduct) {
   if (!product.isOnSale) return false;
-  if (product.saleEndsAt && product.saleEndsAt < new Date()) return false;
+  if (product.saleEndsAt) {
+    const endsAt =
+      product.saleEndsAt instanceof Date
+        ? product.saleEndsAt
+        : new Date(product.saleEndsAt);
+    if (endsAt < new Date()) return false;
+  }
   return true;
 }
 
@@ -118,6 +124,73 @@ export function getProductDiscountPercent(
   siteSale?: SiteSaleSettings,
 ) {
   return getProductPriceRange(variants, product, siteSale).maxDiscountPercent;
+}
+
+export type CartProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  isNewArrival: boolean;
+  isTrending: boolean;
+  isOnSale: boolean;
+  isClearance: boolean;
+  salePercent: number | null;
+  saleEndsAt: string | null;
+  variants: {
+    id: string;
+    size: string;
+    color: string;
+    ageGroup: string;
+    price: number;
+    salePrice: number | null;
+    stock: number;
+  }[];
+  images: { url: string }[];
+};
+
+export function serializeProductForCart(product: {
+  id: string;
+  name: string;
+  slug: string;
+  isNewArrival: boolean;
+  isTrending: boolean;
+  isOnSale: boolean;
+  isClearance: boolean;
+  salePercent: number | null;
+  saleEndsAt: Date | null;
+  variants: Array<{
+    id: string;
+    size: string;
+    color: string;
+    ageGroup: string;
+    price: { toString(): string };
+    salePrice: { toString(): string } | null;
+    stock: number;
+  }>;
+  images: Array<{ url: string }>;
+}): CartProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    isNewArrival: product.isNewArrival,
+    isTrending: product.isTrending,
+    isOnSale: product.isOnSale,
+    isClearance: product.isClearance,
+    salePercent: product.salePercent,
+    saleEndsAt: product.saleEndsAt?.toISOString() ?? null,
+    variants: product.variants.map((variant) => ({
+      id: variant.id,
+      size: variant.size,
+      color: variant.color,
+      ageGroup: variant.ageGroup,
+      price: toNumber(variant.price),
+      salePrice:
+        variant.salePrice != null ? toNumber(variant.salePrice) : null,
+      stock: variant.stock,
+    })),
+    images: product.images.map((image) => ({ url: image.url })),
+  };
 }
 
 export const productInclude = {
