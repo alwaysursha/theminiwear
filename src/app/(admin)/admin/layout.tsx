@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { signOut, requireAdmin } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { PageTransition } from "@/components/PageTransition";
 
 async function handleSignOut() {
   "use server";
@@ -30,7 +31,9 @@ export default async function AdminLayout({
           userRole={session.user.role}
           signOutAction={handleSignOut}
         />
-        <main className="flex-1 overflow-auto p-8">{children}</main>
+        <main className="flex-1 overflow-auto p-8">
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
     </div>
   );

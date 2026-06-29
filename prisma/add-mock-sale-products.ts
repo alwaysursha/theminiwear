@@ -3,6 +3,7 @@ import { Gender, PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import "dotenv/config";
 import { seedImages } from "./seed-images";
+import { resolveProductCategorySlug } from "../src/lib/shop-categories";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
@@ -20,7 +21,6 @@ const saleProducts = [
     trendingScore: 71,
     isOnSale: true,
     salePercent: 28,
-    categorySlug: "dresses",
     images: [...seedImages.products.mintMeadowSundress],
     variants: [
       { size: "2T", color: "Mint", ageGroup: "2T", price: 29.99, stock: 28 },
@@ -40,7 +40,6 @@ const saleProducts = [
     trendingScore: 63,
     isOnSale: true,
     salePercent: 22,
-    categorySlug: "accessories",
     images: [...seedImages.products.cloudKnitBeanieSet],
     variants: [
       { size: "0-12M", color: "Cream", ageGroup: "0-12M", price: 19.99, stock: 45 },
@@ -60,7 +59,6 @@ const saleProducts = [
     trendingScore: 68,
     isOnSale: true,
     salePercent: 20,
-    categorySlug: "tops-tees",
     images: [...seedImages.products.peachPocketTee],
     variants: [
       { size: "2T", color: "Peach", ageGroup: "2T", price: 17.99, stock: 32 },
@@ -80,7 +78,6 @@ const saleProducts = [
     trendingScore: 76,
     isOnSale: true,
     salePercent: 24,
-    categorySlug: "bottoms",
     images: [...seedImages.products.miniFleeceJoggerSet],
     variants: [
       { size: "3T", color: "Heather", ageGroup: "3T", price: 34.99, stock: 22 },
@@ -103,14 +100,18 @@ async function main() {
       continue;
     }
 
+    const categorySlug = resolveProductCategorySlug(
+      def.gender,
+      def.variants.map((variant) => variant.ageGroup),
+    );
     const category = await prisma.category.findUnique({
-      where: { slug: def.categorySlug },
+      where: { slug: categorySlug },
     });
     if (!category) {
-      throw new Error(`Category not found: ${def.categorySlug}`);
+      throw new Error(`Category not found: ${categorySlug}`);
     }
 
-    const { images, variants, categorySlug: _categorySlug, ...data } = def;
+    const { images, variants, ...data } = def;
 
     const product = await prisma.product.create({
       data: {

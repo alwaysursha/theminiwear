@@ -102,14 +102,14 @@ export function ShopFilters({
       </div>
 
       <div>
-        <Label htmlFor="category">Category</Label>
+        <Label htmlFor="category">Shop by category</Label>
         <select
           id="category"
           name="category"
           defaultValue={searchParams.get("category") ?? ""}
           className="mt-1.5 flex h-11 w-full rounded-xl border border-navy/15 bg-white px-4 text-sm text-navy"
         >
-          <option value="">All categories</option>
+          <option value="">All collections</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.slug}>
               {cat.name}

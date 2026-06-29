@@ -27,7 +27,7 @@ export const defaultHomepageSections: HomepageSectionData[] = [
     enabled: true,
     eyebrow: "The Collection",
     title: "Shop by category",
-    description: null,
+    description: "Browse by age and gender to find the perfect fit",
     viewAllLabel: "View all",
     viewAllHref: "/shop",
     productLimit: 4,

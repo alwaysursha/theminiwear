@@ -56,6 +56,21 @@
   }
 }
 
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes heading-shimmer {
   0% {
     background-position: 0% 50%;
@@ -442,6 +457,10 @@
   .hero-slide-visible,
   .hero-slide-hidden {
     transition: none !important;
+  }
+
+  .page-enter {
+    animation: none !important;
   }
 }
 

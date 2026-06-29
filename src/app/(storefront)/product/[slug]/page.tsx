@@ -5,7 +5,7 @@ import { ImageGallery } from "@/components/storefront/ImageGallery";
 import { AddToCartSection } from "@/components/storefront/AddToCartSection";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { prisma } from "@/lib/prisma";
-import { getProductDiscountPercent } from "@/lib/product-utils";
+import { getProductDiscountPercent, serializeProductForCart } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +71,10 @@ export default async function ProductPage({ params }: PageProps) {
           )}
 
           <div className="mt-8">
-            <AddToCartSection product={product} siteSale={siteSale} />
+            <AddToCartSection
+              product={serializeProductForCart(product)}
+              siteSale={siteSale}
+            />
           </div>
         </div>
       </div>

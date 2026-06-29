@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { ViewAllLink } from "@/components/storefront/ViewAllLink";
+import {
+  CATEGORY_SHOWCASE_MOBILE_ORDER,
+  CATEGORY_SHOWCASE_ORDER_CLASSES,
+  isShopCategorySlug,
+} from "@/lib/shop-categories";
+import { cn } from "@/lib/utils";
 
 type CategoryItem = {
   id: string;
@@ -7,26 +13,6 @@ type CategoryItem = {
   slug: string;
   description: string | null;
 };
-
-const categoryOrder = [
-  "bodysuits",
-  "dresses",
-  "tops-tees",
-  "bottoms",
-  "outerwear",
-  "sleepwear",
-  "swimwear",
-  "accessories",
-] as const;
-
-function sortCategories<T extends { slug: string }>(categories: T[]): T[] {
-  const rank = new Map<string, number>(
-    categoryOrder.map((slug, index) => [slug, index]),
-  );
-  return [...categories].sort(
-    (a, b) => (rank.get(a.slug) ?? 99) - (rank.get(b.slug) ?? 99),
-  );
-}
 
 type CategoryShowcaseProps = {
   categories: CategoryItem[];
@@ -59,8 +45,9 @@ export function CategoryShowcase({
   viewAllHref = "/shop",
   viewAllLabel = "View all",
 }: CategoryShowcaseProps) {
-  const sorted = sortCategories(categories);
-  if (sorted.length === 0) return null;
+  if (categories.length === 0) return null;
+
+  const categoryBySlug = new Map(categories.map((category) => [category.slug, category]));
 
   return (
     <section className="relative overflow-hidden border-y border-navy/8 bg-white">
@@ -103,11 +90,22 @@ export function CategoryShowcase({
         </div>
 
         <nav aria-label="Shop by category" className="mt-1">
-          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {sorted.map((cat, index) => (
+          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3">
+            {CATEGORY_SHOWCASE_MOBILE_ORDER.map((slug, index) => {
+              const cat = categoryBySlug.get(slug);
+              if (!cat) return null;
+
+              const orderClass = isShopCategorySlug(slug)
+                ? CATEGORY_SHOWCASE_ORDER_CLASSES[slug]
+                : "";
+
+              return (
               <li
                 key={cat.id}
-                className="animate-category-rise border-b border-navy/6"
+                className={cn(
+                  "animate-category-rise border-b border-navy/6",
+                  orderClass,
+                )}
                 style={{ animationDelay: `${index * 70}ms` }}
               >
                 <Link
@@ -126,7 +124,8 @@ export function CategoryShowcase({
                   )}
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </nav>
       </div>
