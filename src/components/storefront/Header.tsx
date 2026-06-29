@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { LayoutDashboard, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
-import { getDashboardPath, isAdminRole, SITE_NAME } from "@/lib/constants";
+import { SiteLogo } from "@/components/storefront/SiteLogo";
+import { getDashboardPath, isAdminRole } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const baseNavLinks = [
@@ -32,11 +33,8 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
   return (
     <header className="border-b border-navy/10 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="font-display text-xl font-extrabold tracking-tight text-navy sm:text-2xl"
-        >
-          {SITE_NAME}
+        <Link href="/" className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40">
+          <SiteLogo variant="header" priority />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
