@@ -2,6 +2,17 @@ export const SITE_NAME = "The Mini Wear";
 export const SITE_DESCRIPTION =
   "Adorable, comfortable kids clothing for every adventure.";
 
+/** E.164 digits only — used for wa.me links */
+export const WHATSAPP_PHONE_E164 = "16476295666";
+export const WHATSAPP_DISPLAY = "+1 (647) 629 5666";
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_PHONE_E164}`;
+export const WHATSAPP_MESSAGE_INTRO = "Hi, I have a question!";
+
+export function buildWhatsAppUrl(pageUrl: string) {
+  const text = `${WHATSAPP_MESSAGE_INTRO}\n\n${pageUrl}`;
+  return `${WHATSAPP_URL}?text=${encodeURIComponent(text)}`;
+}
+
 export const AGE_GROUPS = [
   "0-3M",
   "3-6M",
