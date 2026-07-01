@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { WHATSAPP_URL, buildWhatsAppUrl } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -21,13 +22,21 @@ function WhatsAppIcon({ className }: { className?: string }) {
 export function WhatsAppChatButton() {
   const pathname = usePathname();
   const [href, setHref] = useState(WHATSAPP_URL);
+  const isProductPage = pathname.startsWith("/product/");
 
   useEffect(() => {
     setHref(buildWhatsAppUrl(window.location.href));
   }, [pathname]);
 
   return (
-    <div className="whatsapp-chat-anchor pointer-events-none fixed bottom-5 right-4 z-40 sm:bottom-7 sm:right-7">
+    <div
+      className={cn(
+        "whatsapp-chat-anchor pointer-events-none fixed right-4 z-[55] sm:right-7",
+        isProductPage
+          ? "bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-7"
+          : "bottom-5 sm:bottom-7",
+      )}
+    >
       <a
         href={href}
         target="_blank"

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { LayoutDashboard, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
+import { useCartUiStore } from "@/lib/cart-ui-store";
 import { SiteLogo } from "@/components/storefront/SiteLogo";
 import { getDashboardPath, isAdminRole } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,9 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
     ? [...baseNavLinks, { href: "/contact", label: "Contact" }]
     : baseNavLinks;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartReady, setCartReady] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
+  const cartPulse = useCartUiStore((s) => s.cartPulse);
   const { data: session } = useSession();
   const isAdmin = session?.user?.role ? isAdminRole(session.user.role) : false;
   const accountHref = session?.user?.role
@@ -29,6 +32,12 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
     : "/auth/sign-in";
   const AccountIcon = isAdmin ? LayoutDashboard : User;
   const accountLabel = isAdmin ? "Admin dashboard" : "Account";
+
+  useEffect(() => {
+    setCartReady(true);
+  }, []);
+
+  const showCartCount = cartReady && itemCount > 0;
 
   return (
     <header className="border-b border-navy/10 bg-white/90 backdrop-blur-md">
@@ -66,15 +75,32 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
             <AccountIcon className="h-5 w-5" />
           </Link>
           <Link
+            id="site-cart-anchor"
             href="/cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60"
-            aria-label="Cart"
+            className={cn(
+              "relative flex h-10 w-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60",
+              cartPulse && "cart-anchor-pulse",
+            )}
+            aria-label={
+              showCartCount ? `Cart, ${itemCount} items` : "Cart"
+            }
           >
             <ShoppingBag className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-coral px-1 text-[10px] font-bold text-white">
+            {showCartCount && (
+              <span
+                className={cn(
+                  "absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-coral px-1 text-[10px] font-bold text-white transition-transform",
+                  cartPulse && "cart-badge-pop",
+                )}
+              >
                 {itemCount > 99 ? "99+" : itemCount}
               </span>
+            )}
+            {cartPulse && (
+              <span
+                className="cart-anchor-ring pointer-events-none absolute inset-0 rounded-full"
+                aria-hidden
+              />
             )}
           </Link>
           <button
