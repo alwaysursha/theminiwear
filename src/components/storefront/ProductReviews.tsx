@@ -36,12 +36,17 @@ export async function ProductReviews({ productId }: ProductReviewsProps) {
   ]);
 
   return (
-    <section className="mt-16 border-t border-navy/10 pt-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <section className="product-detail-enter-5 mt-20 border-t border-navy/10 pt-14 sm:mt-24 sm:pt-16">
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-bold text-navy">Reviews</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-coral">
+            Loved by families
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-bold text-navy sm:text-3xl">
+            Reviews
+          </h2>
           {summary.count > 0 ? (
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2">
               <StarRating rating={summary.average} />
               <span className="text-sm text-navy/60">
                 {summary.average.toFixed(1)} · {summary.count} review
@@ -49,12 +54,12 @@ export async function ProductReviews({ productId }: ProductReviewsProps) {
               </span>
             </div>
           ) : (
-            <p className="mt-1 text-sm text-navy/55">No approved reviews yet.</p>
+            <p className="mt-2 text-sm text-navy/55">No approved reviews yet.</p>
           )}
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+      <div className="grid gap-8 rounded-3xl border border-navy/8 bg-white/55 p-6 backdrop-blur-sm sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
         <ReviewList reviews={reviews} currentUserId={session?.user.id} />
         <ReviewFormGate
           productId={productId}

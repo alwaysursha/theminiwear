@@ -1,6 +1,7 @@
 import { AnnouncementTicker } from "@/components/storefront/AnnouncementTicker";
 import { Footer } from "@/components/storefront/Footer";
 import { Header } from "@/components/storefront/Header";
+import { StorefrontHeaderChrome } from "@/components/storefront/StorefrontHeaderChrome";
 import { Providers } from "@/components/storefront/Providers";
 import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
@@ -27,10 +28,10 @@ export default async function StorefrontLayout({
 
   return (
     <Providers>
-      <div className="sticky top-0 z-50">
+      <StorefrontHeaderChrome>
         <AnnouncementTicker />
         <Header showContact={showContact} />
-      </div>
+      </StorefrontHeaderChrome>
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>
       </main>
