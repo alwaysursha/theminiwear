@@ -75,6 +75,16 @@
       "workerd",
       "@ast-grep/napi",
       "sharp"
-    ]
+    ],
+    "supportedArchitectures": {
+      "os": [
+        "darwin",
+        "linux"
+      ],
+      "cpu": [
+        "x64",
+        "arm64"
+      ]
+    }
   }
 }
