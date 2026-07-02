@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import {
   SITE_SALE_ENABLED_KEY,
   SITE_SALE_PERCENT_KEY,
+  STORE_INFO_KEYS,
 } from "@/lib/settings";
 
 export async function updateSiteWideSale(formData: FormData) {
@@ -33,4 +34,37 @@ export async function updateSiteWideSale(formData: FormData) {
   revalidatePath("/admin/settings");
   revalidatePath("/");
   revalidatePath("/shop");
+}
+
+export async function updateStoreInfo(formData: FormData) {
+  await requireAdmin();
+
+  const get = (name: string) =>
+    ((formData.get(name) as string | null) ?? "").trim();
+
+  const entries: { key: string; value: string }[] = [
+    { key: STORE_INFO_KEYS.name, value: get("name") },
+    { key: STORE_INFO_KEYS.description, value: get("description") },
+    { key: STORE_INFO_KEYS.currency, value: get("currency") },
+    { key: STORE_INFO_KEYS.timezone, value: get("timezone") },
+    {
+      key: STORE_INFO_KEYS.whatsappE164,
+      value: get("whatsappE164").replace(/[^0-9]/g, ""),
+    },
+    { key: STORE_INFO_KEYS.whatsappDisplay, value: get("whatsappDisplay") },
+    { key: STORE_INFO_KEYS.whatsappIntro, value: get("whatsappIntro") },
+  ];
+
+  await prisma.$transaction(
+    entries.map((entry) =>
+      prisma.storeSetting.upsert({
+        where: { key: entry.key },
+        create: { key: entry.key, value: entry.value },
+        update: { value: entry.value },
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/", "layout");
 }

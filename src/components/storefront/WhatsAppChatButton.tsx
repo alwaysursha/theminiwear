@@ -2,8 +2,12 @@
 
 import { Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { WHATSAPP_URL, buildWhatsAppUrl } from "@/lib/constants";
+import { useState } from "react";
+import {
+  WHATSAPP_PHONE_E164,
+  WHATSAPP_MESSAGE_INTRO,
+  buildWhatsAppUrlFor,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -19,14 +23,20 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-export function WhatsAppChatButton() {
+export function WhatsAppChatButton({
+  phoneE164 = WHATSAPP_PHONE_E164,
+  intro = WHATSAPP_MESSAGE_INTRO,
+}: {
+  phoneE164?: string;
+  intro?: string;
+}) {
   const pathname = usePathname();
-  const [href, setHref] = useState(WHATSAPP_URL);
+  const [href, setHref] = useState(`https://wa.me/${phoneE164}`);
   const isProductPage = pathname.startsWith("/product/");
 
-  useEffect(() => {
-    setHref(buildWhatsAppUrl(window.location.href));
-  }, [pathname]);
+  const refreshHref = () => {
+    setHref(buildWhatsAppUrlFor(phoneE164, intro, window.location.href));
+  };
 
   return (
     <div
@@ -41,6 +51,9 @@ export function WhatsAppChatButton() {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
+        onMouseEnter={refreshHref}
+        onFocus={refreshHref}
+        onTouchStart={refreshHref}
         className="whatsapp-chat-button group pointer-events-auto relative flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
         aria-label="Chat with us on WhatsApp"
       >

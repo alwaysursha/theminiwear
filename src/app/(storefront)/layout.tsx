@@ -6,6 +6,7 @@ import { Providers } from "@/components/storefront/Providers";
 import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
+import { getStoreInfo } from "@/lib/settings";
 
 export default async function StorefrontLayout({
   children,
@@ -14,6 +15,8 @@ export default async function StorefrontLayout({
 }) {
   let showContact = true;
   let legalLinks: { href: string; label: string }[] = [];
+
+  const store = await getStoreInfo();
 
   try {
     const [contactPage, footerLegal] = await Promise.all([
@@ -35,8 +38,11 @@ export default async function StorefrontLayout({
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>
       </main>
-      <Footer legalLinks={legalLinks} />
-      <WhatsAppChatButton />
+      <Footer legalLinks={legalLinks} storeName={store.name} />
+      <WhatsAppChatButton
+        phoneE164={store.whatsappE164}
+        intro={store.whatsappIntro}
+      />
     </Providers>
   );
 }

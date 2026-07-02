@@ -1,16 +1,16 @@
-import { formatDate } from "@/lib/date";
 import { DiscountType } from "@prisma/client";
+import { CheckCircle2, Repeat, Tag, TimerOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DataTable } from "@/components/admin/DataTable";
+import { MetricCard } from "@/components/admin/dashboard/MetricCard";
+import { createDiscount } from "@/lib/actions/discounts";
 import {
-  createDiscount,
-  deleteDiscount,
-  toggleDiscountActive,
-} from "@/lib/actions/discounts";
+  DiscountsManager,
+  type AdminDiscountRow,
+  type DiscountTypeValue,
+} from "@/components/admin/discounts/DiscountsManager";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +19,74 @@ export default async function AdminDiscountsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const now = new Date();
+  const rows: AdminDiscountRow[] = discounts.map((d) => ({
+    id: d.id,
+    code: d.code,
+    type: d.type as DiscountTypeValue,
+    value: Number(d.value),
+    minOrderAmount: d.minOrderAmount ? Number(d.minOrderAmount) : null,
+    maxUses: d.maxUses,
+    usedCount: d.usedCount,
+    expiresAt: d.expiresAt ? d.expiresAt.toISOString() : null,
+    expired: d.expiresAt != null && d.expiresAt < now,
+    isActive: d.isActive,
+    createdAt: d.createdAt.toISOString(),
+  }));
+
+  const stats = {
+    total: rows.length,
+    active: rows.filter((r) => r.isActive && !r.expired).length,
+    expired: rows.filter((r) => r.expired).length,
+    redemptions: rows.reduce((sum, r) => sum + r.usedCount, 0),
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Discounts</h2>
-        <p className="text-sm text-slate-500">Manage discount codes</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          Discounts
+        </h2>
+        <p className="text-sm text-slate-500">
+          Create and manage promo codes
+        </p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 font-semibold text-slate-900">Create discount</h3>
-        <form action={createDiscount} className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+        <MetricCard
+          label="Total codes"
+          value={stats.total}
+          icon={Tag}
+          accent="blue"
+        />
+        <MetricCard
+          label="Active"
+          value={stats.active}
+          icon={CheckCircle2}
+          accent="emerald"
+        />
+        <MetricCard
+          label="Expired"
+          value={stats.expired}
+          icon={TimerOff}
+          accent="rose"
+        />
+        <MetricCard
+          label="Redemptions"
+          value={stats.redemptions}
+          icon={Repeat}
+          accent="violet"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <h3 className="mb-4 font-semibold text-slate-900">
+          Create discount code
+        </h3>
+        <form
+          action={createDiscount}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
           <div className="space-y-2">
             <Label htmlFor="code">Code</Label>
             <Input
@@ -36,7 +94,7 @@ export default async function AdminDiscountsPage() {
               name="code"
               required
               placeholder="SUMMER20"
-              className="rounded-md border-slate-200 uppercase"
+              className="rounded-lg border-slate-200 uppercase"
             />
           </div>
           <div className="space-y-2">
@@ -44,7 +102,7 @@ export default async function AdminDiscountsPage() {
             <select
               id="type"
               name="type"
-              className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+              className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
             >
               {Object.values(DiscountType).map((t) => (
                 <option key={t} value={t}>
@@ -62,7 +120,7 @@ export default async function AdminDiscountsPage() {
               step="0.01"
               required
               placeholder="20"
-              className="rounded-md border-slate-200"
+              className="rounded-lg border-slate-200"
             />
           </div>
           <div className="space-y-2">
@@ -72,7 +130,7 @@ export default async function AdminDiscountsPage() {
               name="minOrderAmount"
               type="number"
               step="0.01"
-              className="rounded-md border-slate-200"
+              className="rounded-lg border-slate-200"
             />
           </div>
           <div className="space-y-2">
@@ -81,7 +139,7 @@ export default async function AdminDiscountsPage() {
               id="maxUses"
               name="maxUses"
               type="number"
-              className="rounded-md border-slate-200"
+              className="rounded-lg border-slate-200"
             />
           </div>
           <div className="space-y-2">
@@ -90,10 +148,10 @@ export default async function AdminDiscountsPage() {
               id="expiresAt"
               name="expiresAt"
               type="datetime-local"
-              className="rounded-md border-slate-200"
+              className="rounded-lg border-slate-200"
             />
           </div>
-          <div className="flex items-end gap-4 md:col-span-3">
+          <div className="flex items-center justify-between gap-4 sm:col-span-2 lg:col-span-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -101,11 +159,11 @@ export default async function AdminDiscountsPage() {
                 defaultChecked
                 className="rounded border-slate-300"
               />
-              Active
+              Active immediately
             </label>
             <Button
               type="submit"
-              className="rounded-md bg-slate-900 text-white hover:bg-slate-800"
+              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
             >
               Create discount
             </Button>
@@ -113,99 +171,7 @@ export default async function AdminDiscountsPage() {
         </form>
       </div>
 
-      <DataTable
-        data={discounts}
-        getRowKey={(discount) => discount.id}
-        columns={[
-          {
-            key: "code",
-            header: "Code",
-            render: (discount) => (
-              <span className="font-mono font-medium text-slate-900">
-                {discount.code}
-              </span>
-            ),
-          },
-          {
-            key: "type",
-            header: "Type",
-            render: (discount) => discount.type.replace("_", " "),
-          },
-          {
-            key: "value",
-            header: "Value",
-            render: (discount) =>
-              discount.type === DiscountType.PERCENTAGE
-                ? `${discount.value}%`
-                : discount.type === DiscountType.FREE_SHIPPING
-                  ? "Free shipping"
-                  : formatPrice(Number(discount.value)),
-          },
-          {
-            key: "usage",
-            header: "Usage",
-            render: (discount) =>
-              `${discount.usedCount}${discount.maxUses ? ` / ${discount.maxUses}` : ""}`,
-          },
-          {
-            key: "expiresAt",
-            header: "Expires",
-            render: (discount) =>
-              discount.expiresAt
-                ? formatDate(discount.expiresAt, "MMM d, yyyy")
-                : "—",
-          },
-          {
-            key: "status",
-            header: "Status",
-            render: (discount) => (
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  discount.isActive
-                    ? "bg-green-100 text-green-800"
-                    : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {discount.isActive ? "Active" : "Inactive"}
-              </span>
-            ),
-          },
-          {
-            key: "actions",
-            header: "",
-            className: "text-right",
-            render: (discount) => {
-              const boundToggle = toggleDiscountActive.bind(
-                null,
-                discount.id,
-                !discount.isActive,
-              );
-              const boundDelete = deleteDiscount.bind(null, discount.id);
-
-              return (
-                <div className="flex justify-end gap-2">
-                  <form action={boundToggle}>
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-slate-700 hover:text-slate-900"
-                    >
-                      {discount.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                  </form>
-                  <form action={boundDelete}>
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-red-600 hover:text-red-700"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              );
-            },
-          },
-        ]}
-      />
+      <DiscountsManager discounts={rows} />
     </div>
   );
 }

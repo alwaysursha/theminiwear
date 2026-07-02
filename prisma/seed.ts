@@ -75,7 +75,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       email: "admin@theminiwear.com",
-      name: "Sarah Chen",
+      name: "Faiza Farooq",
       password: hashed,
       role: Role.ADMIN,
       phone: "+1 555-0100",

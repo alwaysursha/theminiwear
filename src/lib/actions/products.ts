@@ -238,6 +238,84 @@ export async function deleteProduct(productId: string) {
   revalidatePath("/admin/products");
 }
 
+export async function toggleProductActive(productId: string) {
+  await requireAdmin();
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { isActive: true },
+  });
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { isActive: !product.isActive },
+  });
+
+  revalidatePath("/admin/products");
+}
+
+export async function duplicateProduct(productId: string) {
+  await requireAdmin();
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { variants: true, images: true },
+  });
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const base = `${slugify(product.name)}-copy`;
+  let slug = base;
+  let counter = 1;
+  while (await prisma.product.findUnique({ where: { slug } })) {
+    slug = `${base}-${counter++}`;
+  }
+
+  const suffix = () => Math.random().toString(36).slice(2, 7);
+
+  await prisma.product.create({
+    data: {
+      name: `${product.name} (Copy)`,
+      slug,
+      description: product.description,
+      gender: product.gender,
+      occasion: product.occasion,
+      categoryId: product.categoryId,
+      isNewArrival: product.isNewArrival,
+      isTrending: product.isTrending,
+      isOnSale: product.isOnSale,
+      isClearance: product.isClearance,
+      salePercent: product.salePercent,
+      saleEndsAt: product.saleEndsAt,
+      isActive: false,
+      images: {
+        create: product.images.map((img) => ({
+          url: img.url,
+          alt: img.alt,
+          sortOrder: img.sortOrder,
+        })),
+      },
+      variants: {
+        create: product.variants.map((v) => ({
+          size: v.size,
+          color: v.color,
+          ageGroup: v.ageGroup,
+          sku: `${v.sku}-copy-${suffix()}`,
+          price: v.price,
+          salePrice: v.salePrice,
+          stock: v.stock,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/admin/products");
+}
+
 export async function getCategories() {
   return prisma.category.findMany({ orderBy: { name: "asc" } });
 }

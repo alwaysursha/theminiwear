@@ -18,9 +18,10 @@ const footerLinks = {
 
 type FooterProps = {
   legalLinks?: { href: string; label: string }[];
+  storeName?: string;
 };
 
-export function Footer({ legalLinks = [] }: FooterProps) {
+export function Footer({ legalLinks = [], storeName = SITE_NAME }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-white/10 bg-[#967BB6] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -69,7 +70,7 @@ export function Footer({ legalLinks = [] }: FooterProps) {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
           <p className="text-xs text-white/50">
-            &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+            &copy; {new Date().getFullYear()} {storeName}. All rights reserved.
           </p>
           {legalLinks.length > 0 && (
             <div className="flex flex-wrap justify-center gap-4 text-xs text-white/50">
