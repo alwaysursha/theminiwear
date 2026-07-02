@@ -27,14 +27,14 @@ export function ProductTrustStrip() {
       {perks.map(({ icon: Icon, label, tone, bg }) => (
         <li
           key={label}
-          className="flex items-center gap-2.5 rounded-xl border border-white/70 bg-white/60 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3"
+          className="flex items-center gap-2.5 rounded-xl border border-white/70 bg-white/60 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3 lg:gap-2.5 lg:px-3 lg:py-2.5"
         >
           <span
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${bg}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl lg:h-8 lg:w-8 lg:rounded-lg ${bg}`}
           >
-            <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${tone}`} aria-hidden />
+            <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 ${tone}`} aria-hidden />
           </span>
-          <span className="text-[11px] font-semibold leading-snug text-navy/75 sm:text-xs md:text-sm">
+          <span className="text-[11px] font-semibold leading-snug text-navy/75 sm:text-xs md:text-sm lg:text-[11px]">
             {label}
           </span>
         </li>

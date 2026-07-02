@@ -1,12 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { ImageGallery } from "@/components/storefront/ImageGallery";
 import { AddToCartSection } from "@/components/storefront/AddToCartSection";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { ProductTrustStrip } from "@/components/storefront/ProductTrustStrip";
+import { ProductCard } from "@/components/storefront/ProductCard";
+import { CustomersAlsoLike } from "@/components/storefront/CustomersAlsoLike";
 import { prisma } from "@/lib/prisma";
-import { getProductDiscountPercent, serializeProductForCart } from "@/lib/product-utils";
+import {
+  getProductDiscountPercent,
+  productInclude,
+  serializeProductForCart,
+} from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +39,29 @@ export default async function ProductPage({ params }: PageProps) {
 
   if (!product) {
     notFound();
+  }
+
+  const sameCategory = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      id: { not: product.id },
+      ...(product.categoryId ? { categoryId: product.categoryId } : {}),
+    },
+    include: productInclude,
+    orderBy: [{ isTrending: "desc" }, { createdAt: "desc" }],
+    take: 12,
+  });
+
+  let relatedProducts = sameCategory;
+  if (relatedProducts.length < 8) {
+    const exclude = [product.id, ...relatedProducts.map((p) => p.id)];
+    const fillers = await prisma.product.findMany({
+      where: { isActive: true, id: { notIn: exclude } },
+      include: productInclude,
+      orderBy: [{ isTrending: "desc" }, { createdAt: "desc" }],
+      take: 12 - relatedProducts.length,
+    });
+    relatedProducts = [...relatedProducts, ...fillers];
   }
 
   const discountPercent = getProductDiscountPercent(
@@ -62,30 +92,30 @@ export default async function ProductPage({ params }: PageProps) {
           Back to shop
         </Link>
 
-        <div className="grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 xl:gap-16">
+        <div className="grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-14 lg:gap-y-5 xl:gap-x-16 xl:gap-y-6">
           <header className="product-detail-enter-3 order-1 space-y-3 sm:space-y-4 lg:order-none lg:col-start-2 lg:row-start-1">
             {product.category && (
               <Link
                 href={`/shop?category=${product.category.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-coral/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-coral transition-colors hover:bg-coral/15 sm:gap-2 sm:px-3.5 sm:py-1.5 sm:text-xs sm:tracking-[0.16em]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-coral/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-coral transition-colors hover:bg-coral/15 sm:gap-2 sm:px-3.5 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] lg:gap-1.5 lg:px-2.5 lg:py-1 lg:text-[10px] lg:tracking-[0.14em]"
               >
-                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
+                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-3 lg:w-3" aria-hidden />
                 {product.category.name}
               </Link>
             )}
 
             <div>
-              <h1 className="font-display text-2xl font-extrabold leading-[1.15] tracking-tight text-navy sm:text-3xl sm:leading-[1.1] lg:text-4xl xl:text-[2.75rem]">
+              <h1 className="font-display text-2xl font-extrabold leading-[1.15] tracking-tight text-navy sm:text-3xl sm:leading-[1.1] lg:text-[1.9rem] lg:leading-[1.15] xl:text-[2.15rem]">
                 {product.name}
               </h1>
               <div
-                className="product-detail-title-line mt-3 h-0.5 w-20 rounded-full bg-gradient-to-r from-coral via-blush to-mint sm:mt-4 sm:h-1 sm:w-24"
+                className="product-detail-title-line mt-3 h-0.5 w-20 rounded-full bg-gradient-to-r from-coral via-blush to-mint sm:mt-4 sm:h-1 sm:w-24 lg:mt-3 lg:h-0.5 lg:w-16"
                 aria-hidden
               />
             </div>
 
             {product.occasion && (
-              <p className="inline-flex rounded-full border border-navy/10 bg-white/60 px-2.5 py-0.5 text-xs font-medium text-navy/55 backdrop-blur-sm sm:px-3 sm:py-1 sm:text-sm">
+              <p className="inline-flex rounded-full border border-navy/10 bg-white/60 px-2.5 py-0.5 text-xs font-medium text-navy/55 backdrop-blur-sm sm:px-3 sm:py-1 sm:text-sm lg:px-2.5 lg:py-0.5 lg:text-xs">
                 Perfect for: {product.occasion}
               </p>
             )}
@@ -100,7 +130,7 @@ export default async function ProductPage({ params }: PageProps) {
             />
           </div>
 
-          <div className="product-detail-enter-4 order-3 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[0_12px_36px_rgba(30,42,74,0.07)] backdrop-blur-md sm:rounded-3xl sm:p-6 sm:shadow-[0_16px_48px_rgba(30,42,74,0.08)] lg:order-none lg:col-start-2 lg:p-8">
+          <div className="product-detail-enter-4 order-3 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[0_12px_36px_rgba(30,42,74,0.07)] backdrop-blur-md sm:rounded-3xl sm:p-6 sm:shadow-[0_16px_48px_rgba(30,42,74,0.08)] lg:order-none lg:col-start-2 lg:p-6">
             <AddToCartSection
               product={serializeProductForCart(product)}
               siteSale={siteSale}
@@ -108,8 +138,8 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
 
           <div className="product-detail-enter-4 order-4 rounded-2xl border border-navy/8 bg-white/55 p-4 backdrop-blur-sm sm:rounded-3xl sm:p-6 lg:order-none lg:col-start-2 lg:p-7">
-            <h2 className="font-display text-base font-bold text-navy sm:text-lg">About this piece</h2>
-            <p className="mt-2 text-sm leading-relaxed text-navy/70 sm:mt-3 sm:text-base">
+            <h2 className="font-display text-base font-bold text-navy sm:text-lg lg:text-base">About this piece</h2>
+            <p className="mt-2 text-sm leading-relaxed text-navy/70 sm:mt-3 sm:text-base lg:text-sm">
               {product.description}
             </p>
           </div>
@@ -120,6 +150,20 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
 
         <ProductReviews productId={product.id} />
+
+        {relatedProducts.length > 0 && (
+          <CustomersAlsoLike>
+            {relatedProducts.map((related, index) => (
+              <div
+                key={related.id}
+                className="cal-card w-[240px] shrink-0 snap-start sm:w-[258px]"
+                style={{ "--cal-i": index } as CSSProperties}
+              >
+                <ProductCard product={related} siteSale={siteSale} />
+              </div>
+            ))}
+          </CustomersAlsoLike>
+        )}
       </div>
     </div>
   );

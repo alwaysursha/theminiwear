@@ -38,7 +38,7 @@ function SelectorPill({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-full border-2 px-3 py-2 text-xs font-semibold transition-all duration-300 sm:px-4 sm:py-2.5 sm:text-sm",
+        "relative overflow-hidden rounded-full border-2 px-3 py-2 text-xs font-semibold transition-all duration-300 sm:px-4 sm:py-2.5 sm:text-sm lg:px-3 lg:py-1.5 lg:text-xs",
         active
           ? "scale-100 border-coral bg-gradient-to-br from-coral to-[#ff6b5a] text-white shadow-[0_6px_20px_rgba(255,127,110,0.35)]"
           : disabled
@@ -70,7 +70,7 @@ function AddToCartButton({
       onClick={onClick}
       className={cn(
         buttonVariants({ size: "lg" }),
-        "product-add-btn group relative h-11 w-full overflow-hidden py-2.5 text-sm font-bold sm:h-12 sm:py-4 sm:text-base",
+        "product-add-btn group relative h-11 w-full overflow-hidden py-2.5 text-sm font-bold sm:h-12 sm:py-4 sm:text-base lg:h-11 lg:py-2.5 lg:text-sm",
         "shadow-[0_10px_24px_rgba(255,127,110,0.35)] transition-all duration-300 sm:shadow-[0_12px_32px_rgba(255,127,110,0.42)]",
         "hover:scale-[1.02] hover:shadow-[0_14px_32px_rgba(255,127,110,0.45)] active:scale-[0.98] disabled:hover:scale-100 sm:hover:shadow-[0_16px_40px_rgba(255,127,110,0.5)]",
         className,
@@ -345,7 +345,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
 
   return (
     <>
-      <div className="space-y-5 sm:space-y-6">
+      <div className="space-y-5 sm:space-y-6 lg:space-y-4">
         <div className="flex flex-wrap gap-2">
           {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
           {(product.isOnSale || variantPricing?.isOnSale) && (
@@ -355,14 +355,14 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
           {product.isTrending && <Badge variant="trending">Trending</Badge>}
         </div>
 
-        <div className="rounded-2xl border border-coral/15 bg-gradient-to-br from-white via-blush/20 to-sky/15 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-5">
+        <div className="rounded-2xl border border-coral/15 bg-gradient-to-br from-white via-blush/20 to-sky/15 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-5 lg:p-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-navy/45 sm:text-xs sm:tracking-[0.18em]">
             Your price
           </p>
           <div className="mt-1 flex flex-wrap items-end gap-2 sm:gap-3">
             <p
               key={variantPricing?.currentPrice ?? "empty"}
-              className="product-price-pop font-display text-3xl font-extrabold tabular-nums text-coral sm:text-4xl lg:text-[2.75rem]"
+              className="product-price-pop font-display text-3xl font-extrabold tabular-nums text-coral sm:text-4xl lg:text-[2.1rem]"
             >
               {variantPricing ? formatPrice(variantPricing.currentPrice) : "—"}
             </p>
@@ -383,7 +383,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
         {sizes.length > 0 && (
           <div>
             <div className="mb-2 flex items-center justify-between sm:mb-3">
-              <p className="text-xs font-bold text-navy sm:text-sm">Pick a size</p>
+              <p className="text-xs font-bold text-navy sm:text-sm lg:text-xs">Pick a size</p>
               <SizeGuideModal />
             </div>
             <div className="flex flex-wrap gap-2">
@@ -408,9 +408,9 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
               <button
                 type="button"
                 onClick={() => setCustomOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-coral/50 bg-coral/[0.06] px-3 py-2 text-xs font-semibold text-coral transition-all duration-300 hover:border-coral hover:bg-coral/10 sm:px-4 sm:py-2.5 sm:text-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-coral/50 bg-coral/[0.06] px-3 py-2 text-xs font-semibold text-coral transition-all duration-300 hover:border-coral hover:bg-coral/10 sm:px-4 sm:py-2.5 sm:text-sm lg:px-3 lg:py-1.5 lg:text-xs"
               >
-                <Scissors className="h-3.5 w-3.5" aria-hidden />
+                <Scissors className="h-3.5 w-3.5 lg:h-3 lg:w-3" aria-hidden />
                 Custom fit
               </button>
             </div>
@@ -419,7 +419,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
 
         {colors.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-bold text-navy sm:mb-3 sm:text-sm">Pick a color</p>
+            <p className="mb-2 text-xs font-bold text-navy sm:mb-3 sm:text-sm lg:text-xs">Pick a color</p>
             <div className="flex flex-wrap gap-2">
               {colors.map((color) => (
                 <SelectorPill
@@ -435,7 +435,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
         )}
 
         {selectedVariant && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-navy/60 sm:gap-x-4 sm:text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-navy/60 sm:gap-x-4 sm:text-sm lg:text-xs">
             <span>Age group: {selectedVariant.ageGroup}</span>
             {lowStock && (
               <span className="product-stock-pulse font-semibold text-coral">
@@ -445,8 +445,8 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
           </div>
         )}
 
-        <div className="hidden rounded-2xl border-2 border-dashed border-coral/25 bg-coral/[0.04] p-4 lg:block">
-          <p className="text-center text-sm font-semibold text-navy/65">
+        <div className="hidden rounded-2xl border-2 border-dashed border-coral/25 bg-coral/[0.04] p-3 lg:block">
+          <p className="text-center text-xs font-semibold text-navy/65">
             Ready? Tap below — we&apos;ll pop it straight into your bag with a little magic ✨
           </p>
         </div>
