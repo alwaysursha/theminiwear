@@ -1,7 +1,11 @@
-import Link from "next/link";
-import { formatDate } from "@/lib/date";
+import { CheckCircle2, Clock, Inbox, MailWarning } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { DataTable } from "@/components/admin/DataTable";
+import { MetricCard } from "@/components/admin/dashboard/MetricCard";
+import {
+  InquiriesManager,
+  type AdminInquiryRow,
+  type InquiryStatusValue,
+} from "@/components/admin/inquiries/InquiriesManager";
 
 export const dynamic = "force-dynamic";
 
@@ -16,72 +20,80 @@ export default async function AdminInquiriesPage() {
     orderBy: { updatedAt: "desc" },
   });
 
+  const rows: AdminInquiryRow[] = inquiries.map((inquiry) => {
+    const last = inquiry.messages[0];
+    const status = inquiry.status as InquiryStatusValue;
+    const needsReply =
+      status !== "RESOLVED" &&
+      status !== "CLOSED" &&
+      !!last &&
+      !last.isStaff;
+    return {
+      id: inquiry.id,
+      subject: inquiry.subject,
+      fromName:
+        inquiry.user?.name ??
+        inquiry.guestName ??
+        inquiry.guestEmail ??
+        "Unknown",
+      status,
+      assigneeName: inquiry.assignee?.name ?? null,
+      messageCount: inquiry._count.messages,
+      preview: last?.content ?? "No messages yet",
+      needsReply,
+      updatedAt: inquiry.updatedAt.toISOString(),
+    };
+  });
+
+  const stats = {
+    total: rows.length,
+    open: rows.filter((r) => r.status === "OPEN").length,
+    inProgress: rows.filter((r) => r.status === "IN_PROGRESS").length,
+    needsReply: rows.filter((r) => r.needsReply).length,
+    resolved: rows.filter((r) => r.status === "RESOLVED").length,
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Inquiries</h2>
-        <p className="text-sm text-slate-500">Customer support inbox</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          Inquiries
+        </h2>
+        <p className="text-sm text-slate-500">
+          Customer support inbox
+          {stats.needsReply > 0 ? ` · ${stats.needsReply} awaiting reply` : ""}
+        </p>
       </div>
 
-      <DataTable
-        data={inquiries}
-        getRowKey={(inquiry) => inquiry.id}
-        columns={[
-          {
-            key: "subject",
-            header: "Subject",
-            render: (inquiry) => (
-              <Link
-                href={`/admin/inquiries/${inquiry.id}`}
-                className="font-medium text-slate-900 hover:underline"
-              >
-                {inquiry.subject}
-              </Link>
-            ),
-          },
-          {
-            key: "from",
-            header: "From",
-            render: (inquiry) =>
-              inquiry.user?.name ??
-              inquiry.guestName ??
-              inquiry.guestEmail ??
-              "Unknown",
-          },
-          {
-            key: "status",
-            header: "Status",
-            render: (inquiry) => (
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  inquiry.status === "OPEN"
-                    ? "bg-amber-100 text-amber-800"
-                    : inquiry.status === "RESOLVED"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-slate-100 text-slate-700"
-                }`}
-              >
-                {inquiry.status.replace("_", " ")}
-              </span>
-            ),
-          },
-          {
-            key: "assignee",
-            header: "Assignee",
-            render: (inquiry) => inquiry.assignee?.name ?? "—",
-          },
-          {
-            key: "messages",
-            header: "Messages",
-            render: (inquiry) => inquiry._count.messages,
-          },
-          {
-            key: "updatedAt",
-            header: "Updated",
-            render: (inquiry) => formatDate(inquiry.updatedAt, "MMM d, yyyy"),
-          },
-        ]}
-      />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+        <MetricCard
+          label="Total"
+          value={stats.total}
+          icon={Inbox}
+          accent="blue"
+        />
+        <MetricCard
+          label="Awaiting reply"
+          value={stats.needsReply}
+          icon={MailWarning}
+          accent="rose"
+          sub="Customer replied last"
+        />
+        <MetricCard
+          label="In progress"
+          value={stats.inProgress}
+          icon={Clock}
+          accent="amber"
+        />
+        <MetricCard
+          label="Resolved"
+          value={stats.resolved}
+          icon={CheckCircle2}
+          accent="emerald"
+        />
+      </div>
+
+      <InquiriesManager inquiries={rows} />
     </div>
   );
 }

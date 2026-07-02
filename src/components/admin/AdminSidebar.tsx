@@ -14,6 +14,7 @@ import {
   Star,
   Truck,
   Users,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
@@ -35,21 +36,39 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings, section: "settings" as const },
 ];
 
-export function AdminSidebar({ role }: { role: Role }) {
+export function AdminSidebar({
+  role,
+  onClose,
+}: {
+  role: Role;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const visibleItems = navItems.filter((item) =>
     canAccessAdminSection(role, item.section),
   );
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-slate-900 text-white">
-      <div className="border-b border-slate-700 px-6 py-5">
-        <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
-          Admin
-        </p>
-        <p className="mt-1 text-lg font-semibold text-white">{SITE_NAME}</p>
+    <aside className="flex h-full w-64 max-w-full flex-col border-r border-slate-200 bg-slate-900 text-white">
+      <div className="flex items-start justify-between border-b border-slate-700 px-6 py-5">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+            Admin
+          </p>
+          <p className="mt-1 text-lg font-semibold text-white">{SITE_NAME}</p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close menu"
+            className="-mr-2 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {visibleItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -60,6 +79,7 @@ export function AdminSidebar({ role }: { role: Role }) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive

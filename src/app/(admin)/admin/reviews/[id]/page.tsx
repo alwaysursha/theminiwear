@@ -11,10 +11,10 @@ import { StarRating } from "@/components/storefront/StarRating";
 import { formatReviewerName } from "@/lib/review-utils";
 import {
   approveProductReview,
-  deleteProductReview,
   rejectProductReview,
   updateProductReview,
 } from "@/lib/actions/reviews";
+import { DeleteReviewButton } from "@/components/admin/reviews/DeleteReviewButton";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,6 @@ export default async function AdminReviewDetailPage({
   const boundApprove = approveProductReview.bind(null, id);
   const boundReject = rejectProductReview.bind(null, id);
   const boundUpdate = updateProductReview.bind(null, id);
-  const boundDelete = deleteProductReview.bind(null, id);
 
   return (
     <div className="space-y-6">
@@ -157,11 +156,7 @@ export default async function AdminReviewDetailPage({
         </form>
       </div>
 
-      <form action={boundDelete}>
-        <Button type="submit" variant="destructive">
-          Delete review
-        </Button>
-      </form>
+      <DeleteReviewButton reviewId={id} productName={review.product.name} />
     </div>
   );
 }

@@ -1,16 +1,25 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import {
+  Boxes,
+  CheckCircle2,
+  PackageX,
+  Plus,
+  Tag,
+  TriangleAlert,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getProductPriceRange } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/admin/DataTable";
-import { deleteProduct } from "@/lib/actions/products";
+import { MetricCard } from "@/components/admin/dashboard/MetricCard";
+import {
+  ProductsManager,
+  type AdminProductRow,
+} from "@/components/admin/products/ProductsManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  const [products, siteSale] = await Promise.all([
+  const [products, siteSale, categories] = await Promise.all([
     prisma.product.findMany({
       include: {
         category: true,
@@ -20,141 +29,106 @@ export default async function AdminProductsPage() {
       orderBy: { createdAt: "desc" },
     }),
     getSiteSaleSettings(),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
   ]);
+
+  const rows: AdminProductRow[] = products.map((product) => {
+    const pricing = getProductPriceRange(product.variants, product, siteSale);
+    const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+    const compareAtMin =
+      "compareAtMin" in pricing ? pricing.compareAtMin : null;
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: product.images[0]?.url ?? null,
+      categoryId: product.categoryId,
+      categoryName: product.category?.name ?? null,
+      variantCount: product.variants.length,
+      totalStock,
+      priceDisplay: pricing.display,
+      minPrice: pricing.minCurrent,
+      hasSale: pricing.hasSale,
+      compareAtMin: compareAtMin ?? null,
+      isActive: product.isActive,
+      isOnSale: product.isOnSale,
+      isClearance: product.isClearance,
+      isNewArrival: product.isNewArrival,
+      isTrending: product.isTrending,
+      salePercent: product.salePercent,
+      createdAt: product.createdAt.toISOString(),
+    };
+  });
+
+  const stats = {
+    total: rows.length,
+    active: rows.filter((r) => r.isActive).length,
+    lowStock: rows.filter((r) => r.totalStock > 0 && r.totalStock <= 5).length,
+    outOfStock: rows.filter((r) => r.totalStock <= 0).length,
+    onSale: rows.filter((r) => r.isOnSale || r.isClearance).length,
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Products</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            Products
+          </h2>
           <p className="text-sm text-slate-500">
-            Manage your product catalog
+            Manage your catalog, stock, pricing and promotions.
           </p>
         </div>
-        <Link href="/admin/products/new">
-          <Button className="rounded-md bg-slate-900 text-white hover:bg-slate-800">
-            <Plus className="h-4 w-4" />
-            Add product
-          </Button>
+        <Link
+          href="/admin/products/new"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+        >
+          <Plus className="h-4 w-4" />
+          Add product
         </Link>
       </div>
 
-      <DataTable
-        data={products}
-        getRowKey={(product) => product.id}
-        columns={[
-          {
-            key: "name",
-            header: "Product",
-            render: (product) => (
-              <div className="flex items-center gap-3">
-                {product.images[0] && (
-                  <img
-                    src={product.images[0].url}
-                    alt={product.name}
-                    className="h-10 w-10 rounded-md object-cover"
-                  />
-                )}
-                <div>
-                  <p className="font-medium text-slate-900">{product.name}</p>
-                  <p className="text-xs text-slate-500">{product.slug}</p>
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: "category",
-            header: "Category",
-            render: (product) => product.category?.name ?? "—",
-          },
-          {
-            key: "variants",
-            header: "Variants",
-            render: (product) => product.variants.length,
-          },
-          {
-            key: "stock",
-            header: "Total stock",
-            render: (product) =>
-              product.variants.reduce((sum, v) => sum + v.stock, 0),
-          },
-          {
-            key: "price",
-            header: "Price range",
-            render: (product) => {
-              const pricing = getProductPriceRange(
-                product.variants,
-                product,
-                siteSale,
-              );
-              return pricing.display;
-            },
-          },
-          {
-            key: "promo",
-            header: "Promo",
-            render: (product) => (
-              <div className="flex flex-wrap gap-1">
-                {product.isOnSale && (
-                  <span className="rounded-full bg-blush px-2 py-0.5 text-xs font-medium text-navy">
-                    Sale{product.salePercent ? ` ${product.salePercent}%` : ""}
-                  </span>
-                )}
-                {product.isClearance && (
-                  <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">
-                    Clearance
-                  </span>
-                )}
-                {!product.isOnSale && !product.isClearance && (
-                  <span className="text-slate-400">—</span>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: "status",
-            header: "Status",
-            render: (product) => (
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  product.isActive
-                    ? "bg-green-100 text-green-800"
-                    : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {product.isActive ? "Active" : "Inactive"}
-              </span>
-            ),
-          },
-          {
-            key: "actions",
-            header: "",
-            className: "text-right",
-            render: (product) => (
-              <div className="flex justify-end gap-2">
-                <Link
-                  href={`/admin/products/${product.id}/edit`}
-                  className="text-sm font-medium text-slate-700 hover:text-slate-900"
-                >
-                  Edit
-                </Link>
-                <form
-                  action={async () => {
-                    "use server";
-                    await deleteProduct(product.id);
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className="text-sm font-medium text-red-600 hover:text-red-700"
-                  >
-                    Delete
-                  </button>
-                </form>
-              </div>
-            ),
-          },
-        ]}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <MetricCard
+          label="Total products"
+          value={stats.total}
+          icon={Boxes}
+          accent="blue"
+          sub={`${categories.length} categories`}
+        />
+        <MetricCard
+          label="Active"
+          value={stats.active}
+          icon={CheckCircle2}
+          accent="emerald"
+          sub={`${stats.total - stats.active} inactive`}
+        />
+        <MetricCard
+          label="Low stock"
+          value={stats.lowStock}
+          icon={TriangleAlert}
+          accent="amber"
+          sub="5 or fewer left"
+        />
+        <MetricCard
+          label="Out of stock"
+          value={stats.outOfStock}
+          icon={PackageX}
+          accent="rose"
+          sub="Needs restock"
+        />
+        <MetricCard
+          label="On promo"
+          value={stats.onSale}
+          icon={Tag}
+          accent="violet"
+          sub="Sale or clearance"
+        />
+      </div>
+
+      <ProductsManager
+        products={rows}
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
       />
     </div>
   );

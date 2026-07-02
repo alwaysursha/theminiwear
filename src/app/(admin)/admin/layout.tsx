@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { signOut, requireAdmin } from "@/lib/auth";
-import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { PageTransition } from "@/components/PageTransition";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 async function handleSignOut() {
   "use server";
@@ -22,19 +20,14 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <AdminSidebar role={session.user.role} />
-      <div className="flex flex-1 flex-col">
-        <AdminHeader
-          userName={session.user.name}
-          userEmail={session.user.email}
-          userRole={session.user.role}
-          signOutAction={handleSignOut}
-        />
-        <main className="flex-1 overflow-auto p-8">
-          <PageTransition>{children}</PageTransition>
-        </main>
-      </div>
-    </div>
+    <AdminShell
+      role={session.user.role}
+      userName={session.user.name}
+      userEmail={session.user.email}
+      userRole={session.user.role}
+      signOutAction={handleSignOut}
+    >
+      {children}
+    </AdminShell>
   );
 }

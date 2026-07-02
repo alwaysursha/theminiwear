@@ -13,6 +13,16 @@ export function buildWhatsAppUrl(pageUrl: string) {
   return `${WHATSAPP_URL}?text=${encodeURIComponent(text)}`;
 }
 
+/** Pure builder using explicit values (safe for client components). */
+export function buildWhatsAppUrlFor(
+  phoneE164: string,
+  intro: string,
+  pageUrl: string,
+) {
+  const text = `${intro}\n\n${pageUrl}`;
+  return `https://wa.me/${phoneE164}?text=${encodeURIComponent(text)}`;
+}
+
 export const AGE_GROUPS = [
   "0-3M",
   "3-6M",
