@@ -57,6 +57,9 @@ export function CheckoutForm({
         items: items.map((i) => ({
           variantId: i.variantId,
           quantity: i.quantity,
+          custom: i.custom
+            ? { measurements: i.custom.measurements }
+            : undefined,
         })),
         addressId: useNewAddress
           ? undefined
@@ -273,9 +276,10 @@ export function CheckoutForm({
         <h2 className="font-display text-lg font-bold text-navy">Summary</h2>
         <div className="mt-4 space-y-2 text-sm">
           {items.map((item) => (
-            <div key={item.variantId} className="flex justify-between text-navy/70">
+            <div key={item.lineId} className="flex justify-between text-navy/70">
               <span className="truncate pr-2">
                 {item.name} × {item.quantity}
+                {item.custom ? " (custom fit)" : ""}
               </span>
               <span>{formatPrice(item.price * item.quantity)}</span>
             </div>

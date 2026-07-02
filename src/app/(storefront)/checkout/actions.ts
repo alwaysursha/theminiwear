@@ -3,6 +3,12 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import {
+  CUSTOM_SIZE_FEE,
+  sanitizeMeasurements,
+  summarizeMeasurements,
+  hasMeasurements,
+} from "@/lib/custom-size";
 import { z } from "zod";
 
 const checkoutInputSchema = z.object({
@@ -10,6 +16,11 @@ const checkoutInputSchema = z.object({
     z.object({
       variantId: z.string(),
       quantity: z.number().min(1),
+      custom: z
+        .object({
+          measurements: z.record(z.string(), z.string()),
+        })
+        .optional(),
     }),
   ),
   addressId: z.string().optional(),
@@ -36,13 +47,31 @@ export async function createCheckoutSession(input: CheckoutInput) {
   const session = await auth();
   const body = checkoutInputSchema.parse(input);
 
+  const variantIds = [...new Set(body.items.map((i) => i.variantId))];
   const variants = await prisma.productVariant.findMany({
-    where: { id: { in: body.items.map((i) => i.variantId) } },
+    where: { id: { in: variantIds } },
     include: { product: { include: { images: { take: 1 } } } },
   });
+  const variantMap = new Map(variants.map((v) => [v.id, v]));
 
-  if (variants.length !== body.items.length) {
+  if (body.items.some((i) => !variantMap.has(i.variantId))) {
     return { error: "Invalid cart items" };
+  }
+
+  // A variant can appear across multiple lines (e.g. a standard line plus one
+  // or more custom-fit lines), so validate stock against the combined quantity.
+  const quantityByVariant = new Map<string, number>();
+  for (const item of body.items) {
+    quantityByVariant.set(
+      item.variantId,
+      (quantityByVariant.get(item.variantId) ?? 0) + item.quantity,
+    );
+  }
+  for (const [variantId, totalQuantity] of quantityByVariant) {
+    const variant = variantMap.get(variantId)!;
+    if (variant.stock < totalQuantity) {
+      return { error: `Insufficient stock for ${variant.product.name}` };
+    }
   }
 
   let discountId: string | undefined;
@@ -63,24 +92,36 @@ export async function createCheckoutSession(input: CheckoutInput) {
   }
 
   const lineItems = body.items.map((item) => {
-    const variant = variants.find((v) => v.id === item.variantId)!;
-    if (variant.stock < item.quantity) {
-      throw new Error(`Insufficient stock for ${variant.product.name}`);
-    }
+    const variant = variantMap.get(item.variantId)!;
+
+    const measurements = item.custom
+      ? sanitizeMeasurements(item.custom.measurements)
+      : null;
+    const isCustom = measurements != null && hasMeasurements(measurements);
+    const customFee = isCustom ? CUSTOM_SIZE_FEE : 0;
+    const unitPrice = Number(variant.price) + customFee;
+
+    const baseName = `${variant.product.name} (${variant.size} / ${variant.color})`;
     return {
       variantId: variant.id,
       quantity: item.quantity,
-      price: Number(variant.price),
+      price: unitPrice,
+      customFee,
+      measurements: isCustom ? measurements : null,
       stripeItem: {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `${variant.product.name} (${variant.size} / ${variant.color})`,
+            name: isCustom ? `${baseName} — Custom fit` : baseName,
+            description:
+              isCustom && measurements
+                ? summarizeMeasurements(measurements) || "Custom-fit tailoring"
+                : undefined,
             images: variant.product.images[0]?.url
               ? [variant.product.images[0].url]
               : undefined,
           },
-          unit_amount: Math.round(Number(variant.price) * 100),
+          unit_amount: Math.round(unitPrice * 100),
         },
         quantity: item.quantity,
       },
@@ -144,6 +185,9 @@ export async function createCheckoutSession(input: CheckoutInput) {
           variantId: i.variantId,
           quantity: i.quantity,
           price: i.price,
+          ...(i.customFee > 0
+            ? { customFee: i.customFee, measurements: i.measurements }
+            : {}),
         })),
       ),
     },

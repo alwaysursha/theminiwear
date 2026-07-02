@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/date";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Scissors } from "lucide-react";
 import { OrderStatus, ShipmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { measurementLabel } from "@/lib/custom-size";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,22 +77,49 @@ export default async function AdminOrderDetailPage({
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 font-semibold text-slate-900">Order items</h3>
           <ul className="divide-y divide-slate-100">
-            {order.items.map((item) => (
-              <li key={item.id} className="flex justify-between py-3 text-sm">
-                <div>
-                  <p className="font-medium text-slate-900">
-                    {item.variant.product.name}
+            {order.items.map((item) => {
+              const measurements =
+                item.customMeasurements &&
+                typeof item.customMeasurements === "object"
+                  ? (item.customMeasurements as Record<string, string>)
+                  : null;
+              return (
+                <li key={item.id} className="flex justify-between py-3 text-sm">
+                  <div className="min-w-0 pr-3">
+                    <p className="font-medium text-slate-900">
+                      {item.variant.product.name}
+                    </p>
+                    <p className="text-slate-500">
+                      {item.variant.size} / {item.variant.color} /{" "}
+                      {item.variant.ageGroup} × {item.quantity}
+                    </p>
+                    {item.customFee != null && (
+                      <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-2">
+                        <p className="flex items-center gap-1 text-xs font-semibold text-amber-800">
+                          <Scissors className="h-3.5 w-3.5" aria-hidden />
+                          Custom fit (+{formatPrice(Number(item.customFee))}/item)
+                        </p>
+                        {measurements && (
+                          <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-amber-900">
+                            {Object.entries(measurements).map(([key, value]) => (
+                              <li key={key}>
+                                <span className="font-semibold">
+                                  {measurementLabel(key)}:
+                                </span>{" "}
+                                {value}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="shrink-0 font-medium text-slate-900">
+                    {formatPrice(Number(item.price) * item.quantity)}
                   </p>
-                  <p className="text-slate-500">
-                    {item.variant.size} / {item.variant.color} /{" "}
-                    {item.variant.ageGroup} × {item.quantity}
-                  </p>
-                </div>
-                <p className="font-medium text-slate-900">
-                  {formatPrice(Number(item.price) * item.quantity)}
-                </p>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
           <dl className="mt-4 space-y-1 border-t border-slate-100 pt-4 text-sm">
             <div className="flex justify-between">

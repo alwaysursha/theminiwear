@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, Scissors, ShoppingBag, Trash2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/utils";
+import { measurementLabel } from "@/lib/custom-size";
 
 export function CartView() {
   const { items, updateQuantity, removeItem, getTotal, getItemCount } =
@@ -34,7 +35,7 @@ export function CartView() {
       <div className="space-y-4">
         {items.map((item) => (
           <div
-            key={item.variantId}
+            key={item.lineId}
             className="flex gap-4 rounded-2xl border border-navy/10 bg-white p-4 shadow-sm"
           >
             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-sky/30">
@@ -66,12 +67,32 @@ export function CartView() {
               <p className="mt-1 font-semibold text-coral">
                 {formatPrice(item.price)}
               </p>
+              {item.custom && (
+                <div className="mt-2 rounded-lg border border-coral/20 bg-coral/[0.05] px-2.5 py-2">
+                  <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-coral">
+                    <Scissors className="h-3 w-3" aria-hidden />
+                    Custom fit · +{formatPrice(item.custom.fee)}
+                  </p>
+                  <ul className="mt-1 space-y-0.5 text-[11px] text-navy/60">
+                    {Object.entries(item.custom.measurements).map(
+                      ([key, value]) => (
+                        <li key={key}>
+                          <span className="font-semibold text-navy/75">
+                            {measurementLabel(key)}:
+                          </span>{" "}
+                          {value}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              )}
               <div className="mt-auto flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() =>
-                      updateQuantity(item.variantId, item.quantity - 1)
+                      updateQuantity(item.lineId, item.quantity - 1)
                     }
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/15 hover:bg-blush/40"
                     aria-label="Decrease quantity"
@@ -84,7 +105,7 @@ export function CartView() {
                   <button
                     type="button"
                     onClick={() =>
-                      updateQuantity(item.variantId, item.quantity + 1)
+                      updateQuantity(item.lineId, item.quantity + 1)
                     }
                     disabled={item.quantity >= item.stock}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/15 hover:bg-blush/40 disabled:opacity-40"
@@ -95,7 +116,7 @@ export function CartView() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => removeItem(item.variantId)}
+                  onClick={() => removeItem(item.lineId)}
                   className="text-navy/40 hover:text-coral"
                   aria-label="Remove item"
                 >

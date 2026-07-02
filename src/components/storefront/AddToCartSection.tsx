@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ShoppingBag, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Scissors, ShoppingBag, Sparkles } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SizeGuideModal } from "@/components/storefront/SizeGuideModal";
+import { CustomSizeModal } from "@/components/storefront/CustomSizeModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
 import { getVariantPricing } from "@/lib/product-utils";
@@ -91,6 +93,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const stickyButtonRef = useRef<HTMLButtonElement>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const [duplicatePrompt, setDuplicatePrompt] = useState<{
     fromX: number;
     fromY: number;
@@ -168,7 +171,9 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
     const fromX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
     const fromY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
 
-    const existingItem = cartItems.find((item) => item.variantId === selectedVariant.id);
+    const existingItem = cartItems.find(
+      (item) => item.variantId === selectedVariant.id && !item.custom,
+    );
     if (existingItem) {
       setDuplicatePrompt({
         fromX,
@@ -189,24 +194,70 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
     performAddToCart(fromX, fromY);
   }
 
+  const stickyImage = product.images[0]?.url;
+  const stickyVariantLabel = [activeSize, activeColor]
+    .filter(Boolean)
+    .join(" · ");
+
   const stickyCartBar = (
-    <div className="product-sticky-cart fixed inset-x-0 bottom-0 z-50 border-t border-navy/10 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(30,42,74,0.12)] backdrop-blur-md sm:p-4 lg:hidden">
-      <div className="mx-auto flex max-w-lg items-center gap-2.5 sm:gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-semibold text-navy/55 sm:text-xs">
-            {product.name}
-          </p>
-          <p className="font-display text-lg font-extrabold text-coral sm:text-xl">
-            {variantPricing ? formatPrice(variantPricing.currentPrice) : "—"}
-          </p>
-        </div>
-        <div className="w-[min(48%,9.5rem)] shrink-0 sm:w-[min(52%,11rem)]">
-          <AddToCartButton
-            buttonRef={stickyButtonRef}
+    <div className="product-sticky-cart fixed inset-x-0 bottom-0 z-50 lg:hidden">
+      <div className="h-[3px] w-full bg-gradient-to-r from-coral via-[#ff6b5a] to-coral" />
+      <div className="border-t border-navy/[0.08] bg-white/95 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-14px_38px_rgba(30,42,74,0.16)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          {stickyImage ? (
+            <div className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-xl border border-navy/10 bg-blush/20 shadow-sm">
+              <Image
+                src={stickyImage}
+                alt=""
+                fill
+                sizes="52px"
+                className="object-cover"
+              />
+            </div>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-bold leading-tight text-navy">
+              {product.name}
+            </p>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <span className="font-display text-xl font-extrabold leading-none text-coral">
+                {variantPricing ? formatPrice(variantPricing.currentPrice) : "—"}
+              </span>
+              {variantPricing?.compareAtPrice != null && (
+                <span className="text-[11px] leading-none text-navy/35 line-through">
+                  {formatPrice(variantPricing.compareAtPrice)}
+                </span>
+              )}
+            </div>
+            {lowStock ? (
+              <p className="product-stock-pulse mt-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-coral">
+                Only {selectedVariant?.stock} left!
+              </p>
+            ) : stickyVariantLabel ? (
+              <p className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.08em] text-navy/45">
+                {stickyVariantLabel}
+              </p>
+            ) : null}
+          </div>
+          <button
+            ref={stickyButtonRef}
+            type="button"
             disabled={outOfStock}
             onClick={() => handleAddToCart(stickyButtonRef.current)}
-            className="h-10 py-2 text-xs sm:h-11 sm:py-3 sm:text-sm"
-          />
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "product-add-btn group relative h-12 shrink-0 overflow-hidden rounded-2xl px-5 text-sm font-bold",
+              "shadow-[0_10px_26px_rgba(255,127,110,0.42)] transition-all duration-300 active:scale-[0.96]",
+              "disabled:opacity-60 disabled:shadow-none",
+            )}
+          >
+            <span
+              className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+              aria-hidden
+            />
+            <ShoppingBag className="h-5 w-5" />
+            {outOfStock ? "Sold out" : "Add to bag"}
+          </button>
         </div>
       </div>
     </div>
@@ -354,6 +405,14 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
                   </SelectorPill>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setCustomOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-dashed border-coral/50 bg-coral/[0.06] px-3 py-2 text-xs font-semibold text-coral transition-all duration-300 hover:border-coral hover:bg-coral/10 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <Scissors className="h-3.5 w-3.5" aria-hidden />
+                Custom fit
+              </button>
             </div>
           </div>
         )}
@@ -411,6 +470,14 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
       {portalReady && duplicatePromptModal
         ? createPortal(duplicatePromptModal, document.body)
         : null}
+      {customOpen ? (
+        <CustomSizeModal
+          product={product}
+          siteSale={siteSale}
+          initialColor={activeColor}
+          onClose={() => setCustomOpen(false)}
+        />
+      ) : null}
     </>
   );
 }

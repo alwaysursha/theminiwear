@@ -43,6 +43,8 @@ export async function POST(request: Request) {
       variantId: string;
       quantity: number;
       price: number;
+      customFee?: number;
+      measurements?: Record<string, string>;
     }>;
 
     const order = await prisma.order.create({
@@ -65,6 +67,8 @@ export async function POST(request: Request) {
             variantId: item.variantId,
             quantity: item.quantity,
             price: item.price,
+            customFee: item.customFee ?? null,
+            customMeasurements: item.measurements ?? undefined,
           })),
         },
         statusHistory: {
