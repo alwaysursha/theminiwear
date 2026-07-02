@@ -1,32 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Ruler, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function SizeGuideModal() {
   const [open, setOpen] = useState(false);
 
-  return (
-    <>
+  useEffect(() => {
+    if (!open) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = original;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const modal = (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-coral hover:underline"
-      >
-        <Ruler className="h-4 w-4" />
-        Size guide
-      </button>
-
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-navy/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-            aria-label="Close size guide"
-          />
-          <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+        className="absolute inset-0 bg-navy/40 backdrop-blur-sm"
+        onClick={() => setOpen(false)}
+        aria-label="Close size guide"
+      />
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl font-bold text-navy">Size Guide</h2>
               <button
@@ -71,9 +75,24 @@ export function SizeGuideModal() {
             <Button className="mt-6 w-full" onClick={() => setOpen(false)}>
               Got it!
             </Button>
-          </div>
-        </div>
-      )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-coral hover:underline lg:gap-1 lg:text-xs"
+      >
+        <Ruler className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
+        Size guide
+      </button>
+
+      {open && typeof document !== "undefined"
+        ? createPortal(modal, document.body)
+        : null}
     </>
   );
 }

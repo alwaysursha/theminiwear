@@ -794,6 +794,82 @@
   }
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes cal-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cal-header-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cal-underline-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.cal-card {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.cal-header {
+  opacity: 0;
+}
+
+.cal-underline {
+  transform-origin: left center;
+}
+
+.cal-revealed .cal-header {
+  animation: cal-header-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.cal-revealed .cal-underline {
+  animation: cal-underline-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.cal-revealed .cal-card {
+  animation: cal-card-in 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(120ms + var(--cal-i) * 85ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-card,
+  .cal-header,
+  .cal-underline {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
