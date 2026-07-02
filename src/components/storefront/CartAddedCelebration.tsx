@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowRight, Check, ShoppingBag, Sparkles, X } from "lucide-react";
+import { ArrowRight, Check, Scissors, ShoppingBag, Sparkles, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
@@ -227,6 +227,12 @@ export function CartAddedCelebration() {
               <p className="mt-1 font-display text-base font-extrabold text-coral sm:mt-2 sm:text-lg">
                 {formatPrice(celebration.price)}
               </p>
+              {celebration.customFee ? (
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-bold text-coral sm:text-xs">
+                  <Scissors className="h-3 w-3" aria-hidden />
+                  Custom fit · incl. {formatPrice(celebration.customFee)}
+                </p>
+              ) : null}
             </div>
           </div>
 

@@ -10,6 +10,8 @@ export type CartCelebration = {
   quantity: number;
   fromX: number;
   fromY: number;
+  /** Custom-fit surcharge (per unit) when this was a made-to-measure add. */
+  customFee?: number;
 };
 
 type CartUiState = {
