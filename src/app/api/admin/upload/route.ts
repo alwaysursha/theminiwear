@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { auth } from "@/lib/auth";
 import { Role } from "@prisma/client";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -26,15 +25,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Image must be under 5MB" }, { status: 400 });
   }
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const filename = `${randomUUID()}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "cms-uploads");
+  const { env } = getCloudflareContext();
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), buffer);
+  const ext =
+    file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const key = `uploads/${randomUUID()}.${ext}`;
+  const body = await file.arrayBuffer();
 
-  const url = `/cms-uploads/${filename}`;
-  return NextResponse.json({ url });
+  await env.UPLOADS.put(key, body, {
+    httpMetadata: { contentType: file.type },
+  });
+
+  const base = env.R2_PUBLIC_URL.replace(/\/+$/, "");
+  return NextResponse.json({ url: `${base}/${key}` });
 }

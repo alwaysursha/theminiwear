@@ -1,12 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "theminiwear",
+  "account_id": "eca56c90cea16c5e271719f6b26769d5",
   "main": ".open-next/worker.js",
   "compatibility_date": "2024-12-30",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "theminiwear-uploads"
+    }
+  ],
+  "vars": {
+    "R2_PUBLIC_URL": "https://pub-1756d0c5dc364b8f9e2d9109e1b0fc67.r2.dev"
   },
   "services": [
     {
