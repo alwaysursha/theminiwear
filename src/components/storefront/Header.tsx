@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { LayoutDashboard, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
+import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
 import { SiteLogo } from "@/components/storefront/SiteLogo";
 import { getDashboardPath, isAdminRole } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -25,8 +26,10 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
   const [cartReady, setCartReady] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
   const cartPulse = useCartUiStore((s) => s.cartPulse);
+  const accountPulse = useAuthToastStore((s) => s.accountPulse);
   const { data: session } = useSession();
   const isAdmin = session?.user?.role ? isAdminRole(session.user.role) : false;
+  const firstName = firstNameOf(session?.user?.name);
   const accountHref = session?.user?.role
     ? getDashboardPath(session.user.role)
     : "/auth/sign-in";
@@ -68,11 +71,27 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
             </Link>
           )}
           <Link
+            id="site-account-anchor"
             href={accountHref}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60"
-            aria-label={accountLabel}
+            className={cn(
+              "relative flex h-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60",
+              firstName ? "gap-2 pl-3 pr-2" : "w-10",
+              accountPulse && "cart-anchor-pulse",
+            )}
+            aria-label={firstName ? `${accountLabel} — ${firstName}` : accountLabel}
           >
-            <AccountIcon className="h-5 w-5" />
+            {firstName && (
+              <span className="hidden max-w-[7rem] truncate text-sm font-semibold leading-none sm:inline">
+                Hi, {firstName}
+              </span>
+            )}
+            <AccountIcon className="h-5 w-5 shrink-0" />
+            {accountPulse && (
+              <span
+                className="cart-anchor-ring pointer-events-none absolute inset-0 rounded-full"
+                aria-hidden
+              />
+            )}
           </Link>
           <Link
             id="site-cart-anchor"
@@ -82,7 +101,7 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
               cartPulse && "cart-anchor-pulse",
             )}
             aria-label={
-              showCartCount ? `Cart, ${itemCount} items` : "Cart"
+              showCartCount ? `Bag, ${itemCount} items` : "Bag"
             }
           >
             <ShoppingBag className="h-5 w-5" />
