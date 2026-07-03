@@ -1,5 +1,7 @@
 name: Production Deploy
 
+# Deploys theminiwear.com on every merge to main (omsyed88 Cloudflare account).
+
 on:
   push:
     branches: [main]
