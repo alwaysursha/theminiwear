@@ -20,6 +20,11 @@
 # production
 /build
 .open-next
+.open-next-backup
+
+# cloudflare
+cloudflare-env.d.ts
+.wrangler
 
 # misc
 .DS_Store
