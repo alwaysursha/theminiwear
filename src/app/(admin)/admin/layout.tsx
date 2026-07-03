@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { signOut, requireAdmin } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
 
+export const dynamic = "force-dynamic";
+
 async function handleSignOut() {
   "use server";
   await signOut({ redirectTo: "/auth/sign-in" });
