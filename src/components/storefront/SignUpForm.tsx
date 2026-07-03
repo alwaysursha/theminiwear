@@ -8,14 +8,22 @@ import { registerUser } from "@/app/(storefront)/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
 
 export function SignUpForm() {
   const router = useRouter();
+  const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const submitBtn = e.currentTarget.querySelector('button[type="submit"]');
+    const rect = submitBtn?.getBoundingClientRect();
+    const fromX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const fromY = rect ? rect.top + rect.height / 2 : window.innerHeight - 80;
+
     setLoading(true);
     setError(null);
 
@@ -43,6 +51,13 @@ export function SignUpForm() {
       router.push("/auth/sign-in");
       return;
     }
+
+    showAuthToast({
+      kind: "signed-up",
+      firstName: firstNameOf(formData.get("name") as string),
+      fromX,
+      fromY,
+    });
 
     router.push("/account");
     router.refresh();

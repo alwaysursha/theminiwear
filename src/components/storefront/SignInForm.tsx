@@ -8,27 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getDashboardPath } from "@/lib/constants";
+import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
 
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { update } = useSession();
+  const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
   const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function resolveRedirectPath() {
-    const session = await update();
-    const role = session?.user?.role;
-    if (!role) return callbackUrl;
-    if (callbackUrl === "/account" || callbackUrl.startsWith("/account/")) {
-      return getDashboardPath(role);
-    }
-    return callbackUrl;
-  }
-
   async function handleCredentials(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const submitBtn = e.currentTarget.querySelector('button[type="submit"]');
+    const rect = submitBtn?.getBoundingClientRect();
+    const fromX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const fromY = rect ? rect.top + rect.height / 2 : window.innerHeight - 80;
+
     setLoading(true);
     setError(null);
 
@@ -45,13 +43,27 @@ export function SignInForm() {
       return;
     }
 
-    const destination = await resolveRedirectPath();
+    const session = await update();
+    showAuthToast({
+      kind: "signed-in",
+      firstName: firstNameOf(session?.user?.name),
+      fromX,
+      fromY,
+    });
+
+    const role = session?.user?.role;
+    const destination =
+      role &&
+      (callbackUrl === "/account" || callbackUrl.startsWith("/account/"))
+        ? getDashboardPath(role)
+        : callbackUrl;
     router.push(destination);
     router.refresh();
   }
 
   async function handleGoogle() {
     setLoading(true);
+    window.sessionStorage.setItem("mw-auth-welcome", "1");
     const redirectTarget = encodeURIComponent(callbackUrl);
     await signIn("google", {
       callbackUrl: `/auth/redirect?callbackUrl=${redirectTarget}`,

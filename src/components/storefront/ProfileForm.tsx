@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { updateProfile } from "@/app/(storefront)/account/profile/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
 
 export function ProfileForm({
   name,
@@ -16,15 +18,26 @@ export function ProfileForm({
   email: string;
   phone: string;
 }) {
+  const router = useRouter();
+  const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
   );
+  const [signingOut, setSigningOut] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
     const result = await updateProfile(new FormData(e.currentTarget));
     setStatus(result.success ? "success" : "error");
+  }
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    await signOut({ redirect: false });
+    showAuthToast({ kind: "signed-out", firstName: firstNameOf(name) });
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -71,8 +84,8 @@ export function ProfileForm({
       </form>
 
       <div className="border-t border-navy/10 pt-6">
-        <Button variant="outline" onClick={() => signOut({ callbackUrl: "/" })}>
-          Sign Out
+        <Button variant="outline" onClick={handleSignOut} disabled={signingOut}>
+          {signingOut ? "Signing out..." : "Sign Out"}
         </Button>
       </div>
     </div>

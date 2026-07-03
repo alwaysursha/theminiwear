@@ -148,21 +148,66 @@ export async function createCheckoutSession(input: CheckoutInput) {
 
   let addressId = body.addressId;
 
-  if (!addressId && body.shippingAddress && session?.user?.id) {
-    const address = await prisma.address.create({
-      data: {
-        userId: session.user.id,
-        fullName: body.shippingAddress.fullName,
-        line1: body.shippingAddress.line1,
-        line2: body.shippingAddress.line2,
-        city: body.shippingAddress.city,
-        state: body.shippingAddress.state,
-        postalCode: body.shippingAddress.postalCode,
-        country: body.shippingAddress.country,
-        phone: body.shippingAddress.phone,
-      },
-    });
-    addressId = address.id;
+  if (session?.user?.id) {
+    const userId = session.user.id;
+    const sa = body.shippingAddress;
+
+    // Persist a freshly entered shipping address to the customer's profile
+    // (deduping against an identical one they already have on file).
+    if (!addressId && sa) {
+      const duplicate = await prisma.address.findFirst({
+        where: {
+          userId,
+          line1: sa.line1,
+          postalCode: sa.postalCode,
+          city: sa.city,
+        },
+      });
+
+      if (duplicate) {
+        addressId = duplicate.id;
+      } else {
+        const existingCount = await prisma.address.count({ where: { userId } });
+        const created = await prisma.address.create({
+          data: {
+            userId,
+            fullName: sa.fullName,
+            line1: sa.line1,
+            line2: sa.line2,
+            city: sa.city,
+            state: sa.state,
+            postalCode: sa.postalCode,
+            country: sa.country,
+            phone: sa.phone,
+            isDefault: existingCount === 0,
+          },
+        });
+        addressId = created.id;
+      }
+    }
+
+    // Pull the shopper's name/phone into their profile when it isn't set yet.
+    if (sa) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, phone: true },
+      });
+      const updates: { name?: string; phone?: string } = {};
+      if (user && (!user.name || user.name.trim() === "")) {
+        updates.name = sa.fullName;
+      }
+      if (
+        user &&
+        (!user.phone || user.phone.trim() === "") &&
+        sa.phone &&
+        sa.phone.trim() !== ""
+      ) {
+        updates.phone = sa.phone;
+      }
+      if (Object.keys(updates).length > 0) {
+        await prisma.user.update({ where: { id: userId }, data: updates });
+      }
+    }
   }
 
   const stripe = await getStripe();
@@ -201,4 +246,69 @@ export async function createCheckoutSession(input: CheckoutInput) {
   }
 
   return { url: checkoutSession.url };
+}
+
+const addressUpdateSchema = z.object({
+  id: z.string().min(1),
+  fullName: z.string().min(1),
+  line1: z.string().min(1),
+  line2: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  postalCode: z.string().min(1),
+  country: z.string().min(1),
+  phone: z.string().optional(),
+});
+
+export type AddressUpdateInput = z.infer<typeof addressUpdateSchema>;
+
+export async function updateAddress(input: AddressUpdateInput) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "You need to be signed in to edit an address." };
+  }
+
+  const parsed = addressUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Please fill in every required field." };
+  }
+  const data = parsed.data;
+
+  const existing = await prisma.address.findFirst({
+    where: { id: data.id, userId: session.user.id },
+  });
+  if (!existing) {
+    return { error: "Address not found." };
+  }
+
+  const updated = await prisma.address.update({
+    where: { id: data.id },
+    data: {
+      fullName: data.fullName,
+      line1: data.line1,
+      line2: data.line2 || null,
+      city: data.city,
+      state: data.state,
+      postalCode: data.postalCode,
+      country: data.country,
+      phone: data.phone || null,
+    },
+  });
+
+  return {
+    success: true as const,
+    address: {
+      id: updated.id,
+      label: updated.label,
+      fullName: updated.fullName,
+      line1: updated.line1,
+      line2: updated.line2,
+      city: updated.city,
+      state: updated.state,
+      postalCode: updated.postalCode,
+      country: updated.country,
+      phone: updated.phone,
+      isDefault: updated.isDefault,
+    },
+  };
 }
