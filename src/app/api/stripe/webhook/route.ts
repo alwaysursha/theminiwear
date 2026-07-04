@@ -75,7 +75,16 @@ export async function POST(request: Request) {
           create: { status: "PAID", note: "Payment received via Stripe" },
         },
       },
-      include: { user: true },
+      include: {
+        user: true,
+        items: {
+          include: {
+            variant: {
+              include: { product: true },
+            },
+          },
+        },
+      },
     });
 
     for (const item of items) {
@@ -90,7 +99,14 @@ export async function POST(request: Request) {
       await sendOrderConfirmationEmail({
         to: email,
         orderNumber: order.orderNumber,
-        total: `$${order.total}`,
+        total: Number(order.total),
+        items: order.items.map((item) => ({
+          name: item.variant.product.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+          size: item.variant.size,
+          color: item.variant.color,
+        })),
       });
     }
   }
