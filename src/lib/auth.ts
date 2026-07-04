@@ -132,3 +132,19 @@ export async function requireRoleAdmin() {
 
   return { session, adminId: admin.id };
 }
+
+/** Resolve the DB user for the current session (id first, then email). */
+export async function resolveSessionUser(session: {
+  user: { id: string; email: string };
+}) {
+  if (session.user.id) {
+    const byId = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+    if (byId) return byId;
+  }
+
+  return prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+}

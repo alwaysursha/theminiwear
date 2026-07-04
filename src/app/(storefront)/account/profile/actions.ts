@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { auth, resolveSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -12,7 +12,7 @@ const profileSchema = z.object({
 
 export async function updateProfile(formData: FormData) {
   const session = await auth();
-  if (!session?.user) return { error: "Unauthorized" };
+  if (!session?.user?.email) return { error: "Unauthorized" };
 
   try {
     const data = profileSchema.parse({
@@ -20,8 +20,11 @@ export async function updateProfile(formData: FormData) {
       phone: formData.get("phone") || undefined,
     });
 
+    const user = await resolveSessionUser(session);
+    if (!user) return { error: "User not found" };
+
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: user.id },
       data: { name: data.name, phone: data.phone },
     });
 
