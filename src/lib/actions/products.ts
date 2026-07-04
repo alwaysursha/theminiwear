@@ -6,6 +6,7 @@ import { Gender, type Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { ageGroupForSize, sortShopCategories } from "@/lib/shop-categories";
 
 export type ProductVariantInput = {
   id?: string;
@@ -22,6 +23,8 @@ export type ProductImageInput = {
   id?: string;
   url: string;
   alt?: string;
+  /** Color this image represents (empty = shown for every color). */
+  color?: string;
   sortOrder?: string;
 };
 
@@ -97,6 +100,7 @@ export async function createProduct(formData: FormData) {
         create: data.images.map((img, index) => ({
           url: img.url,
           alt: img.alt || data.name,
+          color: img.color?.trim() ? img.color.trim() : null,
           sortOrder: img.sortOrder ? parseInt(img.sortOrder, 10) : index,
         })),
       },
@@ -104,7 +108,7 @@ export async function createProduct(formData: FormData) {
         create: data.variants.map((v) => ({
           size: v.size,
           color: v.color,
-          ageGroup: v.ageGroup,
+          ageGroup: v.ageGroup?.trim() || ageGroupForSize(v.size),
           sku: v.sku,
           price: parseFloat(v.price),
           salePrice: v.salePrice?.trim() ? parseFloat(v.salePrice) : null,
@@ -185,7 +189,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     const variantData = {
       size: variant.size,
       color: variant.color,
-      ageGroup: variant.ageGroup,
+      ageGroup: variant.ageGroup?.trim() || ageGroupForSize(variant.size),
       sku: variant.sku,
       price: parseFloat(variant.price),
       salePrice: variant.salePrice?.trim()
@@ -210,6 +214,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     const imageData = {
       url: image.url,
       alt: image.alt || data.name,
+      color: image.color?.trim() ? image.color.trim() : null,
       sortOrder: image.sortOrder ? parseInt(image.sortOrder, 10) : index,
     };
 
@@ -296,6 +301,7 @@ export async function duplicateProduct(productId: string) {
         create: product.images.map((img) => ({
           url: img.url,
           alt: img.alt,
+          color: img.color,
           sortOrder: img.sortOrder,
         })),
       },
@@ -317,7 +323,8 @@ export async function duplicateProduct(productId: string) {
 }
 
 export async function getCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  return sortShopCategories(categories);
 }
 
 export type ProductWithRelations = Prisma.ProductGetPayload<{

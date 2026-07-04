@@ -7,10 +7,18 @@ import { ProductFitImage, ProductImageFrame } from "@/components/storefront/Prod
 import { ProductImageMagnifier } from "@/components/storefront/ProductImageMagnifier";
 import { ProductImageZoomLightbox } from "@/components/storefront/ProductImageZoomLightbox";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
+import { useProductColor } from "@/components/storefront/ProductColorContext";
 import { cn } from "@/lib/utils";
 
+type GalleryImage = {
+  id: string;
+  url: string;
+  alt: string | null;
+  color?: string | null;
+};
+
 type ImageGalleryProps = {
-  images: { id: string; url: string; alt: string | null }[];
+  images: GalleryImage[];
   productName: string;
   discountPercent?: number | null;
   onSale?: boolean;
@@ -22,9 +30,22 @@ export function ImageGallery({
   discountPercent,
   onSale,
 }: ImageGalleryProps) {
+  const { selectedColor } = useProductColor();
   const [selected, setSelected] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+
   const count = images.length;
+
+  // Keep every image (and its thumbnail) visible. When a color is chosen, jump
+  // the main view to that color's first image instead of hiding the others.
+  const [prevColor, setPrevColor] = useState<string | null>(selectedColor);
+  if (prevColor !== selectedColor) {
+    setPrevColor(selectedColor);
+    if (selectedColor) {
+      const idx = images.findIndex((img) => img.color === selectedColor);
+      if (idx >= 0) setSelected(idx);
+    }
+  }
 
   const goTo = useCallback(
     (index: number) => {
@@ -47,9 +68,9 @@ export function ImageGallery({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [goPrev, goNext, zoomOpen]);
 
-  const currentImage = images[selected];
+  const currentImage = images[selected] ?? images[0];
 
-  if (count === 0) {
+  if (count === 0 || !currentImage) {
     return (
       <div className="product-gallery-enter flex aspect-[4/5] items-center justify-center rounded-3xl bg-gradient-to-br from-blush/40 via-sky/20 to-mint/30 text-6xl text-navy/20">
         👕

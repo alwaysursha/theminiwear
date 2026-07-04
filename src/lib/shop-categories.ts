@@ -17,7 +17,21 @@ export type ShopCategoryDefinition = {
   description: string;
   genders: Gender[];
   ageGroups: string[];
+  /** Sizes offered for this category (also used as the variant age group). */
+  sizes: string[];
 };
+
+export const INFANT_SIZES = [
+  "0-3M",
+  "3-6M",
+  "6-12M",
+  "12-18M",
+  "18-24M",
+] as const;
+
+export const TODDLER_SIZES = ["2T", "3T", "4T", "5T", "6T"] as const;
+
+export const KIDS_SIZES = ["6", "7", "8", "10", "12", "14"] as const;
 
 export const INFANT_AGE_GROUPS = [
   "0-3M",
@@ -40,6 +54,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Play-ready outfits and everyday favorites for girls sizes 6T–14",
     genders: ["GIRLS", "UNISEX"],
     ageGroups: [...KIDS_AGE_GROUPS],
+    sizes: [...KIDS_SIZES],
   },
   {
     slug: "boys",
@@ -47,6 +62,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Durable, comfy styles built for active boys sizes 6T–14",
     genders: ["BOYS", "UNISEX"],
     ageGroups: [...KIDS_AGE_GROUPS],
+    sizes: [...KIDS_SIZES],
   },
   {
     slug: "toddler-girls",
@@ -54,6 +70,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Sweet, easy-on pieces for toddler girls sizes 2T–6T",
     genders: ["GIRLS", "UNISEX"],
     ageGroups: [...TODDLER_AGE_GROUPS],
+    sizes: [...TODDLER_SIZES],
   },
   {
     slug: "toddler-boys",
@@ -61,6 +78,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Tough, cozy looks for toddler boys sizes 2T–6T",
     genders: ["BOYS", "UNISEX"],
     ageGroups: [...TODDLER_AGE_GROUPS],
+    sizes: [...TODDLER_SIZES],
   },
   {
     slug: "infant-girls",
@@ -68,6 +86,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Soft, gentle essentials for baby girls newborn–24M",
     genders: ["GIRLS", "UNISEX"],
     ageGroups: [...INFANT_AGE_GROUPS],
+    sizes: [...INFANT_SIZES],
   },
   {
     slug: "infant-boys",
@@ -75,6 +94,7 @@ export const SHOP_CATEGORIES: ShopCategoryDefinition[] = [
     description: "Snuggly staples for baby boys newborn–24M",
     genders: ["BOYS", "UNISEX"],
     ageGroups: [...INFANT_AGE_GROUPS],
+    sizes: [...INFANT_SIZES],
   },
 ];
 
@@ -90,6 +110,23 @@ export function getShopCategoryBySlug(
   slug: string,
 ): ShopCategoryDefinition | undefined {
   return isShopCategorySlug(slug) ? shopCategoryBySlug.get(slug) : undefined;
+}
+
+/** Genders an admin may assign for a category (always includes UNISEX). */
+export function getShopCategoryGenders(slug: string | null | undefined): Gender[] {
+  const category = slug ? getShopCategoryBySlug(slug) : undefined;
+  return category?.genders ?? ["UNISEX", "GIRLS", "BOYS"];
+}
+
+/** Sizes offered for a category. */
+export function getShopCategorySizes(slug: string | null | undefined): string[] {
+  const category = slug ? getShopCategoryBySlug(slug) : undefined;
+  return category?.sizes ?? [];
+}
+
+/** The age group a variant of the given size belongs to (size == age here). */
+export function ageGroupForSize(size: string): string {
+  return size;
 }
 
 export function sortShopCategories<T extends { slug: string }>(categories: T[]): T[] {
