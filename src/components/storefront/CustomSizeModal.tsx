@@ -7,7 +7,7 @@ import { AlertCircle, Ruler, Scissors, ShoppingBag, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
-import { getVariantPricing } from "@/lib/product-utils";
+import { getVariantPricing, productImageForColor } from "@/lib/product-utils";
 import type { CartProduct } from "@/lib/product-utils";
 import type { SiteSaleSettings } from "@/lib/settings";
 import { formatPrice, cn, shouldBypassImageOptimization } from "@/lib/utils";
@@ -65,6 +65,8 @@ export function CustomSizeModal({
   const totalPerItem = basePrice + CUSTOM_SIZE_FEE;
   const measurementsFilled = hasMeasurements(sanitizeMeasurements(values));
 
+  const previewImage = productImageForColor(product.images, selectedColor);
+
   useEffect(() => {
     const scrollY = window.scrollY;
     const original = document.body.style.overflow;
@@ -109,7 +111,7 @@ export function CustomSizeModal({
       size: "Custom fit",
       color: selectedVariant.color,
       price: totalPerItem,
-      image: product.images[0]?.url,
+      image: productImageForColor(product.images, selectedVariant.color),
       stock: selectedVariant.stock,
       quantity: 1,
       custom: { fee: CUSTOM_SIZE_FEE, measurements },
@@ -117,7 +119,7 @@ export function CustomSizeModal({
 
     showCelebration({
       name: product.name,
-      image: product.images[0]?.url,
+      image: productImageForColor(product.images, selectedVariant.color),
       size: "Custom fit",
       color: selectedVariant.color,
       price: totalPerItem,
@@ -178,14 +180,15 @@ export function CustomSizeModal({
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-7">
           <div className="flex items-center gap-3 rounded-2xl border border-navy/8 bg-blush/15 p-3">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-navy/10 bg-white">
-              {product.images[0]?.url ? (
+              {previewImage ? (
                 <Image
-                  src={product.images[0].url}
+                  key={previewImage}
+                  src={previewImage}
                   alt=""
                   fill
                   sizes="56px"
                   className="object-cover"
-                  unoptimized={shouldBypassImageOptimization(product.images[0].url)}
+                  unoptimized={shouldBypassImageOptimization(previewImage)}
                 />
               ) : null}
             </div>

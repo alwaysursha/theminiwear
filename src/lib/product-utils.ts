@@ -145,8 +145,21 @@ export type CartProduct = {
     salePrice: number | null;
     stock: number;
   }[];
-  images: { url: string }[];
+  images: { url: string; color?: string | null }[];
 };
+
+/** First image tagged for this color, else the cover image. */
+export function productImageForColor(
+  images: Array<{ url: string; color?: string | null }>,
+  color: string | null | undefined,
+): string | undefined {
+  if (images.length === 0) return undefined;
+  if (color) {
+    const tagged = images.find((img) => img.color === color);
+    if (tagged) return tagged.url;
+  }
+  return images[0]?.url;
+}
 
 export function serializeProductForCart(product: {
   id: string;
@@ -167,7 +180,7 @@ export function serializeProductForCart(product: {
     salePrice: { toString(): string } | null;
     stock: number;
   }>;
-  images: Array<{ url: string }>;
+  images: Array<{ url: string; color?: string | null }>;
 }): CartProduct {
   return {
     id: product.id,
@@ -189,7 +202,10 @@ export function serializeProductForCart(product: {
         variant.salePrice != null ? toNumber(variant.salePrice) : null,
       stock: variant.stock,
     })),
-    images: product.images.map((image) => ({ url: image.url })),
+    images: product.images.map((image) => ({
+      url: image.url,
+      color: image.color ?? null,
+    })),
   };
 }
 
