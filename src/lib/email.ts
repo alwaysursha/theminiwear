@@ -9,6 +9,7 @@ import { renderOrderShippedEmail } from "@/emails/templates/order-shipped";
 import { renderReturnRequestedEmail } from "@/emails/templates/return-requested";
 import { renderWelcomeEmail } from "@/emails/templates/welcome";
 import { EMAIL_SENDERS } from "@/emails/theme";
+import { getWelcomeEmailProductSections } from "@/lib/emails/welcome-products";
 
 let resendClient: Resend | null = null;
 
@@ -63,11 +64,13 @@ export async function sendWelcomeEmail({
   to: string;
   name: string;
 }) {
+  const sections = await getWelcomeEmailProductSections();
+
   await sendEmail({
     from: EMAIL_SENDERS.hello,
     to,
     subject: "Welcome to The Mini Wear",
-    html: renderWelcomeEmail({ name }),
+    html: renderWelcomeEmail({ name, sections }),
   });
 }
 

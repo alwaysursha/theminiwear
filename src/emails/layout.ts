@@ -1,6 +1,7 @@
 import {
   EMAIL_COLORS,
   escapeHtml,
+  getEmailLogoUrl,
   getSiteName,
   getSiteUrl,
 } from "@/emails/theme";
@@ -55,9 +56,14 @@ export function renderEmailLayout({
               <td style="height: 6px; background: linear-gradient(90deg, ${EMAIL_COLORS.coral}, #ffb8a8, ${EMAIL_COLORS.mint});"></td>
             </tr>
             <tr>
-              <td style="padding: 28px 32px 8px;">
-                <a href="${escapeHtml(siteUrl)}" style="text-decoration: none; color: ${EMAIL_COLORS.navy}; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">
-                  ${escapeHtml(siteName)}
+              <td style="padding: 24px 32px 8px;" align="center">
+                <a href="${escapeHtml(siteUrl)}" style="text-decoration: none; display: inline-block;">
+                  <img
+                    src="${escapeHtml(getEmailLogoUrl())}"
+                    alt="${escapeHtml(siteName)}"
+                    width="200"
+                    style="display: block; width: 200px; max-width: 100%; height: auto; border: 0;"
+                  />
                 </a>
               </td>
             </tr>

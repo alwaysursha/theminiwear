@@ -24,6 +24,17 @@ export function getSiteUrl() {
   ).replace(/\/$/, "");
 }
 
+export function toAbsoluteUrl(path: string, siteUrl = getSiteUrl()) {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function getEmailLogoUrl() {
+  return toAbsoluteUrl("/logo.png");
+}
+
 export function getSiteName() {
   return SITE_NAME;
 }

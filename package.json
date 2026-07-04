@@ -23,7 +23,8 @@
     "deploy:cf": "pnpm build:cloudflare && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && bash scripts/prune-open-next-bundle.sh && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "test:resend": "node --import tsx scripts/test-resend.ts"
+    "test:resend": "node --import tsx scripts/test-resend.ts",
+    "preview:emails": "node --import tsx scripts/preview-all-emails.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
