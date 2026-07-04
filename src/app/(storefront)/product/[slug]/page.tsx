@@ -94,7 +94,7 @@ export default async function ProductPage({ params }: PageProps) {
         </Link>
 
         <ProductColorProvider>
-        <div className="grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-14 lg:gap-y-5 xl:gap-x-16 xl:gap-y-6">
+        <div className="grid min-w-0 items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-14 lg:gap-y-5 xl:gap-x-16 xl:gap-y-6">
           <header className="product-detail-enter-3 order-1 space-y-3 sm:space-y-4 lg:order-none lg:col-start-2 lg:row-start-1">
             {product.category && (
               <Link
@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: PageProps) {
             )}
           </header>
 
-          <div className="product-detail-enter-2 order-2 lg:order-none lg:col-start-1 lg:row-start-1 lg:row-span-3 lg:sticky lg:top-24">
+          <div className="product-detail-enter-2 order-2 min-w-0 max-w-full lg:order-none lg:col-start-1 lg:row-start-1 lg:row-span-3 lg:sticky lg:top-24">
             <ImageGallery
               images={product.images}
               productName={product.name}

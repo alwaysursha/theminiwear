@@ -67,6 +67,18 @@ async function clearDatabase() {
 }
 
 async function main() {
+  const forceSeed =
+    process.argv.includes("--force") || process.env.ALLOW_DB_SEED === "yes";
+
+  const existingProducts = await prisma.product.count();
+  if (!forceSeed && existingProducts > 0) {
+    console.error(
+      "Refusing to seed: database already has data.",
+      "Use pnpm db:seed -- --force only if you intend to wipe everything.",
+    );
+    process.exit(1);
+  }
+
   console.log("Clearing existing data...");
   await clearDatabase();
 

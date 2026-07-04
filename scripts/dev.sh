@@ -26,11 +26,10 @@ sleep 2
 
 echo "→ Syncing schema..."
 if pnpm db:push; then
-  echo "→ Seeding sample data..."
-  node --import tsx prisma/seed.ts 2>/dev/null || true
+  echo "  Schema synced (existing data preserved)."
 else
   echo "⚠ Database not reachable. Run: pnpm dev:db"
-  echo "  Then: pnpm db:push && pnpm db:seed"
+  echo "  Then: pnpm db:push"
 fi
 
 echo ""
