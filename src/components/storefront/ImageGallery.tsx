@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
 import { ProductImageMagnifier } from "@/components/storefront/ProductImageMagnifier";
@@ -58,6 +58,41 @@ export function ImageGallery({
   const goPrev = useCallback(() => goTo(selected - 1), [goTo, selected]);
   const goNext = useCallback(() => goTo(selected + 1), [goTo, selected]);
 
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (!touchStart.current) return;
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      const deltaX = touch.clientX - touchStart.current.x;
+      const deltaY = touch.clientY - touchStart.current.y;
+      touchStart.current = null;
+
+      if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12) {
+        setZoomOpen(true);
+        return;
+      }
+
+      if (count < 2) return;
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+      if (deltaX < 0) {
+        goNext();
+      } else {
+        goPrev();
+      }
+    },
+    [count, goNext, goPrev],
+  );
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (zoomOpen) return;
@@ -81,8 +116,8 @@ export function ImageGallery({
   const frameTone = onSale ? "sale" : "cool";
 
   return (
-    <div className="product-gallery-enter group/gallery space-y-4">
-      <div className="relative">
+    <div className="product-gallery-enter group/gallery min-w-0 max-w-full space-y-4">
+      <div className="relative overflow-hidden">
         <div
           className="pointer-events-none absolute -left-6 -top-6 h-28 w-28 rounded-full bg-coral/20 blur-3xl product-detail-orb"
           aria-hidden
@@ -92,14 +127,18 @@ export function ImageGallery({
           aria-hidden
         />
 
-        <ProductImageFrame tone={frameTone} size="lg" className="aspect-[4/5] w-full">
+        <ProductImageFrame tone={frameTone} size="lg" className="aspect-[4/5] w-full max-w-full">
           <ProductImageMagnifier
             imageUrl={currentImage.url}
             alt={currentImage.alt ?? productName}
             enabled={!zoomOpen}
             className="product-gallery-main h-full w-full"
           >
-            <div className="relative h-full w-full overflow-hidden">
+            <div
+              className="product-gallery-swipe relative h-full w-full touch-pan-y overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               {images.map((img, i) => (
                 <div
                   key={img.id}
@@ -136,13 +175,6 @@ export function ImageGallery({
                 <ZoomIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Magnify
               </button>
-
-              <button
-                type="button"
-                onClick={() => setZoomOpen(true)}
-                className="absolute inset-0 z-[15] md:hidden"
-                aria-label="Open magnified view"
-              />
 
               <p className="pointer-events-none absolute bottom-14 left-1/2 z-20 hidden -translate-x-1/2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium text-navy/60 shadow-sm backdrop-blur-sm md:block">
                 Hover to magnify texture
@@ -210,7 +242,8 @@ export function ImageGallery({
       )}
 
       {count > 1 && (
-        <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="product-gallery-thumbs -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {images.map((img, i) => (
             <button
               key={img.id}
@@ -233,6 +266,7 @@ export function ImageGallery({
               />
             </button>
           ))}
+          </div>
         </div>
       )}
     </div>

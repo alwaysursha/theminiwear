@@ -290,7 +290,7 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
               aria-hidden
             />
 
-            <div className="hero-feature-visual-card relative aspect-[4/5] w-full max-w-[min(100%,22rem)] overflow-hidden rounded-[1.75rem] border border-white/80 bg-white ring-1 ring-navy/5 sm:max-w-[min(100%,26rem)] sm:rounded-[2rem] lg:max-w-none">
+            <div className="hero-feature-visual-card relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white ring-1 ring-navy/5 sm:rounded-[2rem]">
               <Link
                 href={`/product/${product.slug}`}
                 className="absolute inset-0 z-0"
@@ -299,14 +299,16 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
 
               {product.imageUrl ? (
                 <>
-                  <ProductFitImage
-                    src={product.imageUrl}
-                    alt={product.imageAlt ?? product.name}
-                    sizes="(max-width: 1024px) 90vw, 520px"
-                    fit="lg"
-                    mode="cover"
-                    className="transition-transform duration-700 ease-out group-hover/frame:scale-[1.03]"
-                  />
+                  <div className="hero-feature-visual-media absolute inset-0">
+                    <ProductFitImage
+                      src={product.imageUrl}
+                      alt={product.imageAlt ?? product.name}
+                      sizes="(max-width: 1024px) 90vw, 520px"
+                      fit="lg"
+                      mode="cover"
+                      className="hero-feature-visual-img"
+                    />
+                  </div>
                   <div
                     className="hero-feature-shimmer pointer-events-none absolute inset-0 z-10"
                     aria-hidden
