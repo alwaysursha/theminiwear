@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { shouldBypassImageOptimization } from "@/lib/utils";
 
 type ImageUploadFieldProps = {
   label: string;
@@ -108,7 +109,7 @@ export function ImageUploadField({
             alt="Preview"
             fill
             className="object-cover"
-            unoptimized={url.startsWith("/cms-uploads")}
+            unoptimized={shouldBypassImageOptimization(url)}
           />
         </div>
       )}

@@ -27,7 +27,7 @@ import {
   duplicateProduct,
   toggleProductActive,
 } from "@/lib/actions/products";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, shouldBypassImageOptimization } from "@/lib/utils";
 
 export type AdminProductRow = {
   id: string;
@@ -471,6 +471,7 @@ function Thumb({
           fill
           sizes={`${size}px`}
           className="object-cover"
+          unoptimized={shouldBypassImageOptimization(src)}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-slate-300">

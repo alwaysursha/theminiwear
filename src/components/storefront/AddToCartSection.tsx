@@ -13,9 +13,8 @@ import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
 import { getVariantPricing } from "@/lib/product-utils";
 import type { CartProduct } from "@/lib/product-utils";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice, shouldBypassImageOptimization } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
-import { cn } from "@/lib/utils";
 
 type AddToCartSectionProps = {
   product: CartProduct;
@@ -218,6 +217,7 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
                 fill
                 sizes="52px"
                 className="object-cover"
+                unoptimized={shouldBypassImageOptimization(stickyImage)}
               />
             </div>
           ) : null}
