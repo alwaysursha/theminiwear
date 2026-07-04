@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import type {
   HeroDuoSpotlightSlide,
   HeroFeatureSlide,
@@ -184,84 +184,175 @@ function splitProductName(name: string): { lead: string; accent: string } {
   };
 }
 
-/** New arrival — fancy copy left, hero image right */
+/** New arrival — editorial spotlight with premium copy + hero image */
 function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
   const { product } = slide;
   const { lead, accent } = splitProductName(product.name);
 
   return (
-    <AdShell slide={slide}>
-      <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[auto_minmax(10rem,1fr)] gap-2 bg-white p-2 sm:grid-cols-[1fr_1.05fr] sm:grid-rows-1 sm:gap-3 sm:p-3">
-        <div className="relative flex shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-mint/35 via-mint/10 to-blush/40 px-4 py-3 sm:min-h-0 sm:rounded-xl sm:px-6 sm:py-6 lg:px-8">
-          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-mint/40 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-coral/25 blur-xl" />
+    <div className="hero-feature relative flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-br from-[#fffaf9] via-blush/25 to-sky/30">
+      <div
+        className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-coral/20 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-mint/35 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute left-1/3 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-sky/30 blur-3xl"
+        aria-hidden
+      />
 
-          <div className="relative z-10 flex flex-col items-start text-left">
-            {product.categoryName && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-navy/45 sm:text-xs">
-                {product.categoryName}
-              </p>
-            )}
-
-            <h3 className="mt-1.5 font-display text-xl font-extrabold leading-[1.06] text-navy sm:mt-3 sm:text-4xl lg:text-[2.75rem]">
-              {lead}
-              {accent ? (
-                <>
-                  <br />
-                  <span className="text-coral">{accent}</span>
-                </>
-              ) : null}
-            </h3>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-5">
-              <p className="font-display text-2xl font-extrabold text-navy sm:text-4xl lg:text-5xl">
-                {product.priceDisplay}
-              </p>
-              {product.discountPercent != null && (
-                <SaleOffBadge
-                  percent={product.discountPercent}
-                  size="sm"
-                  inline
-                />
-              )}
-            </div>
-
-            <Link
-              href={`/product/${product.slug}`}
-              className={cn(
-                buttonVariants({ size: "default" }),
-                "mt-4 h-9 w-auto self-start px-6 text-sm sm:mt-6 sm:h-11 sm:px-8 sm:text-base",
-              )}
-            >
-              Buy now
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+      <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-5">
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-3 sm:mb-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-coral/25 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-coral shadow-[0_4px_20px_rgba(255,127,110,0.18)] backdrop-blur-sm sm:px-4 sm:py-1.5 sm:text-[11px]">
+            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
+            {slide.tag}
+          </span>
+          <ViewAllLink
+            href={slide.viewAllHref}
+            tone="coral"
+            size="xs"
+            className="text-navy/55 hover:text-coral"
+          >
+            {slide.viewAllLabel}
+          </ViewAllLink>
         </div>
 
-        <Link
-          href={`/product/${product.slug}`}
-          className="group/frame relative block h-full min-h-[10rem] overflow-hidden rounded-lg sm:min-h-0 sm:rounded-xl"
-        >
-          <ProductImageFrame flush size="lg" className="absolute inset-0 h-full w-full">
-            <div className="relative h-full min-h-0">
+        <div className="hero-feature-stack grid min-h-0 flex-1 grid-cols-1 gap-4 max-lg:gap-0 sm:gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center lg:gap-8">
+          <div className="hero-feature-copy-frame relative mx-1 max-lg:mx-0 sm:mx-2 lg:mx-0">
+            <div className="hero-feature-copy relative flex flex-col justify-center p-5 max-lg:p-5 lg:p-8">
+              <span className="hero-feature-corner hero-feature-corner-tl" aria-hidden />
+              <span className="hero-feature-corner hero-feature-corner-tr" aria-hidden />
+              <span className="hero-feature-corner hero-feature-corner-bl" aria-hidden />
+              <span className="hero-feature-corner hero-feature-corner-br" aria-hidden />
+
+              <div
+                className="hero-feature-copy-sheen pointer-events-none absolute bg-gradient-to-br from-white/50 via-transparent to-coral/[0.07]"
+                aria-hidden
+              />
+
+              <div className="relative z-10">
+                {product.categoryName && (
+                  <p className="hero-feature-eyebrow text-[10px] font-bold uppercase text-navy/50 sm:text-[11px]">
+                    {product.categoryName}
+                  </p>
+                )}
+
+                <h3 className="hero-feature-title mt-2.5 max-lg:mt-1.5 text-navy sm:mt-3.5">
+                  <span className="block">{lead}</span>
+                  {accent ? (
+                    <span className="hero-feature-title-accent mt-0.5 block">
+                      {accent}
+                    </span>
+                  ) : null}
+                </h3>
+
+                <div className="mt-4 max-lg:mt-2 sm:mt-5">
+                  <div className="hero-feature-price-rule" aria-hidden />
+                  <div className="hero-feature-price-row mt-3 max-lg:mt-2 flex flex-wrap items-end gap-2.5">
+                    <p className="hero-feature-price text-navy">
+                      {product.priceDisplay}
+                    </p>
+                    {product.discountPercent != null && (
+                      <SaleOffBadge
+                        percent={product.discountPercent}
+                        size="sm"
+                        inline
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <p className="hero-feature-body mt-3 max-lg:mt-2 max-w-sm max-lg:max-w-none text-navy/58 sm:mt-4">
+                  Fresh off the rack — soft fabrics, easy fits, and everyday magic
+                  for little ones.
+                </p>
+
+                <Link
+                  href={`/product/${product.slug}`}
+                  className={cn(
+                    buttonVariants({ size: "default" }),
+                    "hero-feature-cta mt-5 hidden h-11 w-full px-7 text-sm font-bold shadow-[0_14px_36px_rgba(255,127,110,0.38)] sm:mt-6 sm:h-12 lg:inline-flex lg:w-auto lg:px-9 lg:text-base",
+                  )}
+                >
+                  Shop this drop
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-feature-visual group/frame relative mx-auto flex h-full min-h-[14rem] max-lg:min-h-0 w-full max-w-lg items-center justify-center sm:max-lg:min-h-0 lg:mx-0 lg:max-w-none lg:min-h-0">
+            <div
+              className="pointer-events-none absolute inset-[8%] rounded-[2rem] bg-coral/15 blur-2xl transition-transform duration-700 group-hover/frame:scale-105"
+              aria-hidden
+            />
+
+            <div className="hero-feature-visual-card relative aspect-[4/5] w-full max-w-[min(100%,22rem)] overflow-hidden rounded-[1.75rem] border border-white/80 bg-white ring-1 ring-navy/5 sm:max-w-[min(100%,26rem)] sm:rounded-[2rem] lg:max-w-none">
+              <Link
+                href={`/product/${product.slug}`}
+                className="absolute inset-0 z-0"
+                aria-label={`View ${product.name}`}
+              />
+
               {product.imageUrl ? (
-                <ProductFitImage
-                  src={product.imageUrl}
-                  alt={product.imageAlt ?? product.name}
-                  sizes="(max-width: 640px) 100vw, 480px"
-                  mode="cover"
-                />
+                <>
+                  <ProductFitImage
+                    src={product.imageUrl}
+                    alt={product.imageAlt ?? product.name}
+                    sizes="(max-width: 1024px) 90vw, 520px"
+                    fit="lg"
+                    mode="cover"
+                    className="transition-transform duration-700 ease-out group-hover/frame:scale-[1.03]"
+                  />
+                  <div
+                    className="hero-feature-shimmer pointer-events-none absolute inset-0 z-10"
+                    aria-hidden
+                  />
+                </>
               ) : (
-                <div className="flex h-full items-center justify-center bg-blush/20 text-5xl">
+                <div className="flex h-full items-center justify-center bg-gradient-to-br from-blush/40 via-sky/20 to-mint/30 text-6xl">
                   👕
                 </div>
               )}
+
+              {product.discountPercent != null && (
+                <SaleOffBadge
+                  percent={product.discountPercent}
+                  size="md"
+                  className="left-4 top-4 z-20 sm:left-5 sm:top-5"
+                />
+              )}
+
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden bg-gradient-to-t from-navy/75 via-navy/25 to-transparent px-5 pb-5 pt-16 sm:px-6 sm:pb-6 sm:pt-20 lg:block">
+                <p className="line-clamp-1 font-display text-sm font-bold text-white sm:text-base">
+                  {product.name}
+                </p>
+                <p className="mt-0.5 text-xs font-medium text-white/75">
+                  Tap to view details
+                </p>
+              </div>
             </div>
-          </ProductImageFrame>
+          </div>
+        </div>
+      </div>
+
+      <div className="hero-feature-mobile-cta lg:hidden">
+        <div className="hero-feature-shop-scrim" aria-hidden />
+        <Link
+          href={`/product/${product.slug}`}
+          className="hero-feature-shop-link"
+        >
+          <span className="hero-feature-shop-link-text">
+            <span className="hero-feature-shop-link-quiet">Shop this </span>
+            <span className="hero-feature-shop-link-accent">drop</span>
+          </span>
+          <ArrowRight className="hero-feature-shop-link-arrow" aria-hidden />
         </Link>
       </div>
-    </AdShell>
+    </div>
   );
 }
 
