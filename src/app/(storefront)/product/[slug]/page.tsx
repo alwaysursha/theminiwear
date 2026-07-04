@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { ImageGallery } from "@/components/storefront/ImageGallery";
 import { AddToCartSection } from "@/components/storefront/AddToCartSection";
+import { ProductColorProvider } from "@/components/storefront/ProductColorContext";
 import { ProductReviews } from "@/components/storefront/ProductReviews";
 import { ProductTrustStrip } from "@/components/storefront/ProductTrustStrip";
 import { ProductCard } from "@/components/storefront/ProductCard";
@@ -92,6 +93,7 @@ export default async function ProductPage({ params }: PageProps) {
           Back to shop
         </Link>
 
+        <ProductColorProvider>
         <div className="grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-14 lg:gap-y-5 xl:gap-x-16 xl:gap-y-6">
           <header className="product-detail-enter-3 order-1 space-y-3 sm:space-y-4 lg:order-none lg:col-start-2 lg:row-start-1">
             {product.category && (
@@ -148,6 +150,7 @@ export default async function ProductPage({ params }: PageProps) {
             <ProductTrustStrip />
           </div>
         </div>
+        </ProductColorProvider>
 
         <ProductReviews productId={product.id} />
 

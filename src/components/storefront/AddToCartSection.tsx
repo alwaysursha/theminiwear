@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SizeGuideModal } from "@/components/storefront/SizeGuideModal";
 import { CustomSizeModal } from "@/components/storefront/CustomSizeModal";
+import { useProductColor } from "@/components/storefront/ProductColorContext";
 import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
 import { getVariantPricing } from "@/lib/product-utils";
@@ -125,6 +126,11 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
 
   const activeSize = selectedSize ?? sizes[0] ?? null;
   const activeColor = selectedColor ?? colors[0] ?? null;
+
+  const { setSelectedColor: setSharedColor } = useProductColor();
+  useEffect(() => {
+    setSharedColor(activeColor);
+  }, [activeColor, setSharedColor]);
 
   const variantPricing = selectedVariant
     ? getVariantPricing(selectedVariant, product, siteSale)

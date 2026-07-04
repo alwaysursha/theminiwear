@@ -12,7 +12,10 @@
   "r2_buckets": [
     {
       "binding": "UPLOADS",
-      "bucket_name": "theminiwear-uploads"
+      "bucket_name": "theminiwear-uploads",
+      // Use the real (production) bucket during local dev too, so images
+      // uploaded locally are readable on the live site (they share one DB).
+      "remote": true
     }
   ],
   "vars": {

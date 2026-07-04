@@ -36,6 +36,8 @@ export async function POST(request: Request) {
     httpMetadata: { contentType: file.type },
   });
 
-  const base = env.R2_PUBLIC_URL.replace(/\/+$/, "");
-  return NextResponse.json({ url: `${base}/${key}` });
+  // Serve images through the app (streamed from the R2 binding) rather than a
+  // public r2.dev URL. This works in every environment where the object exists
+  // and doesn't depend on the bucket having public access enabled.
+  return NextResponse.json({ url: `/api/media/${key}` });
 }

@@ -18,4 +18,4 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-initOpenNextCloudflareForDev();
+initOpenNextCloudflareForDev({ remoteBindings: true });

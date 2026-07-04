@@ -78,6 +78,7 @@ export default async function EditProductPage({
             id: img.id,
             url: img.url,
             alt: img.alt ?? "",
+            color: img.color ?? "",
             sortOrder: String(img.sortOrder),
           })),
         }}
