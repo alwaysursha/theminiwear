@@ -10,7 +10,7 @@ import { useCartUiStore } from "@/lib/cart-ui-store";
 import { getVariantPricing } from "@/lib/product-utils";
 import type { CartProduct } from "@/lib/product-utils";
 import type { SiteSaleSettings } from "@/lib/settings";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, shouldBypassImageOptimization } from "@/lib/utils";
 import {
   CUSTOM_MEASUREMENT_FIELDS,
   CUSTOM_NOTES_KEY,
@@ -185,6 +185,7 @@ export function CustomSizeModal({
                   fill
                   sizes="56px"
                   className="object-cover"
+                  unoptimized={shouldBypassImageOptimization(product.images[0].url)}
                 />
               ) : null}
             </div>

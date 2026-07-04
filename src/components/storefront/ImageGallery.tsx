@@ -8,7 +8,7 @@ import { ProductImageMagnifier } from "@/components/storefront/ProductImageMagni
 import { ProductImageZoomLightbox } from "@/components/storefront/ProductImageZoomLightbox";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
 import { useProductColor } from "@/components/storefront/ProductColorContext";
-import { cn } from "@/lib/utils";
+import { cn, shouldBypassImageOptimization } from "@/lib/utils";
 
 type GalleryImage = {
   id: string;
@@ -229,6 +229,7 @@ export function ImageGallery({
                 fill
                 className="object-cover"
                 sizes="80px"
+                unoptimized={shouldBypassImageOptimization(img.url)}
               />
             </button>
           ))}
