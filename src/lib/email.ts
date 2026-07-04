@@ -1,4 +1,14 @@
 import type { Resend } from "resend";
+import { renderInquiryReceivedEmail } from "@/emails/templates/inquiry-received";
+import { renderInquiryReplyEmail } from "@/emails/templates/inquiry-reply";
+import {
+  renderOrderConfirmationEmail,
+  type OrderLineItem,
+} from "@/emails/templates/order-confirmation";
+import { renderOrderShippedEmail } from "@/emails/templates/order-shipped";
+import { renderReturnRequestedEmail } from "@/emails/templates/return-requested";
+import { renderWelcomeEmail } from "@/emails/templates/welcome";
+import { EMAIL_SENDERS } from "@/emails/theme";
 
 let resendClient: Resend | null = null;
 
@@ -15,27 +25,76 @@ async function getResend() {
   return resendClient;
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+type SendEmailInput = {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+};
+
+async function sendEmail({ from, to, subject, html, replyTo }: SendEmailInput) {
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`[email] ${subject} -> ${to}`);
+    return;
+  }
+
+  try {
+    const result = await (await getResend()).emails.send({
+      from,
+      to,
+      subject,
+      html,
+      replyTo,
+    });
+
+    if (result.error) {
+      console.error(`[email] Failed to send "${subject}" to ${to}:`, result.error);
+    }
+  } catch (error) {
+    console.error(`[email] Failed to send "${subject}" to ${to}:`, error);
+  }
+}
+
+export async function sendWelcomeEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}) {
+  await sendEmail({
+    from: EMAIL_SENDERS.hello,
+    to,
+    subject: "Welcome to The Mini Wear",
+    html: renderWelcomeEmail({ name }),
+  });
+}
 
 export async function sendOrderConfirmationEmail({
   to,
   orderNumber,
   total,
+  items = [],
 }: {
   to: string;
   orderNumber: string;
-  total: string;
+  total: number | string;
+  items?: OrderLineItem[];
 }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`[email] Order confirmation to ${to}: ${orderNumber} - ${total}`);
-    return;
-  }
+  const numericTotal =
+    typeof total === "string" ? parseFloat(total.replace(/[^0-9.-]/g, "")) : total;
 
-  await (await getResend()).emails.send({
-    from: FROM_EMAIL,
+  await sendEmail({
+    from: EMAIL_SENDERS.orders,
     to,
-    subject: `Order Confirmed - ${orderNumber}`,
-    html: `<h1>Thank you for your order!</h1><p>Order <strong>${orderNumber}</strong> has been confirmed.</p><p>Total: ${total}</p>`,
+    subject: `Order confirmed — ${orderNumber}`,
+    html: renderOrderConfirmationEmail({
+      orderNumber,
+      total: numericTotal,
+      items,
+    }),
+    replyTo: "orders@theminiwear.com",
   });
 }
 
@@ -50,16 +109,30 @@ export async function sendShippingUpdateEmail({
   trackingNumber: string;
   carrier: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`[email] Shipping update to ${to}: ${orderNumber}`);
-    return;
-  }
-
-  await (await getResend()).emails.send({
-    from: FROM_EMAIL,
+  await sendEmail({
+    from: EMAIL_SENDERS.orders,
     to,
-    subject: `Your order has shipped - ${orderNumber}`,
-    html: `<h1>Your order is on the way!</h1><p>Order <strong>${orderNumber}</strong> shipped via ${carrier}.</p><p>Tracking: <strong>${trackingNumber}</strong></p>`,
+    subject: `Your order has shipped — ${orderNumber}`,
+    html: renderOrderShippedEmail({ orderNumber, carrier, trackingNumber }),
+    replyTo: "orders@theminiwear.com",
+  });
+}
+
+export async function sendInquiryReceivedEmail({
+  to,
+  name,
+  subject,
+}: {
+  to: string;
+  name: string;
+  subject: string;
+}) {
+  await sendEmail({
+    from: EMAIL_SENDERS.support,
+    to,
+    subject: `We received your message — ${subject}`,
+    html: renderInquiryReceivedEmail({ name, subject }),
+    replyTo: "support@theminiwear.com",
   });
 }
 
@@ -72,15 +145,29 @@ export async function sendInquiryReplyEmail({
   subject: string;
   message: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`[email] Inquiry reply to ${to}: ${subject}`);
-    return;
-  }
-
-  await (await getResend()).emails.send({
-    from: FROM_EMAIL,
+  await sendEmail({
+    from: EMAIL_SENDERS.support,
     to,
     subject: `Re: ${subject}`,
-    html: `<p>${message}</p>`,
+    html: renderInquiryReplyEmail({ subject, message }),
+    replyTo: "support@theminiwear.com",
+  });
+}
+
+export async function sendReturnRequestedEmail({
+  to,
+  orderNumber,
+  reason,
+}: {
+  to: string;
+  orderNumber: string;
+  reason: string;
+}) {
+  await sendEmail({
+    from: EMAIL_SENDERS.support,
+    to,
+    subject: `Return request received — ${orderNumber}`,
+    html: renderReturnRequestedEmail({ orderNumber, reason }),
+    replyTo: "support@theminiwear.com",
   });
 }

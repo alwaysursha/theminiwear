@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { sendWelcomeEmail } from "@/lib/email";
 import { z } from "zod";
 
 const signUpSchema = z.object({
@@ -34,6 +35,8 @@ export async function registerUser(formData: FormData) {
         password: hashed,
       },
     });
+
+    void sendWelcomeEmail({ to: data.email, name: data.name });
 
     return { success: true };
   } catch {
