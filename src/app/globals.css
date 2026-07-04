@@ -1258,8 +1258,8 @@
   }
 
   .hero-feature-visual-card {
-    width: 97%;
-    max-width: 22rem;
+    width: 95.5%;
+    max-width: 21.65rem;
     aspect-ratio: 4 / 5;
     max-height: 20.75rem;
     box-shadow:
@@ -1513,7 +1513,7 @@
   }
 
   .hero-feature-visual-card {
-    max-width: 23.35rem;
+    max-width: 23rem;
     max-height: 22.25rem;
   }
 
