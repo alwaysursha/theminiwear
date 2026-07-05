@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { updateProfile } from "@/app/(storefront)/account/profile/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
+import { firstNameOf, markPendingSignedOutToast } from "@/lib/auth-toast-store";
 
 export function ProfileForm({
   name,
@@ -18,8 +17,6 @@ export function ProfileForm({
   email: string;
   phone: string;
 }) {
-  const router = useRouter();
-  const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
   );
@@ -34,10 +31,8 @@ export function ProfileForm({
 
   async function handleSignOut() {
     setSigningOut(true);
-    await signOut({ redirect: false });
-    showAuthToast({ kind: "signed-out", firstName: firstNameOf(name) });
-    router.push("/");
-    router.refresh();
+    markPendingSignedOutToast(firstNameOf(name));
+    await signOut({ callbackUrl: "/" });
   }
 
   return (

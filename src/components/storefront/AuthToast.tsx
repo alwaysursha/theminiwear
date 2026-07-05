@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useSession } from "next-auth/react";
 import { Check, LogOut, UserRound, X } from "lucide-react";
-import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
+import { useAuthToastStore, firstNameOf, AUTH_WELCOME_KEY, consumePendingSignedOutToast } from "@/lib/auth-toast-store";
 import { cn } from "@/lib/utils";
 
 type FlyTarget = { dx: number; dy: number };
@@ -28,14 +28,25 @@ export function AuthToast() {
   // Pick up a pending welcome flagged before a full-page auth redirect (Google).
   useEffect(() => {
     if (typeof window === "undefined" || status === "loading") return;
-    const pending = window.sessionStorage.getItem("mw-auth-welcome");
+    const pending = window.sessionStorage.getItem(AUTH_WELCOME_KEY);
     if (!pending) return;
-    window.sessionStorage.removeItem("mw-auth-welcome");
+    window.sessionStorage.removeItem(AUTH_WELCOME_KEY);
     showAuthToast({
       kind: "signed-in",
       firstName: firstNameOf(session?.user?.name),
     });
   }, [status, session, showAuthToast]);
+
+  // Pick up a pending sign-out toast after a full-page redirect from profile.
+  useEffect(() => {
+    if (typeof window === "undefined" || status === "loading") return;
+    const pending = consumePendingSignedOutToast();
+    if (!pending) return;
+    showAuthToast({
+      kind: "signed-out",
+      firstName: pending.firstName,
+    });
+  }, [status, showAuthToast]);
 
   useEffect(() => {
     if (!toast) {

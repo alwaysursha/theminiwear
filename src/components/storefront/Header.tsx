@@ -27,12 +27,17 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
   const itemCount = useCartStore((s) => s.getItemCount());
   const cartPulse = useCartUiStore((s) => s.cartPulse);
   const accountPulse = useAuthToastStore((s) => s.accountPulse);
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.role ? isAdminRole(session.user.role) : false;
-  const firstName = firstNameOf(session?.user?.name);
-  const accountHref = session?.user?.role
-    ? getDashboardPath(session.user.role)
-    : "/auth/sign-in";
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+  const isAdmin =
+    isAuthenticated && session?.user?.role
+      ? isAdminRole(session.user.role)
+      : false;
+  const firstName = isAuthenticated ? firstNameOf(session?.user?.name) : null;
+  const accountHref =
+    isAuthenticated && session?.user?.role
+      ? getDashboardPath(session.user.role)
+      : "/auth/sign-in";
   const AccountIcon = isAdmin ? LayoutDashboard : User;
   const accountLabel = isAdmin ? "Admin dashboard" : "Account";
 

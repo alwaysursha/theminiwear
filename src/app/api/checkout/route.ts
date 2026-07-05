@@ -3,12 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { STRIPE_CURRENCY } from "@/lib/currency";
-import { stripeCheckoutShippingLineItem } from "@/lib/stripe-checkout";
+import { stripeCheckoutEmbeddedParams, stripeCheckoutShippingLineItem } from "@/lib/stripe-checkout";
 import {
   DEFAULT_SHIPPING_COUNTRY,
   resolveCheckoutShipping,
   resolveShippingCountry,
 } from "@/lib/shipping";
+import { getSiteUrl } from "@/emails/theme";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -151,6 +152,7 @@ export async function POST(request: Request) {
     }
 
     const stripe = await getStripe();
+    const siteUrl = getSiteUrl();
     const shippingLineItem = stripeCheckoutShippingLineItem({
       shippingCost: shipping.shippingCost,
       label: shipping.shippingLabel,
@@ -163,8 +165,7 @@ export async function POST(request: Request) {
         ...lineItems.map((i) => i.stripeItem),
         ...(shippingLineItem ? [shippingLineItem] : []),
       ],
-      success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
+      ...stripeCheckoutEmbeddedParams(siteUrl),
       metadata: {
         userId: session?.user?.id ?? "",
         addressId: addressId ?? "",
@@ -192,7 +193,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ sessionId: checkoutSession.id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checkout failed";
     return NextResponse.json({ error: message }, { status: 400 });
