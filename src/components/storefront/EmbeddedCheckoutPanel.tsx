@@ -1,30 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
+import { getStripeJs } from "@/lib/stripe-client";
 
 export function EmbeddedCheckoutPanel({
   clientSecret,
-  publishableKey,
 }: {
   clientSecret: string;
-  publishableKey: string;
 }) {
-  const stripePromise = useMemo(
-    () => loadStripe(publishableKey),
-    [publishableKey],
-  );
-
   return (
     <div className="rounded-3xl border border-navy/8 bg-background p-2 pb-6 shadow-[0_8px_30px_rgba(30,42,74,0.06)] sm:p-3 sm:pb-8">
       <EmbeddedCheckoutProvider
-        stripe={stripePromise}
+        stripe={getStripeJs()}
         options={{ clientSecret }}
       >
         <div className="stripe-embedded-checkout min-h-[520px] overflow-hidden rounded-2xl bg-background">

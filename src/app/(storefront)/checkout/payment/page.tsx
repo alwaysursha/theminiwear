@@ -7,7 +7,6 @@ import {
   EmbeddedCheckoutError,
   EmbeddedCheckoutPanel,
 } from "@/components/storefront/EmbeddedCheckoutPanel";
-import { readStripePublishableKey } from "@/lib/stripe-publishable-key";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +24,6 @@ export default async function CheckoutPaymentPage({
     redirect("/checkout");
   }
 
-  const publishableKey = readStripePublishableKey();
   const secretResult = await getEmbeddedCheckoutClientSecret(sessionId);
 
   return (
@@ -55,15 +53,10 @@ export default async function CheckoutPaymentPage({
 
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 sm:pb-20 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          {!publishableKey ? (
-            <EmbeddedCheckoutError message="Payments are not configured yet. Please contact support." />
-          ) : "error" in secretResult ? (
+          {"error" in secretResult ? (
             <EmbeddedCheckoutError message={secretResult.error} />
           ) : (
-            <EmbeddedCheckoutPanel
-              clientSecret={secretResult.clientSecret}
-              publishableKey={publishableKey}
-            />
+            <EmbeddedCheckoutPanel clientSecret={secretResult.clientSecret} />
           )}
           <EmbeddedCheckoutAside />
         </div>
