@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { getEmbeddedCheckoutClientSecret } from "@/app/(storefront)/checkout/actions";
 import {
@@ -7,6 +8,7 @@ import {
   EmbeddedCheckoutError,
   EmbeddedCheckoutPanel,
 } from "@/components/storefront/EmbeddedCheckoutPanel";
+import { readStripePublishableKey } from "@/lib/stripe-publishable-key";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +26,27 @@ export default async function CheckoutPaymentPage({
     redirect("/checkout");
   }
 
-  const secretResult = await getEmbeddedCheckoutClientSecret(sessionId);
+  const [publishableKey, secretResult] = await Promise.all([
+    Promise.resolve(readStripePublishableKey()),
+    getEmbeddedCheckoutClientSecret(sessionId),
+  ]);
+
+  let panel: ReactNode;
+
+  if (!publishableKey) {
+    panel = (
+      <EmbeddedCheckoutError message="Payments are not configured yet. Please contact support." />
+    );
+  } else if ("error" in secretResult) {
+    panel = <EmbeddedCheckoutError message={secretResult.error} />;
+  } else {
+    panel = (
+      <EmbeddedCheckoutPanel
+        clientSecret={secretResult.clientSecret}
+        publishableKey={publishableKey}
+      />
+    );
+  }
 
   return (
     <div>
@@ -53,11 +75,7 @@ export default async function CheckoutPaymentPage({
 
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 sm:pb-20 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          {"error" in secretResult ? (
-            <EmbeddedCheckoutError message={secretResult.error} />
-          ) : (
-            <EmbeddedCheckoutPanel clientSecret={secretResult.clientSecret} />
-          )}
+          {panel}
           <EmbeddedCheckoutAside />
         </div>
         <p className="mt-6 text-center text-xs text-navy/45">

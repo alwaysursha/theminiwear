@@ -21,7 +21,8 @@
   "vars": {
     "R2_PUBLIC_URL": "https://pub-1756d0c5dc364b8f9e2d9109e1b0fc67.r2.dev",
     "NEXTAUTH_URL": "https://theminiwear.com",
-    "NEXT_PUBLIC_STORE_CURRENCY": "CAD"
+    "NEXT_PUBLIC_STORE_CURRENCY": "CAD",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51To26OC3vS2DJWKyEOG4GwkIcS555q0zslpmFUgsKgZjSc5zc2QcM4StdFuBAd9UT3MLu4FdBD3gKYaYC75X4LmN000yD9sd8O"
   },
   "services": [
     {
