@@ -6,7 +6,7 @@ import { Providers } from "@/components/storefront/Providers";
 import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
-import { getStoreInfo } from "@/lib/settings";
+import { defaultStoreInfo, getStoreInfo } from "@/lib/settings";
 
 export default async function StorefrontLayout({
   children,
@@ -16,7 +16,12 @@ export default async function StorefrontLayout({
   let showContact = true;
   let legalLinks: { href: string; label: string }[] = [];
 
-  const store = await getStoreInfo();
+  let store = defaultStoreInfo();
+  try {
+    store = await getStoreInfo();
+  } catch {
+    // DB unavailable — fall back to static store defaults
+  }
 
   try {
     const [contactPage, footerLegal] = await Promise.all([

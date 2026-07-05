@@ -1,9 +1,35 @@
 import { cache } from "react";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 
+type HyperdriveBinding = {
+  connectionString: string;
+};
+
+function readDatabaseUrl(): string | undefined {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
+  try {
+    const { env } = getCloudflareContext();
+    if (typeof env.DATABASE_URL === "string" && env.DATABASE_URL) {
+      return env.DATABASE_URL;
+    }
+    const hyperdrive = env.HYPERDRIVE as HyperdriveBinding | undefined;
+    if (hyperdrive?.connectionString) {
+      return hyperdrive.connectionString;
+    }
+  } catch {
+    // Outside Cloudflare runtime (local build, tests, etc.)
+  }
+
+  return undefined;
+}
+
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = readDatabaseUrl();
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");

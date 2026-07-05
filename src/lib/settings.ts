@@ -30,6 +30,18 @@ export type StoreInfo = {
   whatsappIntro: string;
 };
 
+export function defaultStoreInfo(): StoreInfo {
+  return {
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    currency: "USD",
+    timezone: "America/New_York",
+    whatsappE164: WHATSAPP_PHONE_E164,
+    whatsappDisplay: WHATSAPP_DISPLAY,
+    whatsappIntro: WHATSAPP_MESSAGE_INTRO,
+  };
+}
+
 export async function getStoreInfo(): Promise<StoreInfo> {
   const settings = await prisma.storeSetting.findMany({
     where: { key: { in: Object.values(STORE_INFO_KEYS) } },

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Nunito } from "next/font/google";
 import { Providers } from "@/components/storefront/Providers";
-import { getStoreInfo } from "@/lib/settings";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
+import { defaultStoreInfo, getStoreInfo } from "@/lib/settings";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -19,7 +20,13 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://theminiwear.com";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { name, description } = await getStoreInfo();
+  let name = SITE_NAME;
+  let description = SITE_DESCRIPTION;
+  try {
+    ({ name, description } = await getStoreInfo());
+  } catch {
+    ({ name, description } = defaultStoreInfo());
+  }
   return {
     metadataBase: new URL(SITE_URL),
     title: {
