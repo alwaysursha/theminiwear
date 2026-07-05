@@ -35,6 +35,9 @@ export async function getStripe() {
     const { default: StripeClient } = await import("stripe");
     stripeClient = new StripeClient(key, {
       apiVersion: "2026-05-27.dahlia",
+      // Cloudflare Workers must use fetch — Node's HTTP client fails with
+      // "An error occurred with our connection to Stripe. Request was retried."
+      httpClient: StripeClient.createFetchHttpClient(),
     });
   }
   return stripeClient;
