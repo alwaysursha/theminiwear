@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { toAbsoluteUrl, getSiteUrl } from "@/emails/theme";
 import {
   CUSTOM_SIZE_FEE,
   sanitizeMeasurements,
@@ -44,8 +45,14 @@ const checkoutInputSchema = z.object({
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
 
 export async function createCheckoutSession(input: CheckoutInput) {
-  const session = await auth();
-  const body = checkoutInputSchema.parse(input);
+  try {
+    const parsed = checkoutInputSchema.safeParse(input);
+    if (!parsed.success) {
+      return { error: "Invalid checkout details. Please refresh and try again." };
+    }
+    const body = parsed.data;
+
+    const session = await auth();
 
   const variantIds = [...new Set(body.items.map((i) => i.variantId))];
   const variants = await prisma.productVariant.findMany({
@@ -118,7 +125,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
                 ? summarizeMeasurements(measurements) || "Custom-fit tailoring"
                 : undefined,
             images: variant.product.images[0]?.url
-              ? [variant.product.images[0].url]
+              ? [toAbsoluteUrl(variant.product.images[0].url)]
               : undefined,
           },
           unit_amount: Math.round(unitPrice * 100),
@@ -211,12 +218,13 @@ export async function createCheckoutSession(input: CheckoutInput) {
   }
 
   const stripe = await getStripe();
+  const siteUrl = getSiteUrl();
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: session?.user?.email ?? body.guestEmail,
     line_items: lineItems.map((i) => i.stripeItem),
-    success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
+    success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}/cart`,
     metadata: {
       userId: session?.user?.id ?? "",
       addressId: addressId ?? "",
@@ -246,6 +254,20 @@ export async function createCheckoutSession(input: CheckoutInput) {
   }
 
   return { url: checkoutSession.url };
+  } catch (error) {
+    console.error("createCheckoutSession failed:", error);
+    const message =
+      error instanceof Error ? error.message : "Checkout failed";
+    if (message.includes("STRIPE_SECRET_KEY")) {
+      return { error: "Payments are not configured yet. Please contact support." };
+    }
+    return {
+      error:
+        message.includes("Stripe") || message.includes("url")
+          ? "Could not start payment. Please try again or contact support."
+          : message,
+    };
+  }
 }
 
 const addressUpdateSchema = z.object({
