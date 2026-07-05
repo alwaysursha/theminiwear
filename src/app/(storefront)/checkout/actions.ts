@@ -24,6 +24,7 @@ import {
   resolveCheckoutShipping,
   resolveShippingCountry,
 } from "@/lib/shipping";
+import { previewCheckoutDiscount } from "@/lib/checkout-discount";
 import { z } from "zod";
 
 const checkoutInputSchema = z.object({
@@ -97,24 +98,6 @@ export async function createCheckoutSession(input: CheckoutInput) {
     }
   }
 
-  let discountId: string | undefined;
-  let discountAmount = 0;
-  let freeShippingDiscount = false;
-
-  if (body.discountCode) {
-    const discount = await prisma.discount.findFirst({
-      where: {
-        code: body.discountCode.toUpperCase(),
-        isActive: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-    });
-
-    if (discount && (!discount.maxUses || discount.usedCount < discount.maxUses)) {
-      discountId = discount.id;
-    }
-  }
-
   const lineItems = body.items.map((item) => {
     const variant = variantMap.get(item.variantId)!;
 
@@ -157,26 +140,18 @@ export async function createCheckoutSession(input: CheckoutInput) {
     0,
   );
 
-  if (discountId) {
-    const discount = await prisma.discount.findUnique({
-      where: { id: discountId },
-    });
-    if (discount) {
-      if (
-        discount.minOrderAmount != null &&
-        subtotal < Number(discount.minOrderAmount)
-      ) {
-        discountId = undefined;
-      } else if (discount.type === "PERCENTAGE") {
-        discountAmount = subtotal * (Number(discount.value) / 100);
-      } else if (discount.type === "FIXED") {
-        discountAmount = Math.min(Number(discount.value), subtotal);
-      } else if (discount.type === "FREE_SHIPPING") {
-        freeShippingDiscount = true;
-      }
-    } else {
-      discountId = undefined;
+  let discountId: string | undefined;
+  let discountAmount = 0;
+  let freeShippingDiscount = false;
+
+  if (body.discountCode?.trim()) {
+    const preview = await previewCheckoutDiscount(body.discountCode, subtotal);
+    if ("error" in preview) {
+      return { error: preview.error };
     }
+    discountId = preview.discount.id;
+    discountAmount = preview.discount.amount;
+    freeShippingDiscount = preview.discount.freeShipping;
   }
 
   const shippingCountry =
@@ -274,17 +249,13 @@ export async function createCheckoutSession(input: CheckoutInput) {
     const discount = await prisma.discount.findUnique({
       where: { id: discountId },
     });
-    if (discount && discount.type !== "FREE_SHIPPING") {
+    if (discount && discount.type !== "FREE_SHIPPING" && discountAmount > 0) {
       const coupon = await stripe.coupons.create({
         name: discount.code,
         duration: "once",
         max_redemptions: 1,
-        ...(discount.type === "PERCENTAGE"
-          ? { percent_off: Number(discount.value) }
-          : {
-              amount_off: Math.round(discountAmount * 100),
-              currency: stripeCurrency,
-            }),
+        amount_off: Math.round(discountAmount * 100),
+        currency: stripeCurrency,
       });
       stripeDiscounts = [{ coupon: coupon.id }];
     }
@@ -338,6 +309,10 @@ export async function createCheckoutSession(input: CheckoutInput) {
 
 export async function fetchShippingQuotes(country: string, subtotal: number) {
   return getShippingQuotes(country, subtotal);
+}
+
+export async function applyCheckoutDiscount(code: string, subtotal: number) {
+  return previewCheckoutDiscount(code, subtotal);
 }
 
 export async function getEmbeddedCheckoutClientSecret(

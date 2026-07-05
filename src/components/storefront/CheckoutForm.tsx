@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  applyCheckoutDiscount,
   createCheckoutSession,
   fetchShippingQuotes,
   updateAddress,
@@ -26,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCartStore } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/utils";
+import type { ResolvedCheckoutDiscount } from "@/lib/checkout-discount";
 
 type ShippingQuote = {
   id: string;
@@ -175,6 +177,12 @@ export function CheckoutForm({
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [quotesError, setQuotesError] = useState<string | null>(null);
 
+  const [discountInput, setDiscountInput] = useState("");
+  const [appliedDiscount, setAppliedDiscount] =
+    useState<ResolvedCheckoutDiscount | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+
   useEffect(() => setMounted(true), []);
 
   const usingNewAddress = useNewAddress || !selectedAddressId;
@@ -189,8 +197,16 @@ export function CheckoutForm({
     (quote) => quote.id === selectedShippingRateId,
   );
   const shippingCost = selectedShippingQuote?.price ?? 0;
-  const total = subtotal + shippingCost;
+  const effectiveShippingCost = appliedDiscount?.freeShipping ? 0 : shippingCost;
+  const discountAmount = appliedDiscount?.amount ?? 0;
+  const total = subtotal - discountAmount + effectiveShippingCost;
   const profileName = splitUserName(userName);
+
+  useEffect(() => {
+    setAppliedDiscount(null);
+    setDiscountError(null);
+    setDiscountInput("");
+  }, [subtotal]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -237,6 +253,37 @@ export function CheckoutForm({
       cancelled = true;
     };
   }, [mounted, shippingCountry, subtotal]);
+
+  async function handleApplyDiscount() {
+    const code = discountInput.trim();
+    if (!code) {
+      setDiscountError("Enter a discount code.");
+      setAppliedDiscount(null);
+      return;
+    }
+
+    setApplyingDiscount(true);
+    setDiscountError(null);
+
+    const result = await applyCheckoutDiscount(code, subtotal);
+
+    setApplyingDiscount(false);
+
+    if ("error" in result) {
+      setDiscountError(result.error);
+      setAppliedDiscount(null);
+      return;
+    }
+
+    setAppliedDiscount(result.discount);
+    setDiscountInput(result.discount.code);
+  }
+
+  function clearDiscount() {
+    setAppliedDiscount(null);
+    setDiscountInput("");
+    setDiscountError(null);
+  }
 
   async function handleGoogle() {
     setLoading(true);
@@ -394,7 +441,7 @@ export function CheckoutForm({
         addressId: usingNewAddress ? undefined : selectedAddressId ?? undefined,
         guestEmail,
         shippingRateId: selectedShippingRateId,
-        discountCode: (formData.get("discountCode") as string) || undefined,
+        discountCode: appliedDiscount?.code ?? undefined,
         shippingAddress,
       });
 
@@ -988,12 +1035,60 @@ export function CheckoutForm({
 
         {/* 4 — Discount */}
         <StepCard step={4} title="Discount code" subtitle="Have a promo code?">
-          <input
-            id="discountCode"
-            name="discountCode"
-            placeholder="Enter code"
-            className={cn(inputCls, "mt-0 uppercase placeholder:normal-case")}
-          />
+          <div className="flex gap-2">
+            <input
+              id="discountCode"
+              name="discountCode"
+              value={discountInput}
+              onChange={(event) => {
+                setDiscountInput(event.target.value);
+                if (appliedDiscount) {
+                  setAppliedDiscount(null);
+                }
+                setDiscountError(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void handleApplyDiscount();
+                }
+              }}
+              placeholder="Enter code"
+              className={cn(inputCls, "mt-0 uppercase placeholder:normal-case")}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleApplyDiscount()}
+              disabled={applyingDiscount || !discountInput.trim()}
+              className="shrink-0"
+            >
+              {applyingDiscount ? "Applying..." : "Apply"}
+            </Button>
+          </div>
+
+          {appliedDiscount && (
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
+              <span>
+                <span className="font-semibold">{appliedDiscount.label}</span>{" "}
+                applied
+              </span>
+              <button
+                type="button"
+                onClick={clearDiscount}
+                className="rounded-md p-1 text-emerald-700 transition hover:bg-emerald-100"
+                aria-label="Remove discount"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {discountError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-600">
+              {discountError}
+            </p>
+          )}
         </StepCard>
       </div>
 
@@ -1033,10 +1128,31 @@ export function CheckoutForm({
                 {formatPrice(subtotal)}
               </span>
             </div>
+            {appliedDiscount && (discountAmount > 0 || appliedDiscount.freeShipping) && (
+              <div className="flex justify-between text-emerald-700">
+                <span>Discount ({appliedDiscount.code})</span>
+                <span className="font-semibold">
+                  {discountAmount > 0
+                    ? `-${formatPrice(discountAmount)}`
+                    : "Free shipping"}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-navy/65">
               <span>Shipping</span>
               <span className="font-semibold text-navy">
-                {formatPrice(shippingCost)}
+                {appliedDiscount?.freeShipping ? (
+                  <span className="inline-flex items-center gap-2">
+                    {shippingCost > 0 && (
+                      <span className="font-normal text-navy/40 line-through">
+                        {formatPrice(shippingCost)}
+                      </span>
+                    )}
+                    <span className="text-emerald-700">Free</span>
+                  </span>
+                ) : (
+                  formatPrice(shippingCost)
+                )}
               </span>
             </div>
           </div>
