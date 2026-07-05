@@ -1,13 +1,10 @@
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { requireStripePublishableKey } from "@/lib/stripe-publishable-key";
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
 export function getStripePublishableKey(): string {
-  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-  if (!key) {
-    throw new Error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set");
-  }
-  return key;
+  return requireStripePublishableKey();
 }
 
 export function getStripeJs(): Promise<Stripe | null> {

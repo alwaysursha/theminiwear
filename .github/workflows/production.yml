@@ -43,4 +43,5 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_URL: https://theminiwear.com
           NEXT_PUBLIC_STORE_CURRENCY: CAD
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: pnpm run deploy:cf

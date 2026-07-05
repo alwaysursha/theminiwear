@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { toStripeCurrency } from "@/lib/currency";
 import { getSiteUrl } from "@/emails/theme";
-import { getStoreInfo } from "@/lib/settings";
+import { getStoreInfo, getSiteSaleSettings } from "@/lib/settings";
+import { getVariantPricing } from "@/lib/product-utils";
 import {
   stripeCheckoutEmbeddedParams,
   stripeCheckoutErrorMessage,
@@ -68,7 +69,10 @@ export async function createCheckoutSession(input: CheckoutInput) {
     const body = parsed.data;
 
     const session = await auth();
-    const { currency: storeCurrency } = await getStoreInfo();
+    const [{ currency: storeCurrency }, siteSale] = await Promise.all([
+      getStoreInfo(),
+      getSiteSaleSettings(),
+    ]);
     const stripeCurrency = toStripeCurrency(storeCurrency);
 
   const variantIds = [...new Set(body.items.map((i) => i.variantId))];
@@ -106,7 +110,8 @@ export async function createCheckoutSession(input: CheckoutInput) {
       : null;
     const isCustom = measurements != null && hasMeasurements(measurements);
     const customFee = isCustom ? CUSTOM_SIZE_FEE : 0;
-    const unitPrice = Number(variant.price) + customFee;
+    const pricing = getVariantPricing(variant, variant.product, siteSale);
+    const unitPrice = pricing.currentPrice + customFee;
 
     const baseName = `${variant.product.name} (${variant.size} / ${variant.color})`;
     const description =

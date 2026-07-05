@@ -1,52 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useMemo } from "react";
 import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
-import { getEmbeddedCheckoutClientSecret } from "@/app/(storefront)/checkout/actions";
-import { getStripeJs } from "@/lib/stripe-client";
 
-export function EmbeddedCheckoutPanel({ sessionId }: { sessionId: string }) {
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchClientSecret = useCallback(async () => {
-    const result = await getEmbeddedCheckoutClientSecret(sessionId);
-    if ("error" in result) {
-      setError(result.error);
-      throw new Error(result.error);
-    }
-    return result.clientSecret;
-  }, [sessionId]);
-
-  if (error) {
-    return (
-      <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm text-red-700">{error}</p>
-        <Link
-          href="/checkout"
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-coral"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to checkout
-        </Link>
-      </div>
-    );
-  }
+export function EmbeddedCheckoutPanel({
+  clientSecret,
+  publishableKey,
+}: {
+  clientSecret: string;
+  publishableKey: string;
+}) {
+  const stripePromise = useMemo(
+    () => loadStripe(publishableKey),
+    [publishableKey],
+  );
 
   return (
     <div className="rounded-3xl border border-navy/8 bg-background p-2 pb-6 shadow-[0_8px_30px_rgba(30,42,74,0.06)] sm:p-3 sm:pb-8">
       <EmbeddedCheckoutProvider
-        stripe={getStripeJs()}
-        options={{ fetchClientSecret }}
+        stripe={stripePromise}
+        options={{ clientSecret }}
       >
         <div className="stripe-embedded-checkout min-h-[520px] overflow-hidden rounded-2xl bg-background">
           <EmbeddedCheckout className="bg-background" />
         </div>
       </EmbeddedCheckoutProvider>
+    </div>
+  );
+}
+
+export function EmbeddedCheckoutError({
+  message,
+}: {
+  message: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center">
+      <p className="text-sm text-red-700">{message}</p>
+      <Link
+        href="/checkout"
+        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-coral"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to checkout
+      </Link>
     </div>
   );
 }
