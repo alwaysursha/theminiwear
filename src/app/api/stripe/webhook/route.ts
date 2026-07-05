@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { clearUserCartById } from "@/lib/actions/cart";
 import { generateOrderNumber } from "@/lib/utils";
 import type Stripe from "stripe";
 
@@ -92,6 +93,10 @@ export async function POST(request: Request) {
         where: { id: item.variantId },
         data: { stock: { decrement: item.quantity } },
       });
+    }
+
+    if (metadata.userId) {
+      await clearUserCartById(metadata.userId);
     }
 
     const email = order.user?.email ?? order.guestEmail;

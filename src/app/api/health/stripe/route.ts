@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getSiteUrl } from "@/emails/theme";
 import { getStripe } from "@/lib/stripe";
 import { STRIPE_CURRENCY } from "@/lib/currency";
-import { stripeCheckoutErrorMessage } from "@/lib/stripe-checkout";
+import {
+  stripeCheckoutEmbeddedParams,
+  stripeCheckoutErrorMessage,
+} from "@/lib/stripe-checkout";
 
 export const dynamic = "force-dynamic";
 
@@ -40,10 +43,9 @@ export async function GET(request: Request) {
             quantity: 1,
           },
         ],
-        success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${siteUrl}/cart`,
+        ...stripeCheckoutEmbeddedParams(siteUrl),
       });
-      checkoutProbe = { ok: Boolean(session.url) };
+      checkoutProbe = { ok: Boolean(session.client_secret) };
     } catch (error) {
       checkoutProbe = { ok: false, error: stripeCheckoutErrorMessage(error) };
     }

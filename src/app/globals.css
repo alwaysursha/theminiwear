@@ -1751,3 +1751,13 @@ h5,
 h6 {
   font-family: var(--font-display), system-ui, sans-serif;
 }
+
+/* Stripe embedded checkout — match storefront warm background, not pure white */
+.stripe-embedded-checkout,
+.stripe-embedded-checkout > div {
+  background-color: var(--background);
+}
+
+.stripe-embedded-checkout iframe {
+  background-color: var(--background);
+}

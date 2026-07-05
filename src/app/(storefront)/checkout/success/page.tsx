@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { ClearCartOnSuccess } from "@/components/storefront/ClearCartOnSuccess";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function CheckoutSuccessPage({
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20 text-center sm:px-6">
+      <ClearCartOnSuccess />
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-mint/50">
         <CheckCircle className="h-10 w-10 text-navy" />
       </div>

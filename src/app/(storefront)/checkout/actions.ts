@@ -6,6 +6,7 @@ import { getStripe } from "@/lib/stripe";
 import { STRIPE_CURRENCY } from "@/lib/currency";
 import { getSiteUrl } from "@/emails/theme";
 import {
+  stripeCheckoutEmbeddedParams,
   stripeCheckoutErrorMessage,
   stripeCheckoutProductData,
   stripeCheckoutShippingLineItem,
@@ -264,8 +265,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
       ...lineItems.map((i) => i.stripeItem),
       ...(shippingLineItem ? [shippingLineItem] : []),
     ],
-    success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/cart`,
+    ...stripeCheckoutEmbeddedParams(siteUrl),
     metadata: {
       userId: session?.user?.id ?? "",
       addressId: addressId ?? "",
@@ -296,7 +296,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
     });
   }
 
-  return { url: checkoutSession.url };
+  return { sessionId: checkoutSession.id };
   } catch (error) {
     console.error("createCheckoutSession failed:", error);
     return { error: stripeCheckoutErrorMessage(error) };
@@ -305,6 +305,36 @@ export async function createCheckoutSession(input: CheckoutInput) {
 
 export async function fetchShippingQuotes(country: string, subtotal: number) {
   return getShippingQuotes(country, subtotal);
+}
+
+export async function getEmbeddedCheckoutClientSecret(
+  sessionId: string,
+): Promise<{ clientSecret: string } | { error: string }> {
+  if (!sessionId.startsWith("cs_")) {
+    return { error: "Invalid checkout session." };
+  }
+
+  try {
+    const stripe = await getStripe();
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (checkoutSession.status === "complete") {
+      return { error: "This checkout has already been completed." };
+    }
+
+    if (checkoutSession.status === "expired") {
+      return { error: "This checkout session has expired. Please try again." };
+    }
+
+    if (!checkoutSession.client_secret) {
+      return { error: "Unable to load payment form. Please try again." };
+    }
+
+    return { clientSecret: checkoutSession.client_secret };
+  } catch (error) {
+    console.error("getEmbeddedCheckoutClientSecret failed:", error);
+    return { error: stripeCheckoutErrorMessage(error) };
+  }
 }
 
 const addressUpdateSchema = z.object({

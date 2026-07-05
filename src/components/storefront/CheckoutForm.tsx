@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import {
@@ -138,6 +139,7 @@ export function CheckoutForm({
 }) {
   const items = useCartStore((s) => s.items);
   const getTotal = useCartStore((s) => s.getTotal);
+  const router = useRouter();
   const { update } = useSession();
 
   const [mounted, setMounted] = useState(false);
@@ -402,8 +404,8 @@ export function CheckoutForm({
         return;
       }
 
-      if (result.url) {
-        window.location.href = result.url;
+      if ("sessionId" in result && result.sessionId) {
+        router.push(`/checkout/payment?session_id=${result.sessionId}`);
         return;
       }
       setLoading(false);

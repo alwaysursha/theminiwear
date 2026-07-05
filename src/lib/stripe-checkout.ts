@@ -65,6 +65,23 @@ export function stripeCheckoutShippingLineItem(input: {
   };
 }
 
+/** Branding for embedded Stripe Checkout — matches storefront palette. */
+export function stripeCheckoutBrandingSettings() {
+  return {
+    background_color: "#fffaf9",
+    button_color: "#ff7f6e",
+    border_style: "rounded" as const,
+  };
+}
+
+export function stripeCheckoutEmbeddedParams(siteUrl: string) {
+  return {
+    ui_mode: "embedded_page" as const,
+    return_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    branding_settings: stripeCheckoutBrandingSettings(),
+  };
+}
+
 export function stripeCheckoutErrorMessage(error: unknown): string {
   if (
     error &&
