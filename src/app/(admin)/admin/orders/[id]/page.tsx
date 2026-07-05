@@ -14,6 +14,7 @@ import { OrderStatus, ShipmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { measurementLabel } from "@/lib/custom-size";
+import { productRefundAmount } from "@/lib/order-refund";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,7 @@ export default async function AdminOrderDetailPage({
       address: true,
       items: { include: { variant: { include: { product: true } } } },
       shipment: true,
+      returnRequest: true,
       statusHistory: { orderBy: { createdAt: "desc" } },
       discount: true,
     },
@@ -55,6 +57,7 @@ export default async function AdminOrderDetailPage({
   const boundRefund = refundOrder.bind(null, id);
 
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
+  const refundAmount = productRefundAmount(order);
 
   return (
     <div className="space-y-6">
@@ -293,6 +296,29 @@ export default async function AdminOrderDetailPage({
             )}
           </div>
 
+          {order.returnRequest && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-6">
+              <h3 className="mb-2 font-semibold text-amber-900">
+                Return request
+              </h3>
+              <p className="text-sm text-amber-800">
+                Status:{" "}
+                <span className="font-semibold">
+                  {order.returnRequest.status.replace("_", " ")}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-amber-900/80">
+                {order.returnRequest.reason}
+              </p>
+              <Link
+                href="/admin/returns"
+                className="mt-3 inline-block text-sm font-semibold text-amber-900 underline-offset-2 hover:underline"
+              >
+                Manage in Returns →
+              </Link>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h3 className="mb-4 font-semibold text-slate-900">Update status</h3>
             <form action={boundUpdateStatus} className="space-y-3">
@@ -329,26 +355,28 @@ export default async function AdminOrderDetailPage({
             </form>
           </div>
 
-          {order.status !== OrderStatus.REFUNDED && (
+          {order.status !== OrderStatus.REFUNDED && refundAmount > 0 && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm sm:p-6">
-              <h3 className="mb-1 font-semibold text-rose-900">Refund order</h3>
+              <h3 className="mb-1 font-semibold text-rose-900">Refund products</h3>
               <p className="mb-4 text-sm text-rose-700">
-                Processes a Stripe refund and marks the order as refunded.
+                Refunds the product total via Stripe. Shipping (
+                {formatPrice(Number(order.shippingCost))}) is not refunded.
               </p>
               <ConfirmSubmitButton
                 action={boundRefund}
-                triggerLabel="Process refund"
+                triggerLabel="Refund products"
                 triggerClassName="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-600/30 transition-colors hover:bg-rose-700"
-                title="Process refund?"
-                confirmLabel="Process refund"
+                title="Refund products?"
+                confirmLabel="Refund products"
                 description={
                   <>
                     A Stripe refund of{" "}
                     <span className="font-semibold text-slate-900">
-                      {formatPrice(Number(order.total))}
+                      {formatPrice(refundAmount)}
                     </span>{" "}
-                    will be issued for {order.orderNumber} and the order marked
-                    as refunded. This can&apos;t be undone.
+                    (products only) will be issued for {order.orderNumber}.
+                    Shipping of {formatPrice(Number(order.shippingCost))} is
+                    kept. The order will be marked as refunded.
                   </>
                 }
               />

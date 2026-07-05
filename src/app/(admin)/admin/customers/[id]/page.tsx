@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { paidOrderWhere } from "@/lib/order-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +44,7 @@ export default async function AdminCustomerDetailPage({
   const customer = await prisma.user.findUnique({
     where: { id },
     include: {
-      orders: { orderBy: { createdAt: "desc" } },
+      orders: { where: paidOrderWhere, orderBy: { createdAt: "desc" } },
       notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
       addresses: true,
     },
@@ -54,7 +55,7 @@ export default async function AdminCustomerDetailPage({
   }
 
   const spend = await prisma.order.aggregate({
-    where: { userId: id },
+    where: { userId: id, ...paidOrderWhere },
     _sum: { total: true },
   });
 

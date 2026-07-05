@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/date";
 import { ArrowLeft, Headset, Send, UserRound } from "lucide-react";
-import { InquiryStatus } from "@prisma/client";
+import { InquiryStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { InquiryAdminControls } from "@/components/admin/inquiries/InquiryAdminControls";
 import { replyToInquiry } from "@/lib/actions/inquiries";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,12 @@ export default async function AdminInquiryDetailPage({
   if (!inquiry) {
     notFound();
   }
+
+  const staff = await prisma.user.findMany({
+    where: { role: { in: [Role.ADMIN, Role.ORDER_MANAGER, Role.SUPPORT_AGENT] } },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
 
   const boundReply = replyToInquiry.bind(null, id);
   const fromName =
@@ -78,6 +85,13 @@ export default async function AdminInquiryDetailPage({
           </span>
         </div>
       </div>
+
+      <InquiryAdminControls
+        inquiryId={inquiry.id}
+        status={inquiry.status}
+        assigneeId={inquiry.assigneeId}
+        staff={staff}
+      />
 
       {/* Thread */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">

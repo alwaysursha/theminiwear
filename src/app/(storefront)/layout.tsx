@@ -39,12 +39,12 @@ export default async function StorefrontLayout({
   }
 
   return (
-    <Providers>
+    <Providers currency={store.currency}>
       <StorefrontHeaderChrome>
         <AnnouncementTicker
           freeShippingMessage={
             freeShippingThreshold != null
-              ? `Free shipping on orders over ${formatPrice(freeShippingThreshold)}`
+              ? `Free shipping on orders over ${formatPrice(freeShippingThreshold, store.currency)}`
               : null
           }
         />

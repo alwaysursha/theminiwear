@@ -1,5 +1,9 @@
 import type { NextAuthConfig } from "next-auth";
 import { isAdminRole } from "@/lib/constants";
+import {
+  adminSectionFromPath,
+  canAccessAdminSection,
+} from "@/lib/admin-permissions";
 import type { Role } from "@prisma/client";
 
 export const authConfig = {
@@ -17,7 +21,11 @@ export const authConfig = {
       const role = auth?.user?.role as Role | undefined;
 
       if (pathname.startsWith("/admin")) {
-        return isLoggedIn && !!role && isAdminRole(role);
+        if (!isLoggedIn || !role || !isAdminRole(role)) {
+          return false;
+        }
+        const section = adminSectionFromPath(pathname);
+        return canAccessAdminSection(role, section);
       }
 
       if (pathname.startsWith("/account")) {

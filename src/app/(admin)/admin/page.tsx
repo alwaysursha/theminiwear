@@ -18,6 +18,7 @@ import { OrderStatus, InquiryStatus, ReviewStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, cn } from "@/lib/utils";
 import { formatDate, startOfMonth, subMonths } from "@/lib/date";
+import { PAID_ORDER_STATUSES } from "@/lib/order-status";
 import { MetricCard } from "@/components/admin/dashboard/MetricCard";
 import {
   DashboardPanel,
@@ -30,13 +31,6 @@ import {
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 
 export const dynamic = "force-dynamic";
-
-const PAID_STATUSES = [
-  OrderStatus.PAID,
-  OrderStatus.PROCESSING,
-  OrderStatus.SHIPPED,
-  OrderStatus.DELIVERED,
-];
 
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
 
@@ -92,18 +86,18 @@ export default async function AdminDashboardPage() {
     weekOrders,
   ] = await Promise.all([
     prisma.order.aggregate({
-      where: { status: { in: PAID_STATUSES } },
+      where: { status: { in: PAID_ORDER_STATUSES } },
       _sum: { total: true },
       _count: true,
     }),
     prisma.order.aggregate({
-      where: { status: { in: PAID_STATUSES }, createdAt: { gte: startMonth } },
+      where: { status: { in: PAID_ORDER_STATUSES }, createdAt: { gte: startMonth } },
       _sum: { total: true },
       _count: true,
     }),
     prisma.order.aggregate({
       where: {
-        status: { in: PAID_STATUSES },
+        status: { in: PAID_ORDER_STATUSES },
         createdAt: { gte: startPrevMonth, lt: startMonth },
       },
       _sum: { total: true },
@@ -154,7 +148,7 @@ export default async function AdminDashboardPage() {
       where: { role: Role.USER, createdAt: { gte: startWeek } },
     }),
     prisma.order.findMany({
-      where: { status: { in: PAID_STATUSES }, createdAt: { gte: startWeek } },
+      where: { status: { in: PAID_ORDER_STATUSES }, createdAt: { gte: startWeek } },
       select: { total: true, createdAt: true },
     }),
   ]);

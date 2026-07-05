@@ -14,6 +14,7 @@ export type AdminCustomerRow = {
   notesCount: number;
   joined: string;
   lastOrderAt: string | null;
+  isGuest?: boolean;
 };
 
 type OrdersFilter = "all" | "with" | "without";
@@ -198,14 +199,21 @@ export function CustomersManager({
                           {initials(c.name)}
                         </div>
                         <div className="min-w-0">
-                          <Link
-                            href={`/admin/customers/${c.id}`}
-                            className="block truncate font-medium text-slate-900 hover:text-slate-600"
-                          >
-                            {c.name}
-                          </Link>
+                          {c.isGuest ? (
+                            <p className="block truncate font-medium text-slate-900">
+                              {c.name}
+                            </p>
+                          ) : (
+                            <Link
+                              href={`/admin/customers/${c.id}`}
+                              className="block truncate font-medium text-slate-900 hover:text-slate-600"
+                            >
+                              {c.name}
+                            </Link>
+                          )}
                           <p className="truncate text-xs text-slate-400">
                             {c.email}
+                            {c.isGuest ? " · Guest" : ""}
                           </p>
                         </div>
                       </div>
@@ -229,12 +237,57 @@ export function CustomersManager({
 
           {/* Mobile / tablet cards */}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:hidden">
-            {filtered.map((c) => (
-              <Link
-                key={c.id}
-                href={`/admin/customers/${c.id}`}
-                className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-              >
+            {filtered.map((c) =>
+              c.isGuest ? (
+                <div
+                  key={c.id}
+                  className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                        avatarColor(c.id),
+                      )}
+                    >
+                      {initials(c.email)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-900">
+                        Guest checkout
+                      </p>
+                      <p className="truncate text-xs text-slate-400">
+                        {c.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-center">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {c.ordersCount}
+                      </p>
+                      <p className="text-[11px] text-slate-400">Orders</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {formatPrice(c.totalSpend)}
+                      </p>
+                      <p className="text-[11px] text-slate-400">Spent</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {c.lastOrderAt ? formatDate(c.lastOrderAt) : "—"}
+                      </p>
+                      <p className="text-[11px] text-slate-400">Last order</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={c.id}
+                  href={`/admin/customers/${c.id}`}
+                  className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                >
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
@@ -272,7 +325,8 @@ export function CustomersManager({
                   </div>
                 </div>
               </Link>
-            ))}
+              ),
+            )}
           </div>
         </>
       )}

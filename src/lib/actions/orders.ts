@@ -5,6 +5,7 @@ import { OrderStatus, ShipmentStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendShippingUpdateEmail } from "@/lib/email";
+import { productRefundAmount } from "@/lib/order-refund";
 import { getStripe } from "@/lib/stripe";
 
 export async function updateOrderStatus(
@@ -123,10 +124,16 @@ export async function refundOrder(orderId: string) {
     throw new Error("Order already refunded");
   }
 
+  const refundAmount = productRefundAmount(order);
+  if (refundAmount <= 0) {
+    throw new Error("Nothing to refund on products for this order");
+  }
+
   if (order.stripePaymentId) {
     const stripe = await getStripe();
     await stripe.refunds.create({
       payment_intent: order.stripePaymentId,
+      amount: Math.round(refundAmount * 100),
     });
   }
 
@@ -139,7 +146,7 @@ export async function refundOrder(orderId: string) {
       data: {
         orderId,
         status: OrderStatus.REFUNDED,
-        note: "Refund processed",
+        note: `Product refund processed (${refundAmount.toFixed(2)}; shipping non-refundable)`,
       },
     }),
   ]);

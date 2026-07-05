@@ -3,8 +3,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { STRIPE_CURRENCY } from "@/lib/currency";
+import { toStripeCurrency } from "@/lib/currency";
 import { getSiteUrl } from "@/emails/theme";
+import { getStoreInfo } from "@/lib/settings";
 import {
   stripeCheckoutEmbeddedParams,
   stripeCheckoutErrorMessage,
@@ -66,6 +67,8 @@ export async function createCheckoutSession(input: CheckoutInput) {
     const body = parsed.data;
 
     const session = await auth();
+    const { currency: storeCurrency } = await getStoreInfo();
+    const stripeCurrency = toStripeCurrency(storeCurrency);
 
   const variantIds = [...new Set(body.items.map((i) => i.variantId))];
   const variants = await prisma.productVariant.findMany({
@@ -136,7 +139,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
       measurements: isCustom ? measurements : null,
       stripeItem: {
         price_data: {
-          currency: STRIPE_CURRENCY,
+          currency: stripeCurrency,
           product_data: stripeCheckoutProductData({
             name: isCustom ? `${baseName} — Custom fit` : baseName,
             description,
@@ -159,13 +162,20 @@ export async function createCheckoutSession(input: CheckoutInput) {
       where: { id: discountId },
     });
     if (discount) {
-      if (discount.type === "PERCENTAGE") {
+      if (
+        discount.minOrderAmount != null &&
+        subtotal < Number(discount.minOrderAmount)
+      ) {
+        discountId = undefined;
+      } else if (discount.type === "PERCENTAGE") {
         discountAmount = subtotal * (Number(discount.value) / 100);
       } else if (discount.type === "FIXED") {
-        discountAmount = Number(discount.value);
+        discountAmount = Math.min(Number(discount.value), subtotal);
       } else if (discount.type === "FREE_SHIPPING") {
         freeShippingDiscount = true;
       }
+    } else {
+      discountId = undefined;
     }
   }
 
@@ -256,7 +266,29 @@ export async function createCheckoutSession(input: CheckoutInput) {
   const shippingLineItem = stripeCheckoutShippingLineItem({
     shippingCost: shipping.shippingCost,
     label: shipping.shippingLabel,
+    currency: storeCurrency,
   });
+
+  let stripeDiscounts: { coupon: string }[] | undefined;
+  if (discountId) {
+    const discount = await prisma.discount.findUnique({
+      where: { id: discountId },
+    });
+    if (discount && discount.type !== "FREE_SHIPPING") {
+      const coupon = await stripe.coupons.create({
+        name: discount.code,
+        duration: "once",
+        max_redemptions: 1,
+        ...(discount.type === "PERCENTAGE"
+          ? { percent_off: Number(discount.value) }
+          : {
+              amount_off: Math.round(discountAmount * 100),
+              currency: stripeCurrency,
+            }),
+      });
+      stripeDiscounts = [{ coupon: coupon.id }];
+    }
+  }
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -265,6 +297,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
       ...lineItems.map((i) => i.stripeItem),
       ...(shippingLineItem ? [shippingLineItem] : []),
     ],
+    ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
     ...stripeCheckoutEmbeddedParams(siteUrl),
     metadata: {
       userId: session?.user?.id ?? "",
