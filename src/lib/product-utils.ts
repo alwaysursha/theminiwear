@@ -42,28 +42,28 @@ export function getVariantPricing(
   siteSale?: SiteSaleSettings,
 ): VariantPricing {
   const regularPrice = toNumber(variant.price);
-  const candidates: number[] = [];
 
+  const productCandidates: number[] = [regularPrice];
   if (variant.salePrice != null) {
-    candidates.push(toNumber(variant.salePrice));
+    productCandidates.push(toNumber(variant.salePrice));
   }
-
   if (isSaleActive(product) && product.salePercent && product.salePercent > 0) {
-    candidates.push(regularPrice * (1 - product.salePercent / 100));
+    productCandidates.push(regularPrice * (1 - product.salePercent / 100));
   }
 
+  let productSalePrice = Math.min(
+    ...productCandidates.map((p) => Math.round(p * 100) / 100),
+  );
+
+  let finalPrice = productSalePrice;
   if (siteSale?.enabled && siteSale.percent > 0) {
-    candidates.push(regularPrice * (1 - siteSale.percent / 100));
+    finalPrice =
+      Math.round(productSalePrice * (1 - siteSale.percent / 100) * 100) / 100;
   }
 
-  const bestSale =
-    candidates.length > 0
-      ? Math.min(...candidates.map((p) => Math.round(p * 100) / 100))
-      : null;
-
-  if (bestSale != null && bestSale < regularPrice) {
+  if (finalPrice < regularPrice) {
     return {
-      currentPrice: bestSale,
+      currentPrice: finalPrice,
       compareAtPrice: regularPrice,
       isOnSale: true,
     };

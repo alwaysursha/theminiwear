@@ -3,7 +3,9 @@ import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
+import { SaleEndsAtBadge } from "@/components/storefront/SaleEndsAtBadge";
 import { getProductPriceRange, type ProductWithRelations } from "@/lib/product-utils";
+import { getProductSaleEndsAt } from "@/lib/sale-expiry";
 import { getColorSwatch, uniqueColors } from "@/lib/color-utils";
 import { formatPrice, cn } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
@@ -18,6 +20,7 @@ export function ShopProductCard({
   const image = product.images[0];
   const pricing = getProductPriceRange(product.variants, product, siteSale);
   const colors = uniqueColors(product.variants);
+  const saleEndsAt = getProductSaleEndsAt(product);
   const soldOut = product.variants.every((v) => v.stock <= 0) && product.variants.length > 0;
 
   return (
@@ -47,6 +50,8 @@ export function ShopProductCard({
             {pricing.maxDiscountPercent != null && (
               <SaleOffBadge percent={pricing.maxDiscountPercent} size="md" />
             )}
+
+            {saleEndsAt && <SaleEndsAtBadge endsAt={saleEndsAt} />}
 
             <div className="absolute left-2 top-2 z-20 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {product.isClearance && <Badge variant="clearance">Clearance</Badge>}

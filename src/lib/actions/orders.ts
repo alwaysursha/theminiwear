@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { OrderStatus, ShipmentStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 import { sendShippingUpdateEmail } from "@/lib/email";
 import { productRefundAmount } from "@/lib/order-refund";
@@ -40,6 +41,7 @@ export async function updateOrderStatusFromForm(
   const status = formData.get("status") as OrderStatus;
   const note = formData.get("note") as string;
   await updateOrderStatus(orderId, status, note || undefined);
+  await flashAdminSaved();
 }
 
 export async function updateShipment(
@@ -107,6 +109,7 @@ export async function updateShipment(
   }
 
   revalidatePath(`/admin/orders/${orderId}`);
+  await flashAdminSaved();
 }
 
 export async function refundOrder(orderId: string) {
@@ -153,4 +156,5 @@ export async function refundOrder(orderId: string) {
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  await flashAdminSaved();
 }

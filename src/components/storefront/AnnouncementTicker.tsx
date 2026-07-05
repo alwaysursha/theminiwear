@@ -24,13 +24,13 @@ function TickerTrack({
 }
 
 export function AnnouncementTicker({
-  freeShippingMessage,
+  announcement,
 }: {
-  freeShippingMessage?: string | null;
+  announcement: string;
 }) {
-  const announcement = freeShippingMessage
-    ? `${freeShippingMessage}${SP}/${SP}Orders processed and shipped within 2-5 business days${SP}/${SP}`
-    : `Orders processed and shipped within 2-5 business days${SP}/${SP}`;
+  const content =
+    announcement.trim() ||
+    `Orders processed and shipped within 2-5 business days${SP}/${SP}`;
 
   return (
     <div
@@ -61,8 +61,8 @@ export function AnnouncementTicker({
       </div>
 
       <div className="relative z-10 flex w-max animate-marquee group-hover:[animation-play-state:paused]">
-        <TickerTrack announcement={announcement} />
-        <TickerTrack announcement={announcement} hidden />
+        <TickerTrack announcement={content} />
+        <TickerTrack announcement={content} hidden />
       </div>
     </div>
   );

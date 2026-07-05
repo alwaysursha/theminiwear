@@ -29,4 +29,8 @@
       "service": "theminiwear"
     }
   ],
+  // Paid Workers plan allows up to 300_000 ms; 30s is plenty for Next.js SSR/admin.
+  "limits": {
+    "cpu_ms": 30000
+  },
 }

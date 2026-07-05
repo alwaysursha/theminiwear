@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 
 export async function addCustomerNote(customerId: string, formData: FormData) {
@@ -32,6 +33,7 @@ export async function addCustomerNote(customerId: string, formData: FormData) {
 
   revalidatePath(`/admin/customers/${customerId}`);
   revalidatePath("/admin/customers");
+  await flashAdminSaved();
 }
 
 export async function deleteCustomerNote(noteId: string, customerId: string) {
@@ -40,4 +42,5 @@ export async function deleteCustomerNote(noteId: string, customerId: string) {
   await prisma.customerNote.delete({ where: { id: noteId } });
 
   revalidatePath(`/admin/customers/${customerId}`);
+  await flashAdminSaved();
 }

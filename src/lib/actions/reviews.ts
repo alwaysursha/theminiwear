@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ReviewStatus } from "@prisma/client";
 import { auth, requireRoleAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 import {
   canUserReviewProduct,
@@ -100,6 +101,7 @@ export async function approveProductReview(reviewId: string): Promise<void> {
   revalidatePath(`/product/${review.product.slug}`);
   revalidatePath("/admin/reviews");
   revalidatePath(`/admin/reviews/${reviewId}`);
+  await flashAdminSaved();
 }
 
 export async function rejectProductReview(
@@ -124,6 +126,7 @@ export async function rejectProductReview(
   revalidatePath(`/product/${review.product.slug}`);
   revalidatePath("/admin/reviews");
   revalidatePath(`/admin/reviews/${reviewId}`);
+  await flashAdminSaved();
 }
 
 export async function updateProductReview(
@@ -152,6 +155,7 @@ export async function updateProductReview(
   revalidatePath(`/product/${review.product.slug}`);
   revalidatePath("/admin/reviews");
   revalidatePath(`/admin/reviews/${reviewId}`);
+  await flashAdminSaved();
 }
 
 export async function deleteProductReview(reviewId: string): Promise<void> {
@@ -164,4 +168,5 @@ export async function deleteProductReview(reviewId: string): Promise<void> {
 
   revalidatePath(`/product/${review.product.slug}`);
   revalidatePath("/admin/reviews");
+  await flashAdminSaved();
 }

@@ -13,6 +13,8 @@ import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
 import { getVariantPricing } from "@/lib/product-utils";
 import type { CartProduct } from "@/lib/product-utils";
+import { getProductSaleEndsAt } from "@/lib/sale-expiry";
+import { SaleEndsAtBadge } from "@/components/storefront/SaleEndsAtBadge";
 import { cn, formatPrice, shouldBypassImageOptimization } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
 
@@ -134,6 +136,8 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
   const variantPricing = selectedVariant
     ? getVariantPricing(selectedVariant, product, siteSale)
     : null;
+
+  const saleEndsAt = useMemo(() => getProductSaleEndsAt(product), [product]);
 
   const lowStock =
     selectedVariant != null &&
@@ -382,7 +386,15 @@ export function AddToCartSection({ product, siteSale }: AddToCartSectionProps) {
             <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-coral sm:mt-2 sm:gap-1.5 sm:text-sm">
               <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
               You&apos;re getting a sweet deal!
+              {siteSale?.enabled && siteSale.percent > 0
+                ? ` — includes extra ${siteSale.percent}% site-wide`
+                : ""}
             </p>
+          )}
+          {saleEndsAt && (
+            <div className="mt-3">
+              <SaleEndsAtBadge endsAt={saleEndsAt} variant="inline" />
+            </div>
           )}
         </div>
 

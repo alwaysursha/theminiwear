@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
+import { SaleEndsAtBadge } from "@/components/storefront/SaleEndsAtBadge";
 import { getProductPriceRange } from "@/lib/product-utils";
+import { getProductSaleEndsAt } from "@/lib/sale-expiry";
 import { formatPrice } from "@/lib/utils";
 import type { SiteSaleSettings } from "@/lib/settings";
 import type { Category, Product, ProductImage, ProductVariant } from "@prisma/client";
@@ -22,6 +24,7 @@ export function ProductCard({
 }) {
   const image = product.images[0];
   const pricing = getProductPriceRange(product.variants, product, siteSale);
+  const saleEndsAt = getProductSaleEndsAt(product);
 
   return (
     <Link
@@ -46,6 +49,7 @@ export function ProductCard({
             {pricing.maxDiscountPercent != null && (
               <SaleOffBadge percent={pricing.maxDiscountPercent} size="md" />
             )}
+            {saleEndsAt && <SaleEndsAtBadge endsAt={saleEndsAt} />}
             <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
               {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
               {product.isNewArrival && <Badge variant="new">New</Badge>}

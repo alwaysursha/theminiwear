@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { Role, HomepageSectionKey, HomepageSectionSort } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
+import { TICKER_KEYS } from "@/lib/ticker";
 import type { HeroButton, HeroProductTile, SitePageSlug } from "@/lib/cms/types";
 
 async function requireDeveloper() {
@@ -64,6 +66,7 @@ export async function saveHeroSettings(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/developer/hero");
+  await flashAdminSaved();
 }
 
 export async function saveHomepageSection(key: HomepageSectionKey, formData: FormData) {
@@ -115,6 +118,7 @@ export async function saveHomepageSection(key: HomepageSectionKey, formData: For
 
   revalidatePath("/");
   revalidatePath(`/admin/developer/${key.toLowerCase().replace(/_/g, "-")}`);
+  await flashAdminSaved();
 }
 
 export async function saveSitePage(slug: SitePageSlug, formData: FormData) {
@@ -150,6 +154,7 @@ export async function saveSitePage(slug: SitePageSlug, formData: FormData) {
   revalidatePath(`/${slug}`);
   revalidatePath("/");
   revalidatePath(`/admin/developer/pages/${slug}`);
+  await flashAdminSaved();
 }
 
 export async function createCategory(formData: FormData) {
@@ -174,6 +179,7 @@ export async function createCategory(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/developer/categories");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function updateCategory(categoryId: string, formData: FormData) {
@@ -191,6 +197,7 @@ export async function updateCategory(categoryId: string, formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/developer/categories");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function deleteCategoryWithProducts(formData: FormData) {
@@ -214,6 +221,7 @@ export async function deleteCategoryWithProducts(formData: FormData) {
     await prisma.category.delete({ where: { id: categoryId } });
     revalidatePath("/");
     revalidatePath("/admin/developer/categories");
+    await flashAdminSaved();
     return;
   }
 
@@ -246,4 +254,38 @@ export async function deleteCategoryWithProducts(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/developer/categories");
   revalidatePath("/shop");
+  await flashAdminSaved();
+}
+
+export async function saveTickerSettings(formData: FormData) {
+  await requireDeveloper();
+
+  const customLine = String(formData.get("customLine") ?? "").trim();
+  const showFreeShipping = formData.get("showFreeShipping") === "on";
+  const secondaryLine = String(formData.get("secondaryLine") ?? "").trim();
+
+  await prisma.$transaction([
+    prisma.storeSetting.upsert({
+      where: { key: TICKER_KEYS.customLine },
+      create: { key: TICKER_KEYS.customLine, value: customLine },
+      update: { value: customLine },
+    }),
+    prisma.storeSetting.upsert({
+      where: { key: TICKER_KEYS.showFreeShipping },
+      create: {
+        key: TICKER_KEYS.showFreeShipping,
+        value: String(showFreeShipping),
+      },
+      update: { value: String(showFreeShipping) },
+    }),
+    prisma.storeSetting.upsert({
+      where: { key: TICKER_KEYS.secondaryLine },
+      create: { key: TICKER_KEYS.secondaryLine, value: secondaryLine },
+      update: { value: secondaryLine },
+    }),
+  ]);
+
+  revalidatePath("/");
+  revalidatePath("/admin/developer/ticker");
+  await flashAdminSaved();
 }

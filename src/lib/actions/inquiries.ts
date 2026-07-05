@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { InquiryStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 import { sendInquiryReplyEmail } from "@/lib/email";
 
@@ -57,6 +58,7 @@ export async function replyToInquiry(inquiryId: string, formData: FormData) {
 
   revalidatePath("/admin/inquiries");
   revalidatePath(`/admin/inquiries/${inquiryId}`);
+  await flashAdminSaved();
 }
 
 export async function updateInquiryStatus(
@@ -77,6 +79,7 @@ export async function updateInquiryStatus(
 
   revalidatePath("/admin/inquiries");
   revalidatePath(`/admin/inquiries/${inquiryId}`);
+  await flashAdminSaved();
 }
 
 export async function assignInquiry(inquiryId: string, formData: FormData) {
@@ -97,4 +100,5 @@ export async function assignInquiry(inquiryId: string, formData: FormData) {
 
   revalidatePath("/admin/inquiries");
   revalidatePath(`/admin/inquiries/${inquiryId}`);
+  await flashAdminSaved();
 }

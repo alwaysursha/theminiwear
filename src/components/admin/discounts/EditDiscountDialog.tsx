@@ -13,17 +13,25 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const boundUpdate = updateDiscount.bind(null, discount.id);
 
   function handleSubmit(formData: FormData) {
+    setError(null);
     startTransition(() => {
       boundUpdate(formData)
-        .then(() => {
+        .then((result) => {
+          if (result.error) {
+            setError(result.error);
+            return;
+          }
           router.refresh();
           setOpen(false);
         })
-        .catch(() => setOpen(false));
+        .catch(() => {
+          setError("Something went wrong. Please try again.");
+        });
     });
   }
 
@@ -62,6 +70,14 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
           </button>
         </div>
         <form action={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2"
+            >
+              {error}
+            </p>
+          )}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor={`code-${discount.id}`}>Code</Label>
             <Input

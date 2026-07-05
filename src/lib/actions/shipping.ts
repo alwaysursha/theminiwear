@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 
 export async function createShippingZone(formData: FormData) {
@@ -24,6 +25,7 @@ export async function createShippingZone(formData: FormData) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function updateShippingZone(zoneId: string, formData: FormData) {
@@ -47,6 +49,7 @@ export async function updateShippingZone(zoneId: string, formData: FormData) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function deleteShippingZone(zoneId: string) {
@@ -58,6 +61,7 @@ export async function deleteShippingZone(zoneId: string) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function createShippingRate(zoneId: string, formData: FormData) {
@@ -84,6 +88,7 @@ export async function createShippingRate(zoneId: string, formData: FormData) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function updateShippingRate(rateId: string, formData: FormData) {
@@ -110,6 +115,7 @@ export async function updateShippingRate(rateId: string, formData: FormData) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function deleteShippingRate(rateId: string) {
@@ -121,4 +127,5 @@ export async function deleteShippingRate(rateId: string) {
   revalidatePath("/checkout");
   revalidatePath("/cart");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }

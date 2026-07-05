@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Gender, type Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { ageGroupForSize, sortShopCategories } from "@/lib/shop-categories";
@@ -119,6 +120,7 @@ export async function createProduct(formData: FormData) {
   });
 
   revalidatePath("/admin/products");
+  await flashAdminSaved();
   redirect("/admin/products");
 }
 
@@ -232,6 +234,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${productId}/edit`);
+  await flashAdminSaved();
   redirect("/admin/products");
 }
 
@@ -241,6 +244,7 @@ export async function deleteProduct(productId: string) {
   await prisma.product.delete({ where: { id: productId } });
 
   revalidatePath("/admin/products");
+  await flashAdminSaved();
 }
 
 export async function toggleProductActive(productId: string) {
@@ -260,6 +264,7 @@ export async function toggleProductActive(productId: string) {
   });
 
   revalidatePath("/admin/products");
+  await flashAdminSaved();
 }
 
 export async function duplicateProduct(productId: string) {
@@ -320,6 +325,7 @@ export async function duplicateProduct(productId: string) {
   });
 
   revalidatePath("/admin/products");
+  await flashAdminSaved();
 }
 
 export async function getCategories() {

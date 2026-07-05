@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 import {
   SITE_SALE_ENABLED_KEY,
@@ -31,9 +32,10 @@ export async function updateSiteWideSale(formData: FormData) {
     }),
   ]);
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/discounts");
   revalidatePath("/");
   revalidatePath("/shop");
+  await flashAdminSaved();
 }
 
 export async function updateStoreInfo(formData: FormData) {
@@ -67,4 +69,5 @@ export async function updateStoreInfo(formData: FormData) {
 
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
+  await flashAdminSaved();
 }

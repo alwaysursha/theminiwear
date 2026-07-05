@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Role } from "@prisma/client";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { AdminSaveToast } from "@/components/admin/AdminSaveToast";
 import { PageTransition } from "@/components/PageTransition";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,7 @@ export function AdminShell({
         <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <PageTransition>{children}</PageTransition>
         </main>
+        <AdminSaveToast />
       </div>
     </div>
   );

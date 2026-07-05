@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ReturnStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 
 export async function updateReturnStatus(
@@ -18,4 +19,5 @@ export async function updateReturnStatus(
 
   revalidatePath("/admin/returns");
   revalidatePath("/admin/orders");
+  await flashAdminSaved();
 }

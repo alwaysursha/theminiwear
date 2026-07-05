@@ -1,6 +1,6 @@
-import { Store, Tag } from "lucide-react";
-import { getSiteSaleSettings, getStoreInfo } from "@/lib/settings";
-import { updateSiteWideSale, updateStoreInfo } from "@/lib/actions/settings";
+import { Store } from "lucide-react";
+import { getStoreInfo } from "@/lib/settings";
+import { updateStoreInfo } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,10 +32,7 @@ const TIMEZONES = [
 ];
 
 export default async function AdminSettingsPage() {
-  const [siteSale, store] = await Promise.all([
-    getSiteSaleSettings(),
-    getStoreInfo(),
-  ]);
+  const store = await getStoreInfo();
 
   return (
     <div className="space-y-6">
@@ -44,59 +41,6 @@ export default async function AdminSettingsPage() {
           Settings
         </h2>
         <p className="text-sm text-slate-500">Store configuration</p>
-      </div>
-
-      {/* Site-wide sale */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-start gap-3 border-b border-slate-100 bg-gradient-to-br from-rose-50 to-pink-50 p-4 sm:p-6">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-            <Tag className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-900">Site-wide sale</h3>
-            <p className="mt-0.5 text-sm text-slate-500">
-              Apply a discount to every product at once. Individual product sales
-              and variant sale prices still apply — customers always get the best
-              price.
-            </p>
-          </div>
-        </div>
-        <form
-          action={updateSiteWideSale}
-          className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6"
-        >
-          <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 sm:col-span-2">
-            <input
-              type="checkbox"
-              name="siteWideSaleEnabled"
-              defaultChecked={siteSale.enabled}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            <span className="text-sm font-medium text-slate-700">
-              Enable site-wide sale
-            </span>
-          </label>
-          <div className="space-y-2">
-            <Label htmlFor="siteWideSalePercent">Discount %</Label>
-            <Input
-              id="siteWideSalePercent"
-              name="siteWideSalePercent"
-              type="number"
-              min={0}
-              max={100}
-              defaultValue={siteSale.percent || 15}
-              className="rounded-lg border-slate-200"
-            />
-          </div>
-          <div className="flex items-end">
-            <Button
-              type="submit"
-              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-            >
-              Save sale settings
-            </Button>
-          </div>
-        </form>
       </div>
 
       {/* Store information (editable) */}
