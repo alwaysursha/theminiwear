@@ -7,6 +7,11 @@ type HyperdriveBinding = {
   connectionString: string;
 };
 
+type CloudflareBindings = {
+  DATABASE_URL?: string;
+  HYPERDRIVE?: HyperdriveBinding;
+};
+
 function readDatabaseUrl(): string | undefined {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
@@ -14,12 +19,12 @@ function readDatabaseUrl(): string | undefined {
 
   try {
     const { env } = getCloudflareContext();
-    if (typeof env.DATABASE_URL === "string" && env.DATABASE_URL) {
-      return env.DATABASE_URL;
+    const bindings = env as typeof env & CloudflareBindings;
+    if (typeof bindings.DATABASE_URL === "string" && bindings.DATABASE_URL) {
+      return bindings.DATABASE_URL;
     }
-    const hyperdrive = env.HYPERDRIVE as HyperdriveBinding | undefined;
-    if (hyperdrive?.connectionString) {
-      return hyperdrive.connectionString;
+    if (bindings.HYPERDRIVE?.connectionString) {
+      return bindings.HYPERDRIVE.connectionString;
     }
   } catch {
     // Outside Cloudflare runtime (local build, tests, etc.)
