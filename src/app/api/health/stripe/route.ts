@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSiteUrl } from "@/emails/theme";
 import { getStripe } from "@/lib/stripe";
+import { STRIPE_CURRENCY } from "@/lib/currency";
 import { stripeCheckoutErrorMessage } from "@/lib/stripe-checkout";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
         line_items: [
           {
             price_data: {
-              currency: "usd",
+              currency: STRIPE_CURRENCY,
               product_data: { name: "Checkout probe" },
               unit_amount: 100,
             },

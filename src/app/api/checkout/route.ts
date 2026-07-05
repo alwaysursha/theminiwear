@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { STRIPE_CURRENCY } from "@/lib/currency";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
         price: Number(variant.price),
         stripeItem: {
           price_data: {
-            currency: "usd",
+            currency: STRIPE_CURRENCY,
             product_data: {
               name: `${variant.product.name} (${variant.size} / ${variant.color})`,
               images: variant.product.images[0]?.url

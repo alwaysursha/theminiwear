@@ -1,4 +1,5 @@
 import { SITE_NAME } from "@/lib/constants";
+export { formatMoney } from "@/lib/currency";
 
 export const EMAIL_COLORS = {
   background: "#fffaf9",
@@ -49,12 +50,4 @@ export function escapeHtml(text: string) {
 
 export function textToHtml(text: string) {
   return escapeHtml(text).replace(/\n/g, "<br />");
-}
-
-export function formatMoney(amount: number | string) {
-  const value = typeof amount === "string" ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }

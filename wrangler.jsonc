@@ -20,7 +20,8 @@
   ],
   "vars": {
     "R2_PUBLIC_URL": "https://pub-1756d0c5dc364b8f9e2d9109e1b0fc67.r2.dev",
-    "NEXTAUTH_URL": "https://theminiwear.com"
+    "NEXTAUTH_URL": "https://theminiwear.com",
+    "NEXT_PUBLIC_STORE_CURRENCY": "CAD"
   },
   "services": [
     {

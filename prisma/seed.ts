@@ -1077,6 +1077,7 @@ async function main() {
     data: [
       { key: "site_wide_sale_enabled", value: "false" },
       { key: "site_wide_sale_percent", value: "15" },
+      { key: "store_currency", value: "CAD" },
     ],
   });
 

@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { STRIPE_CURRENCY } from "@/lib/currency";
 import { getSiteUrl } from "@/emails/theme";
 import {
   stripeCheckoutErrorMessage,
@@ -126,7 +127,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
       measurements: isCustom ? measurements : null,
       stripeItem: {
         price_data: {
-          currency: "usd",
+          currency: STRIPE_CURRENCY,
           product_data: stripeCheckoutProductData({
             name: isCustom ? `${baseName} — Custom fit` : baseName,
             description,

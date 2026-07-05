@@ -34,7 +34,7 @@ export function defaultStoreInfo(): StoreInfo {
   return {
     name: SITE_NAME,
     description: SITE_DESCRIPTION,
-    currency: "USD",
+    currency: "CAD",
     timezone: "America/New_York",
     whatsappE164: WHATSAPP_PHONE_E164,
     whatsappDisplay: WHATSAPP_DISPLAY,
@@ -56,7 +56,7 @@ export async function getStoreInfo(): Promise<StoreInfo> {
   return {
     name: pick(STORE_INFO_KEYS.name, SITE_NAME),
     description: pick(STORE_INFO_KEYS.description, SITE_DESCRIPTION),
-    currency: pick(STORE_INFO_KEYS.currency, "USD"),
+    currency: pick(STORE_INFO_KEYS.currency, "CAD"),
     timezone: pick(STORE_INFO_KEYS.timezone, "America/New_York"),
     whatsappE164: pick(STORE_INFO_KEYS.whatsappE164, WHATSAPP_PHONE_E164),
     whatsappDisplay: pick(STORE_INFO_KEYS.whatsappDisplay, WHATSAPP_DISPLAY),

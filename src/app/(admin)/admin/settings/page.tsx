@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const dynamic = "force-dynamic";
 
-const CURRENCIES = ["USD", "CAD", "EUR", "GBP", "AUD"];
+const CURRENCIES = ["CAD", "USD", "EUR", "GBP", "AUD"];
 
 const TIMEZONES = [
   "America/New_York",
