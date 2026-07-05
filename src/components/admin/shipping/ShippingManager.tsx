@@ -428,7 +428,10 @@ export function ShippingManager({ zones }: { zones: ShippingZoneRow[] }) {
               {zone.rates.length > 0 ? (
                 <div className="mb-5 space-y-3">
                   {zone.rates.map((rate) => (
-                    <RateForm key={rate.id} rate={rate} />
+                    <RateForm
+                      key={`${rate.id}-${rate.minOrder ?? "none"}-${rate.price}`}
+                      rate={rate}
+                    />
                   ))}
                 </div>
               ) : (

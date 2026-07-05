@@ -12,6 +12,37 @@ function revalidateShipping() {
   revalidatePath("/shop");
 }
 
+function parseOptionalOrderAmount(
+  raw: FormDataEntryValue | null,
+): number | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value < 0) {
+    return null;
+  }
+
+  return value;
+}
+
+function parseRateFormData(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const price = Number(formData.get("price"));
+  const minOrder = parseOptionalOrderAmount(formData.get("minOrder"));
+  const maxOrder = parseOptionalOrderAmount(formData.get("maxOrder"));
+  const estimatedDays =
+    String(formData.get("estimatedDays") ?? "").trim() || null;
+
+  return { name, price, minOrder, maxOrder, estimatedDays };
+}
+
 export async function createShippingZone(
   _prev: AdminSaveState,
   formData: FormData,
@@ -91,11 +122,16 @@ export async function createShippingRate(
     return { error: "Zone not found." };
   }
 
-  const name = formData.get("name") as string;
-  const price = parseFloat(formData.get("price") as string);
-  const minOrderRaw = formData.get("minOrder") as string;
-  const maxOrderRaw = formData.get("maxOrder") as string;
-  const estimatedDays = (formData.get("estimatedDays") as string) || null;
+  const { name, price, minOrder, maxOrder, estimatedDays } =
+    parseRateFormData(formData);
+
+  if (!name) {
+    return { error: "Rate name is required." };
+  }
+
+  if (!Number.isFinite(price) || price < 0) {
+    return { error: "Enter a valid price." };
+  }
 
   try {
     await prisma.shippingRate.create({
@@ -103,15 +139,16 @@ export async function createShippingRate(
         zoneId,
         name,
         price,
-        minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
-        maxOrder: maxOrderRaw ? parseFloat(maxOrderRaw) : null,
+        minOrder,
+        maxOrder,
         estimatedDays,
       },
     });
 
     revalidateShipping();
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("createShippingRate failed:", error);
     return { error: "Could not add rate. Please try again." };
   }
 }
@@ -127,11 +164,16 @@ export async function updateShippingRate(
     return { error: "Rate not found." };
   }
 
-  const name = formData.get("name") as string;
-  const price = parseFloat(formData.get("price") as string);
-  const minOrderRaw = formData.get("minOrder") as string;
-  const maxOrderRaw = formData.get("maxOrder") as string;
-  const estimatedDays = (formData.get("estimatedDays") as string) || null;
+  const { name, price, minOrder, maxOrder, estimatedDays } =
+    parseRateFormData(formData);
+
+  if (!name) {
+    return { error: "Rate name is required." };
+  }
+
+  if (!Number.isFinite(price) || price < 0) {
+    return { error: "Enter a valid price." };
+  }
 
   try {
     await prisma.shippingRate.update({
@@ -139,15 +181,16 @@ export async function updateShippingRate(
       data: {
         name,
         price,
-        minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
-        maxOrder: maxOrderRaw ? parseFloat(maxOrderRaw) : null,
+        minOrder,
+        maxOrder,
         estimatedDays,
       },
     });
 
     revalidateShipping();
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("updateShippingRate failed:", error);
     return { error: "Could not save rate. Please try again." };
   }
 }

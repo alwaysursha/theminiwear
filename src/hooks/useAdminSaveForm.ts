@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import type { AdminSaveState } from "@/lib/admin-form-state";
 
@@ -10,14 +11,16 @@ export function useAdminSaveForm(
   ) => Promise<AdminSaveState>,
   initialState: AdminSaveState = {},
 ) {
+  const router = useRouter();
   const [showSaved, setShowSaved] = useState(false);
   const [state, formAction, pending] = useActionState(action, initialState);
 
   useEffect(() => {
     if (state.ok && !pending) {
       setShowSaved(true);
+      router.refresh();
     }
-  }, [state.ok, pending]);
+  }, [state.ok, pending, router]);
 
   useEffect(() => {
     if (state.error) {
