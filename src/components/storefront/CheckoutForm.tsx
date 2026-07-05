@@ -49,6 +49,26 @@ type Address = {
 
 type AccountMode = "create" | "guest";
 
+function splitUserName(name: string | null | undefined): {
+  firstName: string;
+  lastName: string;
+} {
+  const trimmed = (name ?? "").trim();
+  if (!trimmed) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
+  }
+
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
 function GoogleGlyph({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden focusable="false">
@@ -107,12 +127,14 @@ export function CheckoutForm({
   userName,
   isLoggedIn,
   defaultCountry = "CA",
+  shippingCountries,
 }: {
   addresses: Address[];
   userEmail?: string | null;
   userName?: string | null;
   isLoggedIn: boolean;
   defaultCountry?: string;
+  shippingCountries: Array<{ code: string; label: string }>;
 }) {
   const items = useCartStore((s) => s.items);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -137,7 +159,13 @@ export function CheckoutForm({
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const [newAddressCountry, setNewAddressCountry] = useState(defaultCountry);
+  const [newAddressCountry, setNewAddressCountry] = useState(() => {
+    const codes = shippingCountries.map((country) => country.code);
+    if (codes.includes(defaultCountry)) {
+      return defaultCountry;
+    }
+    return codes[0] ?? defaultCountry;
+  });
   const [shippingQuotes, setShippingQuotes] = useState<ShippingQuote[]>([]);
   const [selectedShippingRateId, setSelectedShippingRateId] = useState<
     string | null
@@ -160,6 +188,7 @@ export function CheckoutForm({
   );
   const shippingCost = selectedShippingQuote?.price ?? 0;
   const total = subtotal + shippingCost;
+  const profileName = splitUserName(userName);
 
   useEffect(() => {
     if (!mounted) return;
@@ -278,16 +307,26 @@ export function CheckoutForm({
       | undefined;
 
     if (usingNewAddress) {
-      const firstName = ((formData.get("firstName") as string) || "").trim();
-      const lastName = ((formData.get("lastName") as string) || "").trim();
+      let fullName: string;
+
+      if (isLoggedIn) {
+        fullName =
+          `${profileName.firstName} ${profileName.lastName}`.trim() ||
+          (userName ?? "").trim();
+      } else {
+        const firstName = ((formData.get("firstName") as string) || "").trim();
+        const lastName = ((formData.get("lastName") as string) || "").trim();
+        fullName = `${firstName} ${lastName}`.trim();
+      }
+
       shippingAddress = {
-        fullName: `${firstName} ${lastName}`.trim(),
+        fullName,
         line1: (formData.get("line1") as string) || "",
         line2: (formData.get("line2") as string) || undefined,
         city: (formData.get("city") as string) || "",
         state: (formData.get("state") as string) || "",
         postalCode: (formData.get("postalCode") as string) || "",
-        country: (formData.get("country") as string) || defaultCountry,
+        country: newAddressCountry,
         phone: (formData.get("phone") as string) || undefined,
       };
     }
@@ -646,7 +685,7 @@ export function CheckoutForm({
                           />
                         </div>
                         <div>
-                          <Label>State</Label>
+                          <Label>Province / State</Label>
                           <input
                             className={inputCls}
                             value={editDraft.state}
@@ -659,7 +698,7 @@ export function CheckoutForm({
                           />
                         </div>
                         <div>
-                          <Label>Postal code</Label>
+                          <Label>Postal / Zip Code</Label>
                           <input
                             className={inputCls}
                             value={editDraft.postalCode}
@@ -673,7 +712,7 @@ export function CheckoutForm({
                         </div>
                         <div>
                           <Label>Country</Label>
-                          <input
+                          <select
                             className={inputCls}
                             value={editDraft.country}
                             onChange={(ev) =>
@@ -682,7 +721,13 @@ export function CheckoutForm({
                                 country: ev.target.value,
                               })
                             }
-                          />
+                          >
+                            {shippingCountries.map((country) => (
+                              <option key={country.code} value={country.code}>
+                                {country.label}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div className="sm:col-span-2">
                           <Label>Phone</Label>
@@ -757,26 +802,57 @@ export function CheckoutForm({
                 </button>
               )}
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="firstName">First name</Label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    required
-                    autoComplete="given-name"
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last name</Label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    required
-                    autoComplete="family-name"
-                    className={inputCls}
-                  />
-                </div>
+                {isLoggedIn ? (
+                  <>
+                    <div>
+                      <Label htmlFor="firstName">First name</Label>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        value={profileName.firstName}
+                        readOnly
+                        disabled
+                        autoComplete="given-name"
+                        className={cn(inputCls, "cursor-not-allowed bg-navy/[0.03]")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last name</Label>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        value={profileName.lastName}
+                        readOnly
+                        disabled
+                        autoComplete="family-name"
+                        className={cn(inputCls, "cursor-not-allowed bg-navy/[0.03]")}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Label htmlFor="firstName">First name</Label>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        required
+                        autoComplete="given-name"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last name</Label>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        required
+                        autoComplete="family-name"
+                        className={inputCls}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="sm:col-span-2">
                   <Label htmlFor="line1">Address line 1</Label>
                   <input
@@ -807,7 +883,7 @@ export function CheckoutForm({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state">Province / State</Label>
                   <input
                     id="state"
                     name="state"
@@ -817,7 +893,7 @@ export function CheckoutForm({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="postalCode">Postal code</Label>
+                  <Label htmlFor="postalCode">Postal / Zip Code</Label>
                   <input
                     id="postalCode"
                     name="postalCode"
@@ -828,18 +904,23 @@ export function CheckoutForm({
                 </div>
                 <div>
                   <Label htmlFor="country">Country</Label>
-                  <input
+                  <select
                     id="country"
                     name="country"
                     value={newAddressCountry}
                     onChange={(event) =>
-                      setNewAddressCountry(event.target.value.toUpperCase())
+                      setNewAddressCountry(event.target.value)
                     }
                     required
                     autoComplete="country-name"
-                    placeholder="CA"
                     className={inputCls}
-                  />
+                  >
+                    {shippingCountries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="phone">Phone</Label>

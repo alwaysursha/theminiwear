@@ -2,6 +2,16 @@ import { prisma } from "@/lib/prisma";
 
 export const DEFAULT_SHIPPING_COUNTRY = "CA";
 
+export const SHIPPING_COUNTRY_LABELS: Record<string, string> = {
+  CA: "Canada",
+  US: "United States",
+};
+
+export type ShippingCountryOption = {
+  code: string;
+  label: string;
+};
+
 export type ShippingQuote = {
   id: string;
   name: string;
@@ -106,6 +116,34 @@ export async function getFreeShippingThreshold(
   }
 
   return Math.min(...thresholds);
+}
+
+export async function getShippingCountries(): Promise<ShippingCountryOption[]> {
+  const zones = await prisma.shippingZone.findMany({
+    where: { isActive: true },
+    select: { countries: true },
+  });
+
+  const codes = new Set<string>();
+  for (const zone of zones) {
+    for (const country of zone.countries) {
+      codes.add(normalizeCountryCode(country));
+    }
+  }
+
+  return [...codes]
+    .sort()
+    .map((code) => ({
+      code,
+      label: SHIPPING_COUNTRY_LABELS[code] ?? code,
+    }));
+}
+
+export function defaultShippingCountries(): ShippingCountryOption[] {
+  return [
+    { code: "CA", label: SHIPPING_COUNTRY_LABELS.CA },
+    { code: "US", label: SHIPPING_COUNTRY_LABELS.US },
+  ];
 }
 
 export async function resolveShippingCountry(input: {

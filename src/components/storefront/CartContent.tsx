@@ -258,11 +258,7 @@ export function CartContent({
             </div>
             <div className="flex justify-between text-navy/65">
               <span>Shipping</span>
-              {remaining > 0 ? (
-                <span>Calculated at checkout</span>
-              ) : (
-                <span className="font-semibold text-coral">Free</span>
-              )}
+              <span>Calculated at checkout</span>
             </div>
           </div>
 

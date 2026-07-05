@@ -2,18 +2,29 @@ import { Lock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
-import { DEFAULT_SHIPPING_COUNTRY } from "@/lib/shipping";
+import {
+  DEFAULT_SHIPPING_COUNTRY,
+  defaultShippingCountries,
+  getShippingCountries,
+} from "@/lib/shipping";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
   const session = await auth();
-  const addresses = session?.user?.id
-    ? await prisma.address.findMany({
-        where: { userId: session.user.id },
-        orderBy: [{ isDefault: "desc" }, { label: "asc" }],
-      })
-    : [];
+  const [addresses, shippingCountriesRaw] = await Promise.all([
+    session?.user?.id
+      ? prisma.address.findMany({
+          where: { userId: session.user.id },
+          orderBy: [{ isDefault: "desc" }, { label: "asc" }],
+        })
+      : Promise.resolve([]),
+    getShippingCountries(),
+  ]);
+  const shippingCountries =
+    shippingCountriesRaw.length > 0
+      ? shippingCountriesRaw
+      : defaultShippingCountries();
 
   return (
     <div>
@@ -48,6 +59,7 @@ export default async function CheckoutPage() {
           userName={session?.user?.name}
           isLoggedIn={!!session?.user}
           defaultCountry={DEFAULT_SHIPPING_COUNTRY}
+          shippingCountries={shippingCountries}
         />
       </div>
     </div>
