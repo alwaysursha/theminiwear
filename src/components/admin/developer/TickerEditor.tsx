@@ -1,18 +1,91 @@
 "use client";
 
-import { Megaphone } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
+import { Megaphone, Plus, X } from "lucide-react";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { TickerStaticPreview } from "@/components/storefront/AnnouncementTicker";
 import type { TickerSettings } from "@/lib/ticker";
-import { saveTickerSettings } from "@/lib/actions/developer";
+import { normalizeTickerMessages } from "@/lib/ticker";
+import {
+  saveTickerSettings,
+  type TickerSaveState,
+} from "@/lib/actions/developer";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
+const initialSaveState: TickerSaveState = {};
 
 export function TickerEditor({ ticker }: { ticker: TickerSettings }) {
+  const [messages, setMessages] = useState<string[]>(
+    ticker.messages.length > 0 ? ticker.messages : [""],
+  );
+  const [showSaved, setShowSaved] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<{
+    index: number;
+    label: string;
+  } | null>(null);
+  const [state, formAction, pending] = useActionState(
+    saveTickerSettings,
+    initialSaveState,
+  );
+
+  useEffect(() => {
+    if (state.ok && !pending) {
+      setShowSaved(true);
+    }
+  }, [state.ok, pending]);
+
+  useEffect(() => {
+    if (state.error) {
+      setShowSaved(false);
+    }
+  }, [state.error]);
+
+  function markDirty() {
+    setShowSaved(false);
+  }
+
+  function updateMessage(index: number, value: string) {
+    markDirty();
+    setMessages((current) =>
+      current.map((message, i) => (i === index ? value : message)),
+    );
+  }
+
+  function addMessage() {
+    markDirty();
+    setMessages((current) => [...current, ""]);
+  }
+
+  function requestRemoveMessage(index: number) {
+    if (messages.length <= 1) {
+      return;
+    }
+
+    const label = messages[index]?.trim() || `Message ${index + 1}`;
+    setRemoveTarget({ index, label });
+  }
+
+  function confirmRemoveMessage() {
+    if (!removeTarget) {
+      return;
+    }
+
+    markDirty();
+    setMessages((current) =>
+      current.filter((_, i) => i !== removeTarget.index),
+    );
+    setRemoveTarget(null);
+  }
+
+  const previewMessages = normalizeTickerMessages(messages);
+
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <form
-        action={saveTickerSettings}
+        action={formAction}
         className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
       >
         <div className="flex items-center gap-2">
@@ -20,68 +93,103 @@ export function TickerEditor({ ticker }: { ticker: TickerSettings }) {
           <h3 className="font-semibold text-slate-900">Announcement ticker</h3>
         </div>
         <p className="text-sm text-slate-500">
-          Edit the scrolling bar at the top of the storefront. Segments are
-          separated by a slash in the live ticker.
+          Each line scrolls in order, separated by a slash with equal spacing on
+          both sides — for example:{" "}
+          <span className="whitespace-pre font-mono text-xs text-slate-600">
+            {"          /          Message 1          /          Message 2          /          "}
+          </span>
         </p>
 
-        <div className="space-y-2">
-          <Label htmlFor="customLine">Custom line (optional)</Label>
-          <Input
-            id="customLine"
-            name="customLine"
-            defaultValue={ticker.customLine}
-            placeholder="e.g. New spring collection just dropped"
-            className="rounded-lg border-slate-200"
-          />
+        {state.error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          >
+            {state.error}
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <Label>Ticker messages</Label>
+          {messages.map((message, index) => (
+            <div key={index} className="flex gap-2">
+              <Input
+                name="messages"
+                value={message}
+                onChange={(event) => updateMessage(index, event.target.value)}
+                placeholder={`Message ${index + 1}`}
+                className="rounded-lg border-slate-200"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => requestRemoveMessage(index)}
+                disabled={messages.length <= 1}
+                className="shrink-0 rounded-lg"
+                aria-label={`Remove message ${index + 1}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addMessage}
+            className="rounded-lg"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add message
+          </Button>
         </div>
 
-        <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
-          <input
-            type="checkbox"
-            name="showFreeShipping"
-            defaultChecked={ticker.showFreeShipping}
-            className="h-4 w-4 rounded border-slate-300"
-          />
-          <span className="text-sm text-slate-700">
-            Include free shipping threshold (from Shipping settings)
-          </span>
-        </label>
-
-        <div className="space-y-2">
-          <Label htmlFor="secondaryLine">Shipping / processing message</Label>
-          <Textarea
-            id="secondaryLine"
-            name="secondaryLine"
-            rows={2}
-            defaultValue={ticker.secondaryLine}
-            className="rounded-lg border-slate-200"
-          />
-        </div>
-
-        <Button
-          type="submit"
-          className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-        >
-          Save ticker
-        </Button>
+        <AdminSaveButton
+          pending={pending}
+          saved={showSaved && Boolean(state.ok)}
+          label="Save ticker"
+        />
       </form>
 
       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Preview order
+          Live preview
         </p>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-600">
-          {ticker.customLine.trim() && <li>{ticker.customLine}</li>}
-          {ticker.showFreeShipping && (
-            <li>Free shipping threshold (auto)</li>
-          )}
-          <li>{ticker.secondaryLine}</li>
-        </ol>
+        {previewMessages.length > 0 ? (
+          <div className="mt-3">
+            <TickerStaticPreview messages={messages} />
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">
+            Add at least one message to show the ticker on the storefront.
+          </p>
+        )}
         <p className="mt-4 text-xs text-slate-400">
-          When site-wide sale is on, a red banner appears below this ticker
-          automatically.
+          With two messages, the bar loops as Message 1 → Message 2 → Message 1 →
+          Message 2. When site-wide sale is on, a red banner appears below this
+          ticker automatically.
         </p>
       </div>
+
+      <AdminConfirmDialog
+        open={removeTarget != null}
+        title="Remove ticker message?"
+        description={
+          <>
+            This message will be removed from the storefront ticker. You can add
+            it again anytime before saving.
+            {removeTarget && (
+              <span className="mt-3 block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-slate-900">
+                &ldquo;{removeTarget.label}&rdquo;
+              </span>
+            )}
+          </>
+        }
+        confirmLabel="Remove message"
+        cancelLabel="Keep message"
+        onConfirm={confirmRemoveMessage}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </div>
   );
 }

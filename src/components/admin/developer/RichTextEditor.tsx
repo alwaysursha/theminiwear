@@ -8,6 +8,7 @@ type RichTextEditorProps = {
   name: string;
   defaultValue?: string;
   className?: string;
+  onChange?: () => void;
 };
 
 function exec(command: string, value?: string) {
@@ -18,6 +19,7 @@ export function RichTextEditor({
   name,
   defaultValue = "",
   className,
+  onChange,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,6 +28,7 @@ export function RichTextEditor({
     if (editorRef.current && inputRef.current) {
       inputRef.current.value = editorRef.current.innerHTML;
     }
+    onChange?.();
   }
 
   return (

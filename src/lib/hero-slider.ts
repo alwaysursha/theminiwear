@@ -14,6 +14,7 @@ export type HeroBrandSlide = {
 export type HeroProductItem = {
   slug: string;
   name: string;
+  description: string;
   categoryName: string | null;
   priceDisplay: string;
   discountPercent: number | null;
@@ -73,6 +74,7 @@ function toProductItem(
   return {
     slug: product.slug,
     name: product.name,
+    description: product.description.trim(),
     categoryName: product.category?.name ?? null,
     priceDisplay: pricing.display,
     discountPercent: pricing.maxDiscountPercent,
@@ -99,6 +101,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "peach-pocket-tee",
       name: "Peach Pocket Tee",
+      description: "",
       categoryName: "Tops & Tees",
       priceDisplay: "$14.39",
       discountPercent: 20,
@@ -109,6 +112,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "mini-fleece-jogger-set",
       name: "Mini Fleece Jogger Set",
+      description: "",
       categoryName: "Bottoms",
       priceDisplay: "$26.59",
       discountPercent: 24,
@@ -119,6 +123,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "mint-meadow-sundress",
       name: "Mint Meadow Sundress",
+      description: "",
       categoryName: "Dresses",
       priceDisplay: "$21.59",
       discountPercent: 28,
@@ -129,6 +134,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "cloud-knit-beanie-set",
       name: "Cloud Knit Beanie Set",
+      description: "",
       categoryName: "Accessories",
       priceDisplay: "$15.59",
       discountPercent: 22,
@@ -141,6 +147,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "bunny-knit-cardigan",
       name: "Bunny Knit Cardigan",
+      description: "",
       categoryName: "Outerwear",
       priceDisplay: "$32.99",
       discountPercent: null,
@@ -151,6 +158,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "starlight-pajama-set",
       name: "Starlight Pajama Set",
+      description: "",
       categoryName: "Sleepwear",
       priceDisplay: "$28.99",
       discountPercent: null,
@@ -161,6 +169,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "little-explorer-overalls",
       name: "Little Explorer Overalls",
+      description: "",
       categoryName: "Bottoms",
       priceDisplay: "$34.99",
       discountPercent: null,
@@ -171,6 +180,7 @@ const SHOWCASE_GRID_MOCKS: Record<"sale" | "trending", HeroProductItem[]> = {
     {
       slug: "dino-roar-hoodie",
       name: "Dino Roar Hoodie",
+      description: "",
       categoryName: "Tops & Tees",
       priceDisplay: "$29.99",
       discountPercent: null,

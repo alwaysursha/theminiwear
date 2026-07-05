@@ -3,12 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { DiscountType, Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
-import { flashAdminSaved } from "@/lib/admin-save-flash";
+import type { AdminSaveState } from "@/lib/admin-form-state";
 import { prisma } from "@/lib/prisma";
 
-export type DiscountFormState = {
-  error?: string;
-};
+export type DiscountFormState = AdminSaveState;
 
 function parseDiscountFormData(formData: FormData) {
   const code = (formData.get("code") as string).toUpperCase().trim();
@@ -89,15 +87,19 @@ export async function createDiscount(
   }
 
   revalidatePath("/admin/discounts");
-  await flashAdminSaved();
-  return {};
+  return { ok: true };
 }
 
 export async function updateDiscount(
-  discountId: string,
+  _prev: DiscountFormState,
   formData: FormData,
 ): Promise<DiscountFormState> {
   await requireAdmin();
+
+  const discountId = String(formData.get("discountId") ?? "").trim();
+  if (!discountId) {
+    return { error: "Discount not found." };
+  }
 
   const data = parseDiscountFormData(formData);
 
@@ -129,8 +131,7 @@ export async function updateDiscount(
   }
 
   revalidatePath("/admin/discounts");
-  await flashAdminSaved();
-  return {};
+  return { ok: true };
 }
 
 export async function deleteDiscount(discountId: string) {
@@ -139,7 +140,6 @@ export async function deleteDiscount(discountId: string) {
   await prisma.discount.delete({ where: { id: discountId } });
 
   revalidatePath("/admin/discounts");
-  await flashAdminSaved();
 }
 
 export async function toggleDiscountActive(
@@ -154,5 +154,4 @@ export async function toggleDiscountActive(
   });
 
   revalidatePath("/admin/discounts");
-  await flashAdminSaved();
 }

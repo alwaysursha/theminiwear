@@ -1,15 +1,24 @@
+"use client";
+
 import { Tag } from "lucide-react";
 import type { SiteSaleSettings } from "@/lib/settings";
 import { updateSiteWideSale } from "@/lib/actions/settings";
-import { Button } from "@/components/ui/button";
+import { initialAdminSaveState } from "@/lib/admin-form-state";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAdminSaveForm } from "@/hooks/useAdminSaveForm";
 
 export function SiteWideSalePanel({
   siteSale,
 }: {
   siteSale: SiteSaleSettings;
 }) {
+  const { state, formAction, pending, saved, markDirty } = useAdminSaveForm(
+    updateSiteWideSale,
+    initialAdminSaveState,
+  );
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-start gap-3 border-b border-slate-100 bg-gradient-to-br from-rose-50 to-pink-50 p-4 sm:p-6">
@@ -25,15 +34,24 @@ export function SiteWideSalePanel({
         </div>
       </div>
       <form
-        action={updateSiteWideSale}
+        action={formAction}
         className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6"
       >
+        {state.error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2"
+          >
+            {state.error}
+          </p>
+        )}
         <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 sm:col-span-2">
           <input
             type="checkbox"
             name="siteWideSaleEnabled"
             defaultChecked={siteSale.enabled}
             className="h-4 w-4 rounded border-slate-300"
+            onChange={markDirty}
           />
           <span className="text-sm font-medium text-slate-700">
             Enable site-wide sale
@@ -49,15 +67,18 @@ export function SiteWideSalePanel({
             max={100}
             defaultValue={siteSale.percent || 15}
             className="rounded-lg border-slate-200"
+            onChange={markDirty}
           />
         </div>
         <div className="flex items-end">
-          <Button
-            type="submit"
-            className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-          >
-            Save site-wide sale
-          </Button>
+          <AdminSaveButton
+            pending={pending}
+            saved={saved}
+            label="Save site-wide sale"
+            savingLabel="Saving sale"
+            savedLabel="Sale saved"
+            className="rounded-lg"
+          />
         </div>
       </form>
     </div>

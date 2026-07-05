@@ -22,9 +22,9 @@ import {
   X,
 } from "lucide-react";
 import {
-  approveProductReview,
+  approveProductReviewById,
   deleteProductReview,
-  rejectProductReview,
+  rejectProductReviewById,
 } from "@/lib/actions/reviews";
 import { cn } from "@/lib/utils";
 
@@ -335,12 +335,10 @@ export function ReviewsManager({ reviews }: { reviews: AdminReviewRow[] }) {
                           review={r}
                           busy={busy}
                           onApprove={() =>
-                            runAction(r.id, () => approveProductReview(r.id))
+                            runAction(r.id, () => approveProductReviewById(r.id))
                           }
                           onReject={() =>
-                            runAction(r.id, () =>
-                              rejectProductReview(r.id, new FormData()),
-                            )
+                            runAction(r.id, () => rejectProductReviewById(r.id))
                           }
                           onDelete={() => setConfirmDelete(r)}
                         />
@@ -401,12 +399,10 @@ export function ReviewsManager({ reviews }: { reviews: AdminReviewRow[] }) {
                       review={r}
                       busy={busy}
                       onApprove={() =>
-                        runAction(r.id, () => approveProductReview(r.id))
+                        runAction(r.id, () => approveProductReviewById(r.id))
                       }
                       onReject={() =>
-                        runAction(r.id, () =>
-                          rejectProductReview(r.id, new FormData()),
-                        )
+                        runAction(r.id, () => rejectProductReviewById(r.id))
                       }
                       onDelete={() => setConfirmDelete(r)}
                     />

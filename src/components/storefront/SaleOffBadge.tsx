@@ -2,24 +2,28 @@ import { cn } from "@/lib/utils";
 
 const sizeConfig = {
   xs: {
-    shell: "rounded-md px-2 py-1 shadow-[0_3px_12px_rgba(30,42,74,0.42)]",
-    percent: "text-base",
-    off: "text-[7px] tracking-[0.1em]",
+    shell: "h-9 w-9 shadow-[0_3px_12px_rgba(30,42,74,0.42)]",
+    percent: "text-xs",
+    percentSign: "text-[10px]",
+    off: "text-[6px] tracking-[0.08em]",
   },
   sm: {
-    shell: "rounded-md px-2 py-1 shadow-[0_4px_14px_rgba(30,42,74,0.44)]",
-    percent: "text-lg",
-    off: "text-[8px] tracking-[0.12em]",
+    shell: "h-10 w-10 shadow-[0_4px_14px_rgba(30,42,74,0.44)]",
+    percent: "text-sm",
+    percentSign: "text-[11px]",
+    off: "text-[7px] tracking-[0.1em]",
   },
   md: {
-    shell: "rounded-lg px-2.5 py-1.5 shadow-[0_5px_18px_rgba(30,42,74,0.48)]",
-    percent: "text-xl",
-    off: "text-[9px] tracking-[0.14em]",
+    shell: "h-11 w-11 sm:h-12 sm:w-12 shadow-[0_5px_18px_rgba(30,42,74,0.48)]",
+    percent: "text-base sm:text-lg",
+    percentSign: "text-xs sm:text-sm",
+    off: "text-[7px] sm:text-[8px] tracking-[0.12em]",
   },
   lg: {
-    shell: "rounded-lg px-3 py-2 shadow-[0_6px_22px_rgba(30,42,74,0.5)]",
-    percent: "text-2xl",
-    off: "text-[10px] tracking-[0.16em]",
+    shell: "h-14 w-14 shadow-[0_6px_22px_rgba(30,42,74,0.5)]",
+    percent: "text-xl",
+    percentSign: "text-base",
+    off: "text-[8px] tracking-[0.14em]",
   },
 } as const;
 
@@ -38,51 +42,38 @@ export function SaleOffBadge({
   const config = sizeConfig[size];
 
   const label = (
-    <span className="inline-flex items-baseline leading-none">
-      <span className={cn("font-display font-extrabold text-coral", config.percent)}>
-        {percent}
-      </span>
-      <span className="flex flex-col items-center leading-none">
-        <span className={cn("font-display font-extrabold leading-none text-coral", config.percent)}>
-          %
+    <span className="flex flex-col items-center justify-center leading-none">
+      <span className="inline-flex items-baseline">
+        <span className={cn("font-display font-extrabold text-coral", config.percent)}>
+          {percent}
         </span>
         <span
-          className={cn(
-            "-mt-px font-bold uppercase leading-none text-white/95",
-            config.off,
-          )}
+          className={cn("font-display font-extrabold leading-none text-coral", config.percentSign)}
         >
-          off
+          %
         </span>
+      </span>
+      <span
+        className={cn(
+          "-mt-px font-bold uppercase leading-none text-white/95",
+          config.off,
+        )}
+      >
+        off
       </span>
     </span>
   );
 
-  if (inline) {
-    return (
-      <span
-        className={cn(
-          "pointer-events-none z-10 inline-flex rounded-full bg-navy font-display shadow-[0_4px_14px_rgba(30,42,74,0.35)] ring-1 ring-mint/30",
-          config.shell,
-          className,
-        )}
-        aria-label={`${percent} percent off`}
-      >
-        {label}
-      </span>
-    );
-  }
+  const shellClass = cn(
+    "pointer-events-none z-10 inline-flex items-center justify-center rounded-full bg-gradient-to-b from-navy to-[#162038] font-display ring-1 ring-mint/25",
+    config.shell,
+    !inline && "absolute right-2 top-2 sm:right-2.5 sm:top-2.5",
+    inline && "bg-navy shadow-[0_4px_14px_rgba(30,42,74,0.35)] ring-mint/30",
+    className,
+  );
 
   return (
-    <span
-      className={cn(
-        "pointer-events-none z-10 inline-flex bg-gradient-to-b from-navy to-[#162038] ring-1 ring-mint/25",
-        config.shell,
-        !inline && "absolute right-2 top-2 sm:right-2.5 sm:top-2.5",
-        className,
-      )}
-      aria-label={`${percent} percent off`}
-    >
+    <span className={shellClass} aria-label={`${percent} percent off`}>
       {label}
     </span>
   );

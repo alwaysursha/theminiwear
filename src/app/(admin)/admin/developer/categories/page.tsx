@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { createCategory } from "@/lib/actions/developer";
 import { CategoryManager } from "@/components/admin/developer/CategoryManager";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +11,6 @@ export default async function DeveloperCategoriesPage() {
 
   return (
     <CategoryManager
-      createCategory={createCategory}
       categories={categories.map((cat) => ({
         id: cat.id,
         name: cat.name,

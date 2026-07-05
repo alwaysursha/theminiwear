@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { flashAdminSaved } from "@/lib/admin-save-flash";
+import type { AdminSaveState } from "@/lib/admin-form-state";
 import { prisma } from "@/lib/prisma";
 import {
   SITE_SALE_ENABLED_KEY,
@@ -10,7 +10,10 @@ import {
   STORE_INFO_KEYS,
 } from "@/lib/settings";
 
-export async function updateSiteWideSale(formData: FormData) {
+export async function updateSiteWideSale(
+  _prev: AdminSaveState,
+  formData: FormData,
+): Promise<AdminSaveState> {
   await requireAdmin();
 
   const enabled = formData.get("siteWideSaleEnabled") === "on";
@@ -19,26 +22,33 @@ export async function updateSiteWideSale(formData: FormData) {
     Math.max(0, parseInt(formData.get("siteWideSalePercent") as string, 10) || 0),
   );
 
-  await prisma.$transaction([
-    prisma.storeSetting.upsert({
-      where: { key: SITE_SALE_ENABLED_KEY },
-      create: { key: SITE_SALE_ENABLED_KEY, value: String(enabled) },
-      update: { value: String(enabled) },
-    }),
-    prisma.storeSetting.upsert({
-      where: { key: SITE_SALE_PERCENT_KEY },
-      create: { key: SITE_SALE_PERCENT_KEY, value: String(percent) },
-      update: { value: String(percent) },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.storeSetting.upsert({
+        where: { key: SITE_SALE_ENABLED_KEY },
+        create: { key: SITE_SALE_ENABLED_KEY, value: String(enabled) },
+        update: { value: String(enabled) },
+      }),
+      prisma.storeSetting.upsert({
+        where: { key: SITE_SALE_PERCENT_KEY },
+        create: { key: SITE_SALE_PERCENT_KEY, value: String(percent) },
+        update: { value: String(percent) },
+      }),
+    ]);
 
-  revalidatePath("/admin/discounts");
-  revalidatePath("/");
-  revalidatePath("/shop");
-  await flashAdminSaved();
+    revalidatePath("/admin/discounts");
+    revalidatePath("/");
+    revalidatePath("/shop");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save site-wide sale. Please try again." };
+  }
 }
 
-export async function updateStoreInfo(formData: FormData) {
+export async function updateStoreInfo(
+  _prev: AdminSaveState,
+  formData: FormData,
+): Promise<AdminSaveState> {
   await requireAdmin();
 
   const get = (name: string) =>
@@ -57,17 +67,21 @@ export async function updateStoreInfo(formData: FormData) {
     { key: STORE_INFO_KEYS.whatsappIntro, value: get("whatsappIntro") },
   ];
 
-  await prisma.$transaction(
-    entries.map((entry) =>
-      prisma.storeSetting.upsert({
-        where: { key: entry.key },
-        create: { key: entry.key, value: entry.value },
-        update: { value: entry.value },
-      }),
-    ),
-  );
+  try {
+    await prisma.$transaction(
+      entries.map((entry) =>
+        prisma.storeSetting.upsert({
+          where: { key: entry.key },
+          create: { key: entry.key, value: entry.value },
+          update: { value: entry.value },
+        }),
+      ),
+    );
 
-  revalidatePath("/admin/settings");
-  revalidatePath("/", "layout");
-  await flashAdminSaved();
+    revalidatePath("/admin/settings");
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save store information. Please try again." };
+  }
 }

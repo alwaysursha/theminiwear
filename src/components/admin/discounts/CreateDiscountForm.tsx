@@ -1,25 +1,39 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
 import { DiscountType } from "@prisma/client";
 import {
   createDiscount,
   type DiscountFormState,
 } from "@/lib/actions/discounts";
-import { Button } from "@/components/ui/button";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAdminSaveForm } from "@/hooks/useAdminSaveForm";
 
 const initialState: DiscountFormState = {};
 
 export function CreateDiscountForm() {
-  const [state, formAction, pending] = useActionState(
+  const { state, formAction, pending, saved, markDirty } = useAdminSaveForm(
     createDiscount,
     initialState,
   );
 
+  useEffect(() => {
+    if (state.ok && !pending) {
+      const form = document.getElementById("create-discount-form");
+      if (form instanceof HTMLFormElement) {
+        form.reset();
+      }
+    }
+  }, [state.ok, pending]);
+
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <form
+      id="create-discount-form"
+      action={formAction}
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    >
       {state.error && (
         <p
           role="alert"
@@ -36,6 +50,7 @@ export function CreateDiscountForm() {
           required
           placeholder="SUMMER20"
           className="rounded-lg border-slate-200 uppercase"
+          onChange={markDirty}
         />
       </div>
       <div className="space-y-2">
@@ -44,6 +59,7 @@ export function CreateDiscountForm() {
           id="type"
           name="type"
           className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          onChange={markDirty}
         >
           {Object.values(DiscountType).map((t) => (
             <option key={t} value={t}>
@@ -62,6 +78,7 @@ export function CreateDiscountForm() {
           required
           placeholder="20"
           className="rounded-lg border-slate-200"
+          onChange={markDirty}
         />
       </div>
       <div className="space-y-2">
@@ -72,6 +89,7 @@ export function CreateDiscountForm() {
           type="number"
           step="0.01"
           className="rounded-lg border-slate-200"
+          onChange={markDirty}
         />
       </div>
       <div className="space-y-2">
@@ -81,6 +99,7 @@ export function CreateDiscountForm() {
           name="maxUses"
           type="number"
           className="rounded-lg border-slate-200"
+          onChange={markDirty}
         />
       </div>
       <div className="space-y-2">
@@ -90,6 +109,7 @@ export function CreateDiscountForm() {
           name="expiresAt"
           type="datetime-local"
           className="rounded-lg border-slate-200"
+          onChange={markDirty}
         />
       </div>
       <div className="flex items-center justify-between gap-4 sm:col-span-2 lg:col-span-3">
@@ -99,16 +119,18 @@ export function CreateDiscountForm() {
             name="isActive"
             defaultChecked
             className="rounded border-slate-300"
+            onChange={markDirty}
           />
           Active immediately
         </label>
-        <Button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-        >
-          {pending ? "Creating…" : "Create discount"}
-        </Button>
+        <AdminSaveButton
+          pending={pending}
+          saved={saved}
+          label="Create discount"
+          savingLabel="Creating discount"
+          savedLabel="Discount created"
+          className="rounded-lg"
+        />
       </div>
     </form>
   );

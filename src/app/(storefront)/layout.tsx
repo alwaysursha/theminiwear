@@ -8,9 +8,7 @@ import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
 import { defaultStoreInfo, getSiteSaleSettings, getStoreInfo } from "@/lib/settings";
-import { getFreeShippingThreshold } from "@/lib/shipping";
-import { buildTickerAnnouncement, getTickerSettings } from "@/lib/ticker";
-import { formatPrice } from "@/lib/utils";
+import { getTickerSettings } from "@/lib/ticker";
 
 export default async function StorefrontLayout({
   children,
@@ -21,30 +19,18 @@ export default async function StorefrontLayout({
   let legalLinks: { href: string; label: string }[] = [];
 
   let store = defaultStoreInfo();
-  let freeShippingThreshold: number | null = null;
-  let tickerAnnouncement =
-    "Orders processed and shipped within 2-5 business days";
+  let tickerMessages: string[] = [];
   let siteSale = { enabled: false, percent: 0 };
 
   try {
-    const [storeInfo, threshold, tickerSettings, saleSettings] =
-      await Promise.all([
-        getStoreInfo(),
-        getFreeShippingThreshold(),
-        getTickerSettings(),
-        getSiteSaleSettings(),
-      ]);
+    const [storeInfo, tickerSettings, saleSettings] = await Promise.all([
+      getStoreInfo(),
+      getTickerSettings(),
+      getSiteSaleSettings(),
+    ]);
     store = storeInfo;
-    freeShippingThreshold = threshold;
     siteSale = saleSettings;
-    const freeShippingMessage =
-      freeShippingThreshold != null
-        ? `Free shipping on orders over ${formatPrice(freeShippingThreshold, store.currency)}`
-        : null;
-    tickerAnnouncement = buildTickerAnnouncement(
-      tickerSettings,
-      freeShippingMessage,
-    );
+    tickerMessages = tickerSettings.messages;
   } catch {
     // DB unavailable — fall back to static store defaults
   }
@@ -63,7 +49,9 @@ export default async function StorefrontLayout({
   return (
     <Providers currency={store.currency}>
       <StorefrontHeaderChrome>
-        <AnnouncementTicker announcement={tickerAnnouncement} />
+        {tickerMessages.length > 0 ? (
+          <AnnouncementTicker messages={tickerMessages} />
+        ) : null}
         {siteSale.enabled && siteSale.percent > 0 && (
           <SiteWideSaleBanner percent={siteSale.percent} />
         )}
@@ -72,7 +60,11 @@ export default async function StorefrontLayout({
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>
       </main>
-      <Footer legalLinks={legalLinks} storeName={store.name} />
+      <Footer
+        legalLinks={legalLinks}
+        storeName={store.name}
+        storeDescription={store.description}
+      />
       <WhatsAppChatButton
         phoneE164={store.whatsappE164}
         intro={store.whatsappIntro}

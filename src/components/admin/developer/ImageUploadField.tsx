@@ -12,6 +12,7 @@ type ImageUploadFieldProps = {
   name: string;
   defaultUrl?: string | null;
   aspectRatio?: number;
+  onDirty?: () => void;
 };
 
 async function cropImageToBlob(
@@ -52,6 +53,7 @@ export function ImageUploadField({
   name,
   defaultUrl = "",
   aspectRatio = 16 / 9,
+  onDirty,
 }: ImageUploadFieldProps) {
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -74,6 +76,7 @@ export function ImageUploadField({
         throw new Error(data.error ?? "Upload failed");
       }
       setUrl(data.url);
+      onDirty?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -87,7 +90,10 @@ export function ImageUploadField({
       <Input
         name={name}
         value={url}
-        onChange={(e) => setUrl(e.target.value)}
+        onChange={(e) => {
+          setUrl(e.target.value);
+          onDirty?.();
+        }}
         placeholder="https://... or upload below"
       />
       <div className="flex flex-wrap items-center gap-2">

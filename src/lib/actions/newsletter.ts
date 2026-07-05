@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
 
 export async function deleteNewsletterSubscriber(subscriberId: string) {
@@ -13,5 +12,4 @@ export async function deleteNewsletterSubscriber(subscriberId: string) {
   });
 
   revalidatePath("/admin/newsletter");
-  await flashAdminSaved();
 }

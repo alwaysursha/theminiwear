@@ -1,6 +1,12 @@
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
 import type { SitePageData } from "@/lib/cms/types";
-import { saveSitePage } from "@/lib/actions/developer";
-import { Button } from "@/components/ui/button";
+import {
+  saveSitePage,
+  type PageSaveState,
+} from "@/lib/actions/developer";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/admin/developer/RichTextEditor";
@@ -9,28 +15,76 @@ type PageEditorFormProps = {
   page: SitePageData;
 };
 
+const initialSaveState: PageSaveState = {};
+
 export function PageEditorForm({ page }: PageEditorFormProps) {
-  const saveAction = saveSitePage.bind(null, page.slug);
   const isContact = page.slug === "contact";
+  const [showSaved, setShowSaved] = useState(false);
+  const [state, formAction, pending] = useActionState(
+    saveSitePage,
+    initialSaveState,
+  );
+
+  useEffect(() => {
+    if (state.ok && !pending) {
+      setShowSaved(true);
+    }
+  }, [state.ok, pending]);
+
+  useEffect(() => {
+    if (state.error) {
+      setShowSaved(false);
+    }
+  }, [state.error]);
+
+  function markDirty() {
+    setShowSaved(false);
+  }
 
   return (
     <form
-      action={saveAction}
+      action={formAction}
       className="max-w-3xl space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
     >
+      <input type="hidden" name="pageSlug" value={page.slug} />
+
+      {state.error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+        >
+          {state.error}
+        </p>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" defaultValue={page.title} required />
+        <Input
+          id="title"
+          name="title"
+          defaultValue={page.title}
+          required
+          onChange={markDirty}
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="subtitle">Subtitle</Label>
-        <Input id="subtitle" name="subtitle" defaultValue={page.subtitle ?? ""} />
+        <Input
+          id="subtitle"
+          name="subtitle"
+          defaultValue={page.subtitle ?? ""}
+          onChange={markDirty}
+        />
       </div>
 
       {!isContact && (
         <div className="space-y-2">
           <Label>Body</Label>
-          <RichTextEditor name="body" defaultValue={page.body} />
+          <RichTextEditor
+            name="body"
+            defaultValue={page.body}
+            onChange={markDirty}
+          />
         </div>
       )}
 
@@ -42,6 +96,7 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
               id="contactEmail"
               name="contactEmail"
               defaultValue={page.contactEmail ?? ""}
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -50,6 +105,7 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
               id="contactPhone"
               name="contactPhone"
               defaultValue={page.contactPhone ?? ""}
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -60,6 +116,7 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
               defaultValue={page.contactAddress ?? ""}
               rows={3}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -71,6 +128,7 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
               rows={4}
               placeholder={"Mon–Fri: 9am – 5pm PST\nSat–Sun: Closed"}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              onChange={markDirty}
             />
             <p className="text-xs text-slate-500">
               One line per row — line breaks appear on the contact page.
@@ -85,6 +143,7 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
           name="published"
           defaultChecked={page.published}
           className="rounded border-slate-300"
+          onChange={markDirty}
         />
         Published (unpublished pages show “Work in Progress”)
       </label>
@@ -95,13 +154,19 @@ export function PageEditorForm({ page }: PageEditorFormProps) {
           name="showInNav"
           defaultChecked={page.showInNav}
           className="rounded border-slate-300"
+          onChange={markDirty}
         />
         {isContact ? "Show in header navigation" : "Show in footer navigation"}
       </label>
 
-      <Button type="submit" className="bg-slate-900 text-white hover:bg-slate-800">
-        Save page
-      </Button>
+      <AdminSaveButton
+        pending={pending}
+        saved={showSaved && Boolean(state.ok)}
+        label="Save page"
+        savingLabel="Saving page"
+        savedLabel="Page saved"
+        className="rounded-lg"
+      />
     </form>
   );
 }

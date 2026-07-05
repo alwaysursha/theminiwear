@@ -13,14 +13,11 @@ import {
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { paidOrderWhere } from "@/lib/order-status";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { MetricCard } from "@/components/admin/dashboard/MetricCard";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
-import { addCustomerNote, deleteCustomerNote } from "@/lib/actions/customers";
+import { CustomerNoteForm } from "@/components/admin/customers/CustomerNoteForm";
+import { deleteCustomerNote } from "@/lib/actions/customers";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +56,6 @@ export default async function AdminCustomerDetailPage({
     _sum: { total: true },
   });
 
-  const boundAddNote = addCustomerNote.bind(null, id);
   const displayName = customer.name ?? customer.email;
   const lifetimeSpend = Number(spend._sum.total ?? 0);
   const avgOrder =
@@ -274,37 +270,7 @@ export default async function AdminCustomerDetailPage({
             <p className="mb-5 text-sm text-slate-500">No notes yet.</p>
           )}
 
-          <form
-            action={boundAddNote}
-            className="space-y-4 border-t border-slate-100 pt-5"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="content">Add note</Label>
-              <Textarea
-                id="content"
-                name="content"
-                required
-                rows={3}
-                placeholder="Internal note about this customer…"
-                className="rounded-lg border-slate-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                name="tags"
-                placeholder="vip, returns, wholesale"
-                className="rounded-lg border-slate-200"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-            >
-              Save note
-            </Button>
-          </form>
+          <CustomerNoteForm customerId={id} />
         </div>
       </div>
     </div>

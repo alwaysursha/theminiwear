@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import type { HeroSlide } from "@/lib/hero-slider";
 import { HeroBrandSlide } from "@/components/storefront/HeroBrandSlide";
 import { HeroProductSlideView } from "@/components/storefront/HeroProductSlide";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 5000;
+const SWIPE_THRESHOLD_PX = 48;
+const SWIPE_AXIS_LOCK_PX = 12;
 
 type HeroSliderProps = {
   slides: HeroSlide[];
@@ -15,10 +17,15 @@ type HeroSliderProps = {
 
 export function HeroSlider({ slides }: HeroSliderProps) {
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
   const [flashKey, setFlashKey] = useState(0);
   const activeRef = useRef(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const swipeAxis = useRef<"x" | "y" | null>(null);
   const count = slides.length;
+  const isPaused = hoverPaused || userPaused;
 
   const goTo = useCallback(
     (index: number) => {
@@ -36,28 +43,101 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const next = useCallback(() => goTo(activeRef.current + 1), [goTo]);
   const prev = useCallback(() => goTo(activeRef.current - 1), [goTo]);
 
+  const resetTouch = useCallback(() => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    swipeAxis.current = null;
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLElement>) => {
+      if (count <= 1) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+      touchStartX.current = touch.clientX;
+      touchStartY.current = touch.clientY;
+      swipeAxis.current = null;
+    },
+    [count],
+  );
+
+  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLElement>) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+
+    if (swipeAxis.current === null) {
+      if (
+        Math.abs(deltaX) >= SWIPE_AXIS_LOCK_PX ||
+        Math.abs(deltaY) >= SWIPE_AXIS_LOCK_PX
+      ) {
+        swipeAxis.current =
+          Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent<HTMLElement>) => {
+      if (count <= 1) {
+        resetTouch();
+        return;
+      }
+
+      const touch = event.changedTouches[0];
+      if (!touch || touchStartX.current === null || swipeAxis.current !== "x") {
+        resetTouch();
+        return;
+      }
+
+      const deltaX = touch.clientX - touchStartX.current;
+      if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
+        if (deltaX < 0) {
+          next();
+        } else {
+          prev();
+        }
+      }
+
+      resetTouch();
+    },
+    [count, next, prev, resetTouch],
+  );
+
+  const handleTouchCancel = useCallback(() => {
+    resetTouch();
+  }, [resetTouch]);
+
   useEffect(() => {
-    if (count <= 1 || paused) return;
+    if (count <= 1 || isPaused) return;
     const timer = window.setInterval(next, AUTOPLAY_MS);
     return () => window.clearInterval(timer);
-  }, [count, paused, next]);
+  }, [count, isPaused, next]);
 
   if (count === 0) return null;
 
   return (
     <div className="bg-white">
       <section
-        className="group/slider relative h-[min(80vh,38rem)] overflow-hidden sm:h-[min(64vh,29rem)] lg:h-[min(66vh,34rem)]"
+        className="group/slider relative h-[min(80vh,38rem)] touch-pan-y overflow-hidden sm:h-[min(64vh,29rem)] lg:h-[min(66vh,34rem)]"
         aria-roledescription="carousel"
         aria-label="Featured highlights"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocusCapture={() => setPaused(true)}
+        onMouseEnter={() => setHoverPaused(true)}
+        onMouseLeave={() => setHoverPaused(false)}
+        onFocusCapture={() => setHoverPaused(true)}
         onBlurCapture={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-            setPaused(false);
+            setHoverPaused(false);
           }
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         <div className="relative h-full min-h-0 bg-white">
           {slides.map((slide, index) => {
@@ -100,6 +180,19 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
         {count > 1 && (
           <>
+            <button
+              type="button"
+              onClick={() => setUserPaused((current) => !current)}
+              className="absolute bottom-3 right-3 z-40 flex h-7 w-7 items-center justify-center rounded-full border border-white/45 bg-white/30 text-navy/50 shadow-[0_2px_8px_rgba(26,38,66,0.06)] backdrop-blur-sm transition-[background-color,color,opacity] hover:bg-white/50 hover:text-navy/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 sm:bottom-4 sm:right-4"
+              aria-label={userPaused ? "Play slideshow" : "Pause slideshow"}
+              aria-pressed={userPaused}
+            >
+              {userPaused ? (
+                <Play className="h-3 w-3 fill-current" aria-hidden />
+              ) : (
+                <Pause className="h-3 w-3" aria-hidden />
+              )}
+            </button>
             <button
               type="button"
               onClick={prev}

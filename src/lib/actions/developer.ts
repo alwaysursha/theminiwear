@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { Role, HomepageSectionKey, HomepageSectionSort } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
-import { flashAdminSaved } from "@/lib/admin-save-flash";
 import { prisma } from "@/lib/prisma";
-import { TICKER_KEYS } from "@/lib/ticker";
+import { TICKER_MESSAGES_KEY, normalizeTickerMessages } from "@/lib/ticker";
 import type { HeroButton, HeroProductTile, SitePageSlug } from "@/lib/cms/types";
 
 async function requireDeveloper() {
@@ -25,7 +24,15 @@ function parseJsonArray<T>(raw: string, fallback: T[]): T[] {
   }
 }
 
-export async function saveHeroSettings(formData: FormData) {
+export type HeroSaveState = {
+  ok?: boolean;
+  error?: string;
+};
+
+export async function saveHeroSettings(
+  _prev: HeroSaveState,
+  formData: FormData,
+): Promise<HeroSaveState> {
   await requireDeveloper();
 
   const buttons = parseJsonArray<HeroButton>(
@@ -37,40 +44,67 @@ export async function saveHeroSettings(formData: FormData) {
     [],
   );
 
-  await prisma.heroSettings.upsert({
-    where: { id: "default" },
-    create: {
-      id: "default",
-      eyebrow: String(formData.get("eyebrow") ?? ""),
-      headline: String(formData.get("headline") ?? ""),
-      headlineAccent: (formData.get("headlineAccent") as string) || null,
-      description: String(formData.get("description") ?? ""),
-      backgroundType: formData.get("backgroundType") === "image" ? "image" : "gradient",
-      backgroundImageUrl: (formData.get("backgroundImageUrl") as string) || null,
-      gradientPreset: String(formData.get("gradientPreset") ?? "blush-sky-mint"),
-      buttons,
-      productTiles,
-    },
-    update: {
-      eyebrow: String(formData.get("eyebrow") ?? ""),
-      headline: String(formData.get("headline") ?? ""),
-      headlineAccent: (formData.get("headlineAccent") as string) || null,
-      description: String(formData.get("description") ?? ""),
-      backgroundType: formData.get("backgroundType") === "image" ? "image" : "gradient",
-      backgroundImageUrl: (formData.get("backgroundImageUrl") as string) || null,
-      gradientPreset: String(formData.get("gradientPreset") ?? "blush-sky-mint"),
-      buttons,
-      productTiles,
-    },
-  });
+  try {
+    await prisma.heroSettings.upsert({
+      where: { id: "default" },
+      create: {
+        id: "default",
+        eyebrow: String(formData.get("eyebrow") ?? ""),
+        headline: String(formData.get("headline") ?? ""),
+        headlineAccent: (formData.get("headlineAccent") as string) || null,
+        description: String(formData.get("description") ?? ""),
+        backgroundType:
+          formData.get("backgroundType") === "image" ? "image" : "gradient",
+        backgroundImageUrl: (formData.get("backgroundImageUrl") as string) || null,
+        gradientPreset: String(formData.get("gradientPreset") ?? "blush-sky-mint"),
+        buttons,
+        productTiles,
+      },
+      update: {
+        eyebrow: String(formData.get("eyebrow") ?? ""),
+        headline: String(formData.get("headline") ?? ""),
+        headlineAccent: (formData.get("headlineAccent") as string) || null,
+        description: String(formData.get("description") ?? ""),
+        backgroundType:
+          formData.get("backgroundType") === "image" ? "image" : "gradient",
+        backgroundImageUrl: (formData.get("backgroundImageUrl") as string) || null,
+        gradientPreset: String(formData.get("gradientPreset") ?? "blush-sky-mint"),
+        buttons,
+        productTiles,
+      },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/admin/developer/hero");
-  await flashAdminSaved();
+    revalidatePath("/");
+    revalidatePath("/admin/developer/hero");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save hero. Please try again." };
+  }
 }
 
-export async function saveHomepageSection(key: HomepageSectionKey, formData: FormData) {
+export type SectionSaveState = {
+  ok?: boolean;
+  error?: string;
+};
+
+const homepageSectionKeys: HomepageSectionKey[] = [
+  "CATEGORIES",
+  "NEW_ARRIVALS",
+  "ON_SALE",
+  "CLEARANCE",
+  "TRENDING",
+];
+
+export async function saveHomepageSection(
+  _prev: SectionSaveState,
+  formData: FormData,
+): Promise<SectionSaveState> {
   await requireDeveloper();
+
+  const key = String(formData.get("sectionKey") ?? "") as HomepageSectionKey;
+  if (!homepageSectionKeys.includes(key)) {
+    return { error: "Invalid section." };
+  }
 
   const sortBy = String(formData.get("sortBy") ?? "NEWEST") as HomepageSectionSort;
   const validSort: HomepageSectionSort[] = [
@@ -104,60 +138,91 @@ export async function saveHomepageSection(key: HomepageSectionKey, formData: For
       : {}),
   };
 
-  await prisma.homepageSectionConfig.upsert({
-    where: { key },
-    create: {
-      key,
-      productLimit: 4,
-      sortBy: "NEWEST",
-      includeSiteWideSale: key === "ON_SALE",
-      ...data,
-    },
-    update: data,
-  });
+  try {
+    await prisma.homepageSectionConfig.upsert({
+      where: { key },
+      create: {
+        key,
+        productLimit: 4,
+        sortBy: "NEWEST",
+        includeSiteWideSale: key === "ON_SALE",
+        ...data,
+      },
+      update: data,
+    });
 
-  revalidatePath("/");
-  revalidatePath(`/admin/developer/${key.toLowerCase().replace(/_/g, "-")}`);
-  await flashAdminSaved();
+    revalidatePath("/");
+    revalidatePath(`/admin/developer/sections/${key.toLowerCase().replace(/_/g, "-")}`);
+    return { ok: true };
+  } catch {
+    return { error: "Could not save section. Please try again." };
+  }
 }
 
-export async function saveSitePage(slug: SitePageSlug, formData: FormData) {
+export type PageSaveState = {
+  ok?: boolean;
+  error?: string;
+};
+
+const sitePageSlugs: SitePageSlug[] = ["privacy", "terms", "returns", "contact"];
+
+export async function saveSitePage(
+  _prev: PageSaveState,
+  formData: FormData,
+): Promise<PageSaveState> {
   await requireDeveloper();
 
-  await prisma.sitePage.upsert({
-    where: { slug },
-    create: {
-      slug,
-      title: String(formData.get("title") ?? ""),
-      subtitle: (formData.get("subtitle") as string) || null,
-      body: String(formData.get("body") ?? ""),
-      published: formData.get("published") === "on",
-      showInNav: formData.get("showInNav") === "on",
-      contactEmail: (formData.get("contactEmail") as string) || null,
-      contactPhone: (formData.get("contactPhone") as string) || null,
-      contactAddress: (formData.get("contactAddress") as string) || null,
-      contactHours: (formData.get("contactHours") as string) || null,
-    },
-    update: {
-      title: String(formData.get("title") ?? ""),
-      subtitle: (formData.get("subtitle") as string) || null,
-      body: String(formData.get("body") ?? ""),
-      published: formData.get("published") === "on",
-      showInNav: formData.get("showInNav") === "on",
-      contactEmail: (formData.get("contactEmail") as string) || null,
-      contactPhone: (formData.get("contactPhone") as string) || null,
-      contactAddress: (formData.get("contactAddress") as string) || null,
-      contactHours: (formData.get("contactHours") as string) || null,
-    },
-  });
+  const slug = String(formData.get("pageSlug") ?? "") as SitePageSlug;
+  if (!sitePageSlugs.includes(slug)) {
+    return { error: "Invalid page." };
+  }
 
-  revalidatePath(`/${slug}`);
-  revalidatePath("/");
-  revalidatePath(`/admin/developer/pages/${slug}`);
-  await flashAdminSaved();
+  try {
+    await prisma.sitePage.upsert({
+      where: { slug },
+      create: {
+        slug,
+        title: String(formData.get("title") ?? ""),
+        subtitle: (formData.get("subtitle") as string) || null,
+        body: String(formData.get("body") ?? ""),
+        published: formData.get("published") === "on",
+        showInNav: formData.get("showInNav") === "on",
+        contactEmail: (formData.get("contactEmail") as string) || null,
+        contactPhone: (formData.get("contactPhone") as string) || null,
+        contactAddress: (formData.get("contactAddress") as string) || null,
+        contactHours: (formData.get("contactHours") as string) || null,
+      },
+      update: {
+        title: String(formData.get("title") ?? ""),
+        subtitle: (formData.get("subtitle") as string) || null,
+        body: String(formData.get("body") ?? ""),
+        published: formData.get("published") === "on",
+        showInNav: formData.get("showInNav") === "on",
+        contactEmail: (formData.get("contactEmail") as string) || null,
+        contactPhone: (formData.get("contactPhone") as string) || null,
+        contactAddress: (formData.get("contactAddress") as string) || null,
+        contactHours: (formData.get("contactHours") as string) || null,
+      },
+    });
+
+    revalidatePath(`/${slug}`);
+    revalidatePath("/");
+    revalidatePath(`/admin/developer/pages/${slug}`);
+    return { ok: true };
+  } catch {
+    return { error: "Could not save page. Please try again." };
+  }
 }
 
-export async function createCategory(formData: FormData) {
+export type CategorySaveState = {
+  ok?: boolean;
+  error?: string;
+};
+
+export async function createCategory(
+  _prev: CategorySaveState,
+  formData: FormData,
+): Promise<CategorySaveState> {
   await requireDeveloper();
 
   const name = String(formData.get("name") ?? "").trim();
@@ -169,123 +234,155 @@ export async function createCategory(formData: FormData) {
   const description = (formData.get("description") as string)?.trim() || null;
 
   if (!name || !slug) {
-    throw new Error("Name and slug are required");
+    return { error: "Name and slug are required." };
   }
 
-  await prisma.category.create({
-    data: { name, slug, description },
-  });
+  try {
+    await prisma.category.create({
+      data: { name, slug, description },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/admin/developer/categories");
-  revalidatePath("/shop");
-  await flashAdminSaved();
+    revalidatePath("/");
+    revalidatePath("/admin/developer/categories");
+    revalidatePath("/shop");
+    return { ok: true };
+  } catch {
+    return { error: "Could not create category. The slug may already exist." };
+  }
 }
 
-export async function updateCategory(categoryId: string, formData: FormData) {
+export async function updateCategory(
+  _prev: CategorySaveState,
+  formData: FormData,
+): Promise<CategorySaveState> {
   await requireDeveloper();
 
+  const categoryId = String(formData.get("categoryId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
   const description = (formData.get("description") as string)?.trim() || null;
 
-  await prisma.category.update({
-    where: { id: categoryId },
-    data: { name, slug, description },
-  });
+  if (!categoryId) {
+    return { error: "Category not found." };
+  }
 
-  revalidatePath("/");
-  revalidatePath("/admin/developer/categories");
-  revalidatePath("/shop");
-  await flashAdminSaved();
+  try {
+    await prisma.category.update({
+      where: { id: categoryId },
+      data: { name, slug, description },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/admin/developer/categories");
+    revalidatePath("/shop");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save category. Please try again." };
+  }
 }
 
-export async function deleteCategoryWithProducts(formData: FormData) {
+export type CategoryDeleteState = {
+  ok?: boolean;
+  error?: string;
+};
+
+export async function deleteCategoryWithProducts(
+  _prev: CategoryDeleteState,
+  formData: FormData,
+): Promise<CategoryDeleteState> {
   await requireDeveloper();
 
-  const categoryId = String(formData.get("categoryId") ?? "");
+  const categoryId = String(formData.get("categoryId") ?? "").trim();
   const action = String(formData.get("action") ?? "");
   const targetCategoryId = (formData.get("targetCategoryId") as string) || null;
   const productIds = formData.getAll("productIds") as string[];
 
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-    include: { products: true },
-  });
-
-  if (!category) {
-    throw new Error("Category not found");
+  if (!categoryId) {
+    return { error: "Category not found." };
   }
 
-  if (category.products.length === 0) {
-    await prisma.category.delete({ where: { id: categoryId } });
+  try {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+      include: { products: true },
+    });
+
+    if (!category) {
+      return { error: "Category not found." };
+    }
+
+    if (category.products.length === 0) {
+      await prisma.category.delete({ where: { id: categoryId } });
+      revalidatePath("/");
+      revalidatePath("/admin/developer/categories");
+      revalidatePath("/shop");
+      return { ok: true };
+    }
+
+    const selected =
+      productIds.length > 0
+        ? category.products.filter((p) => productIds.includes(p.id))
+        : category.products;
+
+    if (action === "move") {
+      if (!targetCategoryId || targetCategoryId === categoryId) {
+        return { error: "Choose a different category to move products into." };
+      }
+      await prisma.product.updateMany({
+        where: { id: { in: selected.map((p) => p.id) } },
+        data: { categoryId: targetCategoryId },
+      });
+    } else if (action === "delete") {
+      await prisma.product.deleteMany({
+        where: { id: { in: selected.map((p) => p.id) } },
+      });
+    } else {
+      return { error: "Choose what to do with the products in this category." };
+    }
+
+    const remaining = await prisma.product.count({ where: { categoryId } });
+    if (remaining === 0) {
+      await prisma.category.delete({ where: { id: categoryId } });
+    }
+
     revalidatePath("/");
     revalidatePath("/admin/developer/categories");
-    await flashAdminSaved();
-    return;
+    revalidatePath("/shop");
+    return { ok: true };
+  } catch {
+    return { error: "Could not delete category. Please try again." };
   }
-
-  const selected =
-    productIds.length > 0
-      ? category.products.filter((p) => productIds.includes(p.id))
-      : category.products;
-
-  if (action === "move") {
-    if (!targetCategoryId || targetCategoryId === categoryId) {
-      throw new Error("Choose a different category to move products into");
-    }
-    await prisma.product.updateMany({
-      where: { id: { in: selected.map((p) => p.id) } },
-      data: { categoryId: targetCategoryId },
-    });
-  } else if (action === "delete") {
-    await prisma.product.deleteMany({
-      where: { id: { in: selected.map((p) => p.id) } },
-    });
-  } else {
-    throw new Error("Invalid action");
-  }
-
-  const remaining = await prisma.product.count({ where: { categoryId } });
-  if (remaining === 0) {
-    await prisma.category.delete({ where: { id: categoryId } });
-  }
-
-  revalidatePath("/");
-  revalidatePath("/admin/developer/categories");
-  revalidatePath("/shop");
-  await flashAdminSaved();
 }
 
-export async function saveTickerSettings(formData: FormData) {
+export type TickerSaveState = {
+  ok?: boolean;
+  error?: string;
+};
+
+export async function saveTickerSettings(
+  _prev: TickerSaveState,
+  formData: FormData,
+): Promise<TickerSaveState> {
   await requireDeveloper();
 
-  const customLine = String(formData.get("customLine") ?? "").trim();
-  const showFreeShipping = formData.get("showFreeShipping") === "on";
-  const secondaryLine = String(formData.get("secondaryLine") ?? "").trim();
+  const messages = normalizeTickerMessages(
+    formData.getAll("messages").map((value) => String(value)),
+  );
 
-  await prisma.$transaction([
-    prisma.storeSetting.upsert({
-      where: { key: TICKER_KEYS.customLine },
-      create: { key: TICKER_KEYS.customLine, value: customLine },
-      update: { value: customLine },
-    }),
-    prisma.storeSetting.upsert({
-      where: { key: TICKER_KEYS.showFreeShipping },
+  try {
+    await prisma.storeSetting.upsert({
+      where: { key: TICKER_MESSAGES_KEY },
       create: {
-        key: TICKER_KEYS.showFreeShipping,
-        value: String(showFreeShipping),
+        key: TICKER_MESSAGES_KEY,
+        value: JSON.stringify(messages),
       },
-      update: { value: String(showFreeShipping) },
-    }),
-    prisma.storeSetting.upsert({
-      where: { key: TICKER_KEYS.secondaryLine },
-      create: { key: TICKER_KEYS.secondaryLine, value: secondaryLine },
-      update: { value: secondaryLine },
-    }),
-  ]);
+      update: { value: JSON.stringify(messages) },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/admin/developer/ticker");
-  await flashAdminSaved();
+    revalidatePath("/");
+    revalidatePath("/admin/developer/ticker");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save ticker. Please try again." };
+  }
 }

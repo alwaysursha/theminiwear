@@ -5,11 +5,8 @@ import { ArrowLeft, Headset, Send, UserRound } from "lucide-react";
 import { InquiryStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { InquiryAdminControls } from "@/components/admin/inquiries/InquiryAdminControls";
-import { replyToInquiry } from "@/lib/actions/inquiries";
+import { InquiryReplyForm } from "@/components/admin/inquiries/InquiryReplyForm";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +43,6 @@ export default async function AdminInquiryDetailPage({
     orderBy: { name: "asc" },
   });
 
-  const boundReply = replyToInquiry.bind(null, id);
   const fromName =
     inquiry.user?.name ??
     inquiry.guestName ??
@@ -151,44 +147,7 @@ export default async function AdminInquiryDetailPage({
           <Send className="h-4 w-4 text-slate-400" />
           Reply
         </h3>
-        <form action={boundReply} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="content">Message</Label>
-            <Textarea
-              id="content"
-              name="content"
-              required
-              rows={4}
-              placeholder="Type your reply…"
-              className="rounded-lg border-slate-200"
-            />
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-2 sm:w-64">
-              <Label htmlFor="status">Update status (optional)</Label>
-              <select
-                id="status"
-                name="status"
-                defaultValue=""
-                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-              >
-                <option value="">Keep current</option>
-                {Object.values(InquiryStatus).map((s) => (
-                  <option key={s} value={s}>
-                    {s.replace("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button
-              type="submit"
-              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-            >
-              <Send className="h-4 w-4" />
-              Send reply
-            </Button>
-          </div>
-        </form>
+        <InquiryReplyForm inquiryId={id} />
       </div>
     </div>
   );

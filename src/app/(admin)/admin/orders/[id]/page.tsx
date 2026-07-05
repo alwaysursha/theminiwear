@@ -10,21 +10,18 @@ import {
   Truck,
   User,
 } from "lucide-react";
-import { OrderStatus, ShipmentStatus } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { measurementLabel } from "@/lib/custom-size";
 import { productRefundAmount } from "@/lib/order-refund";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import {
-  refundOrder,
-  updateOrderStatusFromForm,
-  updateShipment,
-} from "@/lib/actions/orders";
+  OrderShipmentForm,
+  OrderStatusForm,
+} from "@/components/admin/orders/OrderDetailForms";
+import { refundOrder } from "@/lib/actions/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -52,8 +49,6 @@ export default async function AdminOrderDetailPage({
     notFound();
   }
 
-  const boundUpdateStatus = updateOrderStatusFromForm.bind(null, id);
-  const boundUpdateShipment = updateShipment.bind(null, id);
   const boundRefund = refundOrder.bind(null, id);
 
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -184,53 +179,18 @@ export default async function AdminOrderDetailPage({
               <Truck className="h-4 w-4 text-slate-400" />
               Shipping & tracking
             </h3>
-            <form
-              action={boundUpdateShipment}
-              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="carrier">Carrier</Label>
-                <Input
-                  id="carrier"
-                  name="carrier"
-                  defaultValue={order.shipment?.carrier ?? ""}
-                  placeholder="USPS, UPS, FedEx"
-                  className="rounded-lg border-slate-200"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="trackingNumber">Tracking number</Label>
-                <Input
-                  id="trackingNumber"
-                  name="trackingNumber"
-                  defaultValue={order.shipment?.trackingNumber ?? ""}
-                  className="rounded-lg border-slate-200"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shipmentStatus">Shipment status</Label>
-                <select
-                  id="shipmentStatus"
-                  name="status"
-                  defaultValue={order.shipment?.status ?? ShipmentStatus.PENDING}
-                  className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-                >
-                  {Object.values(ShipmentStatus).map((s) => (
-                    <option key={s} value={s}>
-                      {s.replace("_", " ")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  type="submit"
-                  className="w-full rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-                >
-                  Save tracking
-                </Button>
-              </div>
-            </form>
+            <OrderShipmentForm
+              orderId={id}
+              shipment={
+                order.shipment
+                  ? {
+                      carrier: order.shipment.carrier,
+                      trackingNumber: order.shipment.trackingNumber,
+                      status: order.shipment.status,
+                    }
+                  : null
+              }
+            />
           </div>
 
           {/* Status history */}
@@ -321,38 +281,7 @@ export default async function AdminOrderDetailPage({
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h3 className="mb-4 font-semibold text-slate-900">Update status</h3>
-            <form action={boundUpdateStatus} className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={order.status}
-                  className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-                >
-                  {Object.values(OrderStatus).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="note">Note (optional)</Label>
-                <Input
-                  id="note"
-                  name="note"
-                  placeholder="Internal note"
-                  className="rounded-lg border-slate-200"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-              >
-                Update status
-              </Button>
-            </form>
+            <OrderStatusForm orderId={id} orderStatus={order.status} />
           </div>
 
           {order.status !== OrderStatus.REFUNDED && refundAmount > 0 && (

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ReviewStatus } from "@prisma/client";
 import { auth, requireRoleAdmin } from "@/lib/auth";
-import { flashAdminSaved } from "@/lib/admin-save-flash";
+import type { AdminSaveState } from "@/lib/admin-form-state";
 import { prisma } from "@/lib/prisma";
 import {
   canUserReviewProduct,
@@ -84,78 +84,109 @@ export async function submitProductReview(
   return { success: true };
 }
 
-export async function approveProductReview(reviewId: string): Promise<void> {
-  const { adminId } = await requireRoleAdmin();
+export async function approveProductReview(
+  _prev: AdminSaveState,
+  formData: FormData,
+): Promise<AdminSaveState> {
+  const reviewId = String(formData.get("reviewId") ?? "").trim();
+  if (!reviewId) {
+    return { error: "Review not found." };
+  }
 
-  const review = await prisma.productReview.update({
-    where: { id: reviewId },
-    data: {
-      status: ReviewStatus.APPROVED,
-      moderatedById: adminId,
-      moderatedAt: new Date(),
-      rejectionNote: null,
-    },
-    include: { product: { select: { slug: true } } },
-  });
+  try {
+    const { adminId } = await requireRoleAdmin();
 
-  revalidatePath(`/product/${review.product.slug}`);
-  revalidatePath("/admin/reviews");
-  revalidatePath(`/admin/reviews/${reviewId}`);
-  await flashAdminSaved();
+    const review = await prisma.productReview.update({
+      where: { id: reviewId },
+      data: {
+        status: ReviewStatus.APPROVED,
+        moderatedById: adminId,
+        moderatedAt: new Date(),
+        rejectionNote: null,
+      },
+      include: { product: { select: { slug: true } } },
+    });
+
+    revalidatePath(`/product/${review.product.slug}`);
+    revalidatePath("/admin/reviews");
+    revalidatePath(`/admin/reviews/${reviewId}`);
+    return { ok: true };
+  } catch {
+    return { error: "Could not approve review. Please try again." };
+  }
 }
 
 export async function rejectProductReview(
-  reviewId: string,
+  _prev: AdminSaveState,
   formData: FormData,
-): Promise<void> {
-  const { adminId } = await requireRoleAdmin();
+): Promise<AdminSaveState> {
+  const reviewId = String(formData.get("reviewId") ?? "").trim();
+  if (!reviewId) {
+    return { error: "Review not found." };
+  }
 
-  const rejectionNote = (formData.get("rejectionNote") as string | null)?.trim() || null;
+  try {
+    const { adminId } = await requireRoleAdmin();
 
-  const review = await prisma.productReview.update({
-    where: { id: reviewId },
-    data: {
-      status: ReviewStatus.REJECTED,
-      moderatedById: adminId,
-      moderatedAt: new Date(),
-      rejectionNote,
-    },
-    include: { product: { select: { slug: true } } },
-  });
+    const rejectionNote =
+      (formData.get("rejectionNote") as string | null)?.trim() || null;
 
-  revalidatePath(`/product/${review.product.slug}`);
-  revalidatePath("/admin/reviews");
-  revalidatePath(`/admin/reviews/${reviewId}`);
-  await flashAdminSaved();
+    const review = await prisma.productReview.update({
+      where: { id: reviewId },
+      data: {
+        status: ReviewStatus.REJECTED,
+        moderatedById: adminId,
+        moderatedAt: new Date(),
+        rejectionNote,
+      },
+      include: { product: { select: { slug: true } } },
+    });
+
+    revalidatePath(`/product/${review.product.slug}`);
+    revalidatePath("/admin/reviews");
+    revalidatePath(`/admin/reviews/${reviewId}`);
+    return { ok: true };
+  } catch {
+    return { error: "Could not reject review. Please try again." };
+  }
 }
 
 export async function updateProductReview(
-  reviewId: string,
+  _prev: AdminSaveState,
   formData: FormData,
-): Promise<void> {
-  const { adminId } = await requireRoleAdmin();
+): Promise<AdminSaveState> {
+  const reviewId = String(formData.get("reviewId") ?? "").trim();
+  if (!reviewId) {
+    return { error: "Review not found." };
+  }
 
   const parsed = parseReviewForm(formData);
   if (!parsed.ok) {
-    throw new Error(parsed.error);
+    return { error: parsed.error };
   }
 
-  const review = await prisma.productReview.update({
-    where: { id: reviewId },
-    data: {
-      rating: parsed.rating,
-      title: parsed.title,
-      body: parsed.body,
-      moderatedById: adminId,
-      moderatedAt: new Date(),
-    },
-    include: { product: { select: { slug: true } } },
-  });
+  try {
+    const { adminId } = await requireRoleAdmin();
 
-  revalidatePath(`/product/${review.product.slug}`);
-  revalidatePath("/admin/reviews");
-  revalidatePath(`/admin/reviews/${reviewId}`);
-  await flashAdminSaved();
+    const review = await prisma.productReview.update({
+      where: { id: reviewId },
+      data: {
+        rating: parsed.rating,
+        title: parsed.title,
+        body: parsed.body,
+        moderatedById: adminId,
+        moderatedAt: new Date(),
+      },
+      include: { product: { select: { slug: true } } },
+    });
+
+    revalidatePath(`/product/${review.product.slug}`);
+    revalidatePath("/admin/reviews");
+    revalidatePath(`/admin/reviews/${reviewId}`);
+    return { ok: true };
+  } catch {
+    return { error: "Could not save review. Please try again." };
+  }
 }
 
 export async function deleteProductReview(reviewId: string): Promise<void> {
@@ -168,5 +199,24 @@ export async function deleteProductReview(reviewId: string): Promise<void> {
 
   revalidatePath(`/product/${review.product.slug}`);
   revalidatePath("/admin/reviews");
-  await flashAdminSaved();
+}
+
+export async function approveProductReviewById(
+  reviewId: string,
+): Promise<AdminSaveState> {
+  const formData = new FormData();
+  formData.set("reviewId", reviewId);
+  return approveProductReview({}, formData);
+}
+
+export async function rejectProductReviewById(
+  reviewId: string,
+  rejectionNote?: string,
+): Promise<AdminSaveState> {
+  const formData = new FormData();
+  formData.set("reviewId", reviewId);
+  if (rejectionNote) {
+    formData.set("rejectionNote", rejectionNote);
+  }
+  return rejectProductReview({}, formData);
 }

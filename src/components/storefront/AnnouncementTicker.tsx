@@ -1,36 +1,70 @@
 "use client";
 
-const SP = " ".repeat(20);
+import { normalizeTickerMessages } from "@/lib/ticker";
 
 const REPEATS_PER_TRACK = 10;
 
-function TickerTrack({
-  hidden,
-  announcement,
-}: {
-  hidden?: boolean;
-  announcement: string;
-}) {
-  const content = announcement.repeat(REPEATS_PER_TRACK);
-
+function TickerSlashDivider() {
   return (
-    <span
-      className="shrink-0 whitespace-pre text-sm font-semibold tracking-wide text-white drop-shadow-[0_1px_2px_rgba(30,42,74,0.35)]"
-      aria-hidden={hidden}
-    >
-      {content}
+    <span className="inline-flex shrink-0 items-center" aria-hidden>
+      <span className="ticker-slash-gap" />
+      <span>/</span>
+      <span className="ticker-slash-gap" />
     </span>
   );
 }
 
-export function AnnouncementTicker({
-  announcement,
+function TickerPeriod({ messages }: { messages: string[] }) {
+  return (
+    <>
+      {messages.map((message, index) => (
+        <span key={index} className="inline-flex shrink-0 items-center">
+          <TickerSlashDivider />
+          <span className="whitespace-nowrap">{message}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
+function TickerTrack({
+  messages,
+  hidden,
 }: {
-  announcement: string;
+  messages: string[];
+  hidden?: boolean;
 }) {
-  const content =
-    announcement.trim() ||
-    `Orders processed and shipped within 2-5 business days${SP}/${SP}`;
+  return (
+    <div
+      className="flex shrink-0 items-center text-sm font-semibold tracking-wide text-white drop-shadow-[0_1px_2px_rgba(30,42,74,0.35)]"
+      aria-hidden={hidden}
+    >
+      {Array.from({ length: REPEATS_PER_TRACK }, (_, index) => (
+        <TickerPeriod key={index} messages={messages} />
+      ))}
+    </div>
+  );
+}
+
+export function TickerStaticPreview({ messages }: { messages: string[] }) {
+  const parts = normalizeTickerMessages(messages);
+  if (parts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center overflow-x-auto rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold tracking-wide text-white">
+      <TickerPeriod messages={parts} />
+      <TickerPeriod messages={parts} />
+    </div>
+  );
+}
+
+export function AnnouncementTicker({ messages }: { messages: string[] }) {
+  const parts = normalizeTickerMessages(messages);
+  if (parts.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -61,8 +95,8 @@ export function AnnouncementTicker({
       </div>
 
       <div className="relative z-10 flex w-max animate-marquee group-hover:[animation-play-state:paused]">
-        <TickerTrack announcement={content} />
-        <TickerTrack announcement={content} hidden />
+        <TickerTrack messages={parts} />
+        <TickerTrack messages={parts} hidden />
       </div>
     </div>
   );

@@ -265,10 +265,11 @@ function FeatureLayout({ slide }: { slide: HeroFeatureSlide }) {
                   </div>
                 </div>
 
-                <p className="hero-feature-body mt-3 max-lg:mt-2 max-w-sm max-lg:max-w-none text-navy/58 sm:mt-4">
-                  Fresh off the rack — soft fabrics, easy fits, and everyday magic
-                  for little ones.
-                </p>
+                {product.description ? (
+                  <p className="hero-feature-body mt-3 max-lg:mt-2 max-w-sm max-lg:max-w-none text-navy/58 sm:mt-4 line-clamp-3">
+                    {product.description}
+                  </p>
+                ) : null}
 
                 <Link
                   href={`/product/${product.slug}`}

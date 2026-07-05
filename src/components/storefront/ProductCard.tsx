@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
-import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
-import { SaleEndsAtBadge } from "@/components/storefront/SaleEndsAtBadge";
+import {
+  ProductCardSaleOverlays,
+  ProductCardStatusFlags,
+} from "@/components/storefront/ProductCardBadges";
 import { getProductPriceRange } from "@/lib/product-utils";
 import { getProductSaleEndsAt } from "@/lib/sale-expiry";
 import { formatPrice } from "@/lib/utils";
@@ -46,29 +47,25 @@ export function ProductCard({
                 👕
               </div>
             )}
-            {pricing.maxDiscountPercent != null && (
-              <SaleOffBadge percent={pricing.maxDiscountPercent} size="md" />
-            )}
-            {saleEndsAt && <SaleEndsAtBadge endsAt={saleEndsAt} />}
-            <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
-              {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
-              {product.isNewArrival && <Badge variant="new">New</Badge>}
-              {product.isTrending && <Badge variant="trending">Trending</Badge>}
-            </div>
+            <ProductCardSaleOverlays
+              maxDiscountPercent={pricing.maxDiscountPercent}
+              saleEndsAt={saleEndsAt}
+            />
           </div>
         </ProductImageFrame>
       </div>
-      <div className="flex flex-1 flex-col gap-1 p-4">
+      <div className="flex flex-1 flex-col gap-1 p-3 sm:gap-1.5 sm:p-4">
+        <ProductCardStatusFlags product={product} />
         {product.category && (
-          <p className="text-xs font-medium uppercase tracking-wide text-navy/50">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-navy/50 sm:text-xs">
             {product.category.name}
           </p>
         )}
-        <h3 className="font-display font-bold text-navy group-hover:text-coral">
+        <h3 className="line-clamp-2 font-display text-sm font-bold leading-snug text-navy group-hover:text-coral sm:text-base">
           {product.name}
         </h3>
-        <div className="mt-auto flex flex-wrap items-baseline gap-2">
-          <p className="text-sm font-semibold text-coral">{pricing.display}</p>
+        <div className="mt-auto flex flex-wrap items-baseline gap-2 pt-0.5">
+          <p className="text-sm font-semibold text-coral sm:text-base">{pricing.display}</p>
           {pricing.hasSale && pricing.compareAtMin != null && (
             <p className="text-xs text-navy/40 line-through">
               {formatPrice(pricing.compareAtMin)}

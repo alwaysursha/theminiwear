@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Gender } from "@prisma/client";
 import { Check, Plus, X } from "lucide-react";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,6 +119,8 @@ export function ProductForm({
     initialData?.images ?? [],
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Preserve ids/SKUs for existing color+size combos on update.
   const existingVariantMap = useMemo(() => {
@@ -206,6 +209,10 @@ export function ProductForm({
 
   const paletteColors = uniquePreserveOrder([...COLORS, ...colors]);
 
+  function markDirty() {
+    setShowSaved(false);
+  }
+
   async function handleSubmit(formData: FormData) {
     if (colors.length === 0 || sizes.length === 0) {
       setFormError(
@@ -218,7 +225,19 @@ export function ProductForm({
       return;
     }
     setFormError(null);
-    await action(formData);
+    setShowSaved(false);
+    startTransition(() => {
+      action(formData)
+        .then(() => setShowSaved(true))
+        .catch((error: unknown) => {
+          setShowSaved(false);
+          setFormError(
+            error instanceof Error
+              ? error.message
+              : "Could not save product. Please try again.",
+          );
+        });
+    });
   }
 
   return (
@@ -616,12 +635,14 @@ export function ProductForm({
       )}
 
       <div className="flex justify-end">
-        <Button
-          type="submit"
-          className="rounded-md bg-slate-900 text-white hover:bg-slate-800"
-        >
-          {submitLabel}
-        </Button>
+        <AdminSaveButton
+          pending={isPending}
+          saved={showSaved}
+          label={submitLabel}
+          savingLabel="Saving product"
+          savedLabel="Product saved"
+          className="rounded-md"
+        />
       </div>
     </form>
   );

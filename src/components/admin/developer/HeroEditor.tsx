@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import type { HeroSettingsData } from "@/lib/cms/types";
 import { HERO_GRADIENT_PRESETS } from "@/lib/cms/types";
-import { saveHeroSettings } from "@/lib/actions/developer";
+import {
+  saveHeroSettings,
+  type HeroSaveState,
+} from "@/lib/actions/developer";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +19,33 @@ type HeroEditorProps = {
   hero: HeroSettingsData;
 };
 
+const initialSaveState: HeroSaveState = {};
+
 export function HeroEditor({ hero }: HeroEditorProps) {
   const [buttons, setButtons] = useState(hero.buttons);
   const [tiles, setTiles] = useState(hero.productTiles);
   const [backgroundType, setBackgroundType] = useState(hero.backgroundType);
+  const [showSaved, setShowSaved] = useState(false);
+  const [state, formAction, pending] = useActionState(
+    saveHeroSettings,
+    initialSaveState,
+  );
+
+  useEffect(() => {
+    if (state.ok && !pending) {
+      setShowSaved(true);
+    }
+  }, [state.ok, pending]);
+
+  useEffect(() => {
+    if (state.error) {
+      setShowSaved(false);
+    }
+  }, [state.error]);
+
+  function markDirty() {
+    setShowSaved(false);
+  }
 
   const gradientClass =
     HERO_GRADIENT_PRESETS[hero.gradientPreset] ??
@@ -26,17 +53,39 @@ export function HeroEditor({ hero }: HeroEditorProps) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <form action={saveHeroSettings} className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <form
+        action={formAction}
+        className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      >
         <input type="hidden" name="buttonsJson" value={JSON.stringify(buttons)} />
         <input type="hidden" name="productTilesJson" value={JSON.stringify(tiles)} />
 
+        {state.error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          >
+            {state.error}
+          </p>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="eyebrow">Tag / eyebrow</Label>
-          <Input id="eyebrow" name="eyebrow" defaultValue={hero.eyebrow} />
+          <Input
+            id="eyebrow"
+            name="eyebrow"
+            defaultValue={hero.eyebrow}
+            onChange={markDirty}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="headline">Headline</Label>
-          <Input id="headline" name="headline" defaultValue={hero.headline} />
+          <Input
+            id="headline"
+            name="headline"
+            defaultValue={hero.headline}
+            onChange={markDirty}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="headlineAccent">Accent word (colored)</Label>
@@ -44,6 +93,7 @@ export function HeroEditor({ hero }: HeroEditorProps) {
             id="headlineAccent"
             name="headlineAccent"
             defaultValue={hero.headlineAccent ?? ""}
+            onChange={markDirty}
           />
         </div>
         <div className="space-y-2">
@@ -53,6 +103,7 @@ export function HeroEditor({ hero }: HeroEditorProps) {
             name="description"
             defaultValue={hero.description}
             rows={3}
+            onChange={markDirty}
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
           />
         </div>
@@ -66,7 +117,10 @@ export function HeroEditor({ hero }: HeroEditorProps) {
                 name="backgroundType"
                 value="gradient"
                 checked={backgroundType === "gradient"}
-                onChange={() => setBackgroundType("gradient")}
+                onChange={() => {
+                  markDirty();
+                  setBackgroundType("gradient");
+                }}
               />
               Gradient
             </label>
@@ -76,7 +130,10 @@ export function HeroEditor({ hero }: HeroEditorProps) {
                 name="backgroundType"
                 value="image"
                 checked={backgroundType === "image"}
-                onChange={() => setBackgroundType("image")}
+                onChange={() => {
+                  markDirty();
+                  setBackgroundType("image");
+                }}
               />
               Image
             </label>
@@ -90,6 +147,7 @@ export function HeroEditor({ hero }: HeroEditorProps) {
               id="gradientPreset"
               name="gradientPreset"
               defaultValue={hero.gradientPreset}
+              onChange={markDirty}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
             >
               {Object.keys(HERO_GRADIENT_PRESETS).map((key) => (
@@ -105,6 +163,7 @@ export function HeroEditor({ hero }: HeroEditorProps) {
             name="backgroundImageUrl"
             defaultUrl={hero.backgroundImageUrl}
             aspectRatio={16 / 9}
+            onDirty={markDirty}
           />
         )}
 
@@ -115,7 +174,8 @@ export function HeroEditor({ hero }: HeroEditorProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
+              onClick={() => {
+                markDirty();
                 setButtons((prev) => [
                   ...prev,
                   {
@@ -124,8 +184,8 @@ export function HeroEditor({ hero }: HeroEditorProps) {
                     href: "/shop",
                     variant: "outline" as const,
                   },
-                ])
-              }
+                ]);
+              }}
             >
               Add button
             </Button>
@@ -134,40 +194,44 @@ export function HeroEditor({ hero }: HeroEditorProps) {
             <div key={btn.id} className="grid gap-2 rounded-md border border-slate-100 p-3 sm:grid-cols-3">
               <Input
                 value={btn.label}
-                onChange={(e) =>
+                onChange={(e) => {
+                  markDirty();
                   setButtons((prev) =>
                     prev.map((b, i) =>
                       i === index ? { ...b, label: e.target.value } : b,
                     ),
-                  )
-                }
+                  );
+                }}
                 placeholder="Label"
               />
               <Input
                 value={btn.href}
-                onChange={(e) =>
+                onChange={(e) => {
+                  markDirty();
                   setButtons((prev) =>
                     prev.map((b, i) =>
                       i === index ? { ...b, href: e.target.value } : b,
                     ),
-                  )
-                }
+                  );
+                }}
                 placeholder="/shop"
               />
               <select
                 value={btn.variant}
-                onChange={(e) =>
+                onChange={(e) => {
+                  markDirty();
                   setButtons((prev) =>
                     prev.map((b, i) =>
                       i === index
                         ? {
                             ...b,
-                            variant: e.target.value === "outline" ? "outline" : "default",
+                            variant:
+                              e.target.value === "outline" ? "outline" : "default",
                           }
                         : b,
                     ),
-                  )
-                }
+                  );
+                }}
                 className="rounded-md border border-slate-200 px-2 text-sm"
               >
                 <option value="default">Primary</option>
@@ -184,7 +248,8 @@ export function HeroEditor({ hero }: HeroEditorProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
+              onClick={() => {
+                markDirty();
                 setTiles((prev) => [
                   ...prev,
                   {
@@ -193,8 +258,8 @@ export function HeroEditor({ hero }: HeroEditorProps) {
                     alt: "",
                     href: "/shop",
                   },
-                ])
-              }
+                ]);
+              }}
             >
               Add tile
             </Button>
@@ -203,36 +268,39 @@ export function HeroEditor({ hero }: HeroEditorProps) {
             <div key={tile.id} className="space-y-2 rounded-md border border-slate-100 p-3">
               <Input
                 value={tile.imageUrl}
-                onChange={(e) =>
+                onChange={(e) => {
+                  markDirty();
                   setTiles((prev) =>
                     prev.map((t, i) =>
                       i === index ? { ...t, imageUrl: e.target.value } : t,
                     ),
-                  )
-                }
+                  );
+                }}
                 placeholder="Image URL"
               />
               <div className="grid gap-2 sm:grid-cols-2">
                 <Input
                   value={tile.alt}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    markDirty();
                     setTiles((prev) =>
                       prev.map((t, i) =>
                         i === index ? { ...t, alt: e.target.value } : t,
                       ),
-                    )
-                  }
+                    );
+                  }}
                   placeholder="Alt text"
                 />
                 <Input
                   value={tile.href}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    markDirty();
                     setTiles((prev) =>
                       prev.map((t, i) =>
                         i === index ? { ...t, href: e.target.value } : t,
                       ),
-                    )
-                  }
+                    );
+                  }}
                   placeholder="Link"
                 />
               </div>
@@ -240,9 +308,11 @@ export function HeroEditor({ hero }: HeroEditorProps) {
           ))}
         </div>
 
-        <Button type="submit" className="bg-slate-900 text-white hover:bg-slate-800">
-          Save hero
-        </Button>
+        <AdminSaveButton
+          pending={pending}
+          saved={showSaved && Boolean(state.ok)}
+          label="Save hero"
+        />
       </form>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">

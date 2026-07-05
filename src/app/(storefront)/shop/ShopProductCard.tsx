@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ProductFitImage, ProductImageFrame } from "@/components/storefront/ProductImageFrame";
-import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
-import { SaleEndsAtBadge } from "@/components/storefront/SaleEndsAtBadge";
+import {
+  ProductCardSaleOverlays,
+  ProductCardStatusFlags,
+} from "@/components/storefront/ProductCardBadges";
 import { getProductPriceRange, type ProductWithRelations } from "@/lib/product-utils";
 import { getProductSaleEndsAt } from "@/lib/sale-expiry";
 import { getColorSwatch, uniqueColors } from "@/lib/color-utils";
@@ -44,20 +45,12 @@ export function ShopProductCard({
               </div>
             )}
 
-            {/* sheen sweep on hover */}
             <span className="shop-card-sheen pointer-events-none absolute inset-0 z-10" aria-hidden />
 
-            {pricing.maxDiscountPercent != null && (
-              <SaleOffBadge percent={pricing.maxDiscountPercent} size="md" />
-            )}
-
-            {saleEndsAt && <SaleEndsAtBadge endsAt={saleEndsAt} />}
-
-            <div className="absolute left-2 top-2 z-20 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
-              {product.isClearance && <Badge variant="clearance">Clearance</Badge>}
-              {product.isNewArrival && <Badge variant="new">New</Badge>}
-              {product.isTrending && <Badge variant="trending">Trending</Badge>}
-            </div>
+            <ProductCardSaleOverlays
+              maxDiscountPercent={pricing.maxDiscountPercent}
+              saleEndsAt={saleEndsAt}
+            />
 
             {soldOut && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/45 backdrop-blur-[1px]">
@@ -67,7 +60,6 @@ export function ShopProductCard({
               </div>
             )}
 
-            {/* hover CTA bar */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-full bg-gradient-to-t from-navy/75 via-navy/25 to-transparent px-3 pb-3 pt-8 opacity-0 transition-all duration-400 ease-out group-hover/frame:translate-y-0 group-hover/frame:opacity-100">
               <span className="flex items-center justify-center gap-1.5 rounded-full bg-white/95 py-2 text-xs font-bold text-navy shadow-lg">
                 View details
@@ -78,7 +70,8 @@ export function ShopProductCard({
         </ProductImageFrame>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-3.5 sm:p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
+        <ProductCardStatusFlags product={product} />
         {product.category && (
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-navy/45 sm:text-[11px]">
             {product.category.name}

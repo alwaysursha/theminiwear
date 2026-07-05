@@ -1,39 +1,33 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, X } from "lucide-react";
-import { updateDiscount } from "@/lib/actions/discounts";
+import {
+  updateDiscount,
+  type DiscountFormState,
+} from "@/lib/actions/discounts";
+import { AdminSaveButton } from "@/components/admin/AdminSaveButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAdminSaveForm } from "@/hooks/useAdminSaveForm";
 import type { AdminDiscountRow, DiscountTypeValue } from "./DiscountsManager";
 
 export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { state, formAction, pending, saved, markDirty } = useAdminSaveForm(
+    updateDiscount,
+    {} as DiscountFormState,
+  );
 
-  const boundUpdate = updateDiscount.bind(null, discount.id);
-
-  function handleSubmit(formData: FormData) {
-    setError(null);
-    startTransition(() => {
-      boundUpdate(formData)
-        .then((result) => {
-          if (result.error) {
-            setError(result.error);
-            return;
-          }
-          router.refresh();
-          setOpen(false);
-        })
-        .catch(() => {
-          setError("Something went wrong. Please try again.");
-        });
-    });
-  }
+  useEffect(() => {
+    if (state.ok && !pending) {
+      router.refresh();
+      setOpen(false);
+    }
+  }, [state.ok, pending, router]);
 
   if (!open) {
     return (
@@ -53,7 +47,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
       <button
         type="button"
         aria-label="Close"
-        onClick={() => !isPending && setOpen(false)}
+        onClick={() => !pending && setOpen(false)}
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
       />
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
@@ -63,19 +57,20 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
           </h3>
           <button
             type="button"
-            onClick={() => !isPending && setOpen(false)}
+            onClick={() => !pending && setOpen(false)}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <form action={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-          {error && (
+        <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+          <input type="hidden" name="discountId" value={discount.id} />
+          {state.error && (
             <p
               role="alert"
               className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2"
             >
-              {error}
+              {state.error}
             </p>
           )}
           <div className="space-y-2 sm:col-span-2">
@@ -86,6 +81,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               required
               defaultValue={discount.code}
               className="rounded-lg border-slate-200 uppercase"
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -95,6 +91,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               name="type"
               defaultValue={discount.type}
               className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+              onChange={markDirty}
             >
               {(["PERCENTAGE", "FIXED", "FREE_SHIPPING"] as DiscountTypeValue[]).map(
                 (type) => (
@@ -115,6 +112,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               required
               defaultValue={discount.value}
               className="rounded-lg border-slate-200"
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -126,6 +124,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               step="0.01"
               defaultValue={discount.minOrderAmount ?? ""}
               className="rounded-lg border-slate-200"
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2">
@@ -136,6 +135,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               type="number"
               defaultValue={discount.maxUses ?? ""}
               className="rounded-lg border-slate-200"
+              onChange={markDirty}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
@@ -145,11 +145,10 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               name="expiresAt"
               type="datetime-local"
               defaultValue={
-                discount.expiresAt
-                  ? discount.expiresAt.slice(0, 16)
-                  : ""
+                discount.expiresAt ? discount.expiresAt.slice(0, 16) : ""
               }
               className="rounded-lg border-slate-200"
+              onChange={markDirty}
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
@@ -158,6 +157,7 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               name="isActive"
               defaultChecked={discount.isActive}
               className="rounded border-slate-300"
+              onChange={markDirty}
             />
             Active
           </label>
@@ -166,18 +166,19 @@ export function EditDiscountDialog({ discount }: { discount: AdminDiscountRow })
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={isPending}
+              disabled={pending}
               className="rounded-lg"
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800"
-            >
-              Save changes
-            </Button>
+            <AdminSaveButton
+              pending={pending}
+              saved={saved}
+              label="Save changes"
+              savingLabel="Saving"
+              savedLabel="Saved"
+              className="rounded-lg"
+            />
           </div>
         </form>
       </div>

@@ -3,17 +3,12 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/storefront/StarRating";
 import { formatReviewerName } from "@/lib/review-utils";
 import {
-  approveProductReview,
-  rejectProductReview,
-  updateProductReview,
-} from "@/lib/actions/reviews";
+  ReviewEditForm,
+  ReviewModerationActions,
+} from "@/components/admin/reviews/ReviewDetailActions";
 import { DeleteReviewButton } from "@/components/admin/reviews/DeleteReviewButton";
 
 export const dynamic = "force-dynamic";
@@ -38,10 +33,6 @@ export default async function AdminReviewDetailPage({
   if (!review) {
     notFound();
   }
-
-  const boundApprove = approveProductReview.bind(null, id);
-  const boundReject = rejectProductReview.bind(null, id);
-  const boundUpdate = updateProductReview.bind(null, id);
 
   return (
     <div className="space-y-6">
@@ -106,54 +97,16 @@ export default async function AdminReviewDetailPage({
         )}
       </div>
 
-      {review.status === "PENDING" && (
-        <div className="flex flex-wrap gap-3">
-          <form action={boundApprove}>
-            <Button type="submit">Approve</Button>
-          </form>
-          <form action={boundReject} className="flex flex-1 flex-wrap items-end gap-3">
-            <div className="min-w-[16rem] flex-1 space-y-2">
-              <Label htmlFor="rejectionNote">Rejection note (internal)</Label>
-              <Input
-                id="rejectionNote"
-                name="rejectionNote"
-                placeholder="Optional note for admins"
-              />
-            </div>
-            <Button type="submit" variant="destructive">
-              Reject
-            </Button>
-          </form>
-        </div>
-      )}
+      <ReviewModerationActions reviewId={id} status={review.status} />
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="mb-4 font-semibold text-slate-900">Edit review</h3>
-        <form action={boundUpdate} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="rating">Rating</Label>
-            <Input
-              id="rating"
-              name="rating"
-              type="number"
-              min={1}
-              max={5}
-              defaultValue={review.rating}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" defaultValue={review.title ?? ""} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="body">Review</Label>
-            <Textarea id="body" name="body" rows={5} defaultValue={review.body} required />
-          </div>
-          <Button type="submit" variant="secondary">
-            Save changes
-          </Button>
-        </form>
+        <ReviewEditForm
+          reviewId={id}
+          rating={review.rating}
+          title={review.title}
+          body={review.body}
+        />
       </div>
 
       <DeleteReviewButton reviewId={id} productName={review.product.name} />

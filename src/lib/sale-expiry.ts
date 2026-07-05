@@ -31,3 +31,45 @@ export function formatSaleEndsLabel(endsAt: Date): string {
 
   return `Sale ends ${formatDate(endsAt, "MMM d, yyyy")}`;
 }
+
+export type SaleCountdownParts = {
+  totalMs: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  expired: boolean;
+};
+
+export function getSaleCountdownParts(
+  endsAt: Date,
+  now: Date = new Date(),
+): SaleCountdownParts {
+  const totalMs = Math.max(0, endsAt.getTime() - now.getTime());
+
+  if (totalMs <= 0) {
+    return {
+      totalMs: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      expired: true,
+    };
+  }
+
+  const totalSeconds = Math.floor(totalMs / 1000);
+
+  return {
+    totalMs,
+    days: Math.floor(totalSeconds / 86_400),
+    hours: Math.floor((totalSeconds % 86_400) / 3_600),
+    minutes: Math.floor((totalSeconds % 3_600) / 60),
+    seconds: totalSeconds % 60,
+    expired: false,
+  };
+}
+
+export function padCountdownUnit(value: number, digits = 2): string {
+  return String(value).padStart(digits, "0");
+}
