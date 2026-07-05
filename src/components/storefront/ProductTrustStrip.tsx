@@ -1,27 +1,37 @@
 import { ShieldCheck, Sparkles, Truck } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 
-const perks = [
-  {
-    icon: Truck,
-    label: "Free shipping $100+",
-    tone: "text-coral",
-    bg: "bg-coral/10",
-  },
-  {
-    icon: ShieldCheck,
-    label: "Easy returns",
-    tone: "text-navy",
-    bg: "bg-sky/40",
-  },
-  {
-    icon: Sparkles,
-    label: "Soft, kid-safe fabrics",
-    tone: "text-navy",
-    bg: "bg-mint/40",
-  },
-] as const;
+export function ProductTrustStrip({
+  freeShippingThreshold,
+}: {
+  freeShippingThreshold?: number | null;
+}) {
+  const shippingLabel =
+    freeShippingThreshold != null
+      ? `Free shipping ${formatPrice(freeShippingThreshold)}+`
+      : "Shipping calculated at checkout";
 
-export function ProductTrustStrip() {
+  const perks = [
+    {
+      icon: Truck,
+      label: shippingLabel,
+      tone: "text-coral",
+      bg: "bg-coral/10",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Easy returns",
+      tone: "text-navy",
+      bg: "bg-sky/40",
+    },
+    {
+      icon: Sparkles,
+      label: "Soft, kid-safe fabrics",
+      tone: "text-navy",
+      bg: "bg-mint/40",
+    },
+  ] as const;
+
   return (
     <ul className="product-detail-enter-5 grid gap-2 sm:grid-cols-3 sm:gap-3">
       {perks.map(({ icon: Icon, label, tone, bg }) => (

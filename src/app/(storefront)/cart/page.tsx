@@ -1,8 +1,17 @@
 import { CartContent } from "@/components/storefront/CartContent";
+import { getFreeShippingThreshold } from "@/lib/shipping";
 
 export const dynamic = "force-dynamic";
 
-export default function CartPage() {
+export default async function CartPage() {
+  let freeShippingThreshold: number | null = null;
+
+  try {
+    freeShippingThreshold = await getFreeShippingThreshold();
+  } catch {
+    // Hide progress bar when shipping settings are unavailable.
+  }
+
   return (
     <div>
       <section className="relative overflow-hidden bg-gradient-to-b from-blush/45 via-[#fffaf9] to-[#fffaf9]">
@@ -29,7 +38,7 @@ export default function CartPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <CartContent />
+        <CartContent freeShippingThreshold={freeShippingThreshold} />
       </div>
     </div>
   );

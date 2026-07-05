@@ -1,3 +1,4 @@
+import { STRIPE_CURRENCY } from "@/lib/currency";
 import { toAbsoluteUrl } from "@/emails/theme";
 
 /** Stripe must fetch product images over public HTTPS — skip app-proxied media. */
@@ -44,6 +45,24 @@ export function stripeCheckoutProductData(input: {
   }
 
   return productData;
+}
+
+export function stripeCheckoutShippingLineItem(input: {
+  shippingCost: number;
+  label: string;
+}) {
+  if (input.shippingCost <= 0) {
+    return null;
+  }
+
+  return {
+    price_data: {
+      currency: STRIPE_CURRENCY,
+      product_data: { name: input.label },
+      unit_amount: Math.round(input.shippingCost * 100),
+    },
+    quantity: 1,
+  };
 }
 
 export function stripeCheckoutErrorMessage(error: unknown): string {

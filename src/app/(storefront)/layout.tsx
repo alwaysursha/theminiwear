@@ -7,6 +7,8 @@ import { WhatsAppChatButton } from "@/components/storefront/WhatsAppChatButton";
 import { PageTransition } from "@/components/PageTransition";
 import { getContactNavPage, getFooterLegalPages } from "@/lib/cms";
 import { defaultStoreInfo, getStoreInfo } from "@/lib/settings";
+import { getFreeShippingThreshold } from "@/lib/shipping";
+import { formatPrice } from "@/lib/utils";
 
 export default async function StorefrontLayout({
   children,
@@ -17,8 +19,10 @@ export default async function StorefrontLayout({
   let legalLinks: { href: string; label: string }[] = [];
 
   let store = defaultStoreInfo();
+  let freeShippingThreshold: number | null = null;
   try {
     store = await getStoreInfo();
+    freeShippingThreshold = await getFreeShippingThreshold();
   } catch {
     // DB unavailable — fall back to static store defaults
   }
@@ -37,7 +41,13 @@ export default async function StorefrontLayout({
   return (
     <Providers>
       <StorefrontHeaderChrome>
-        <AnnouncementTicker />
+        <AnnouncementTicker
+          freeShippingMessage={
+            freeShippingThreshold != null
+              ? `Free shipping on orders over ${formatPrice(freeShippingThreshold)}`
+              : null
+          }
+        />
         <Header showContact={showContact} />
       </StorefrontHeaderChrome>
       <main className="flex-1">

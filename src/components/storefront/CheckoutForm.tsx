@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import {
   createCheckoutSession,
+  fetchShippingQuotes,
   updateAddress,
 } from "@/app/(storefront)/checkout/actions";
 import { registerUser } from "@/app/(storefront)/auth/actions";
@@ -24,6 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCartStore } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/utils";
+
+type ShippingQuote = {
+  id: string;
+  name: string;
+  price: number;
+  estimatedDays: string | null;
+};
 
 type Address = {
   id: string;
@@ -98,11 +106,13 @@ export function CheckoutForm({
   userEmail,
   userName,
   isLoggedIn,
+  defaultCountry = "CA",
 }: {
   addresses: Address[];
   userEmail?: string | null;
   userName?: string | null;
   isLoggedIn: boolean;
+  defaultCountry?: string;
 }) {
   const items = useCartStore((s) => s.items);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -127,17 +137,75 @@ export function CheckoutForm({
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const [shippingMethod, setShippingMethod] = useState<"standard" | "express">(
-    "standard",
-  );
+  const [newAddressCountry, setNewAddressCountry] = useState(defaultCountry);
+  const [shippingQuotes, setShippingQuotes] = useState<ShippingQuote[]>([]);
+  const [selectedShippingRateId, setSelectedShippingRateId] = useState<
+    string | null
+  >(null);
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
+  const [quotesError, setQuotesError] = useState<string | null>(null);
 
   useEffect(() => setMounted(true), []);
 
-  const shippingCost = shippingMethod === "express" ? 12.99 : 5.99;
+  const usingNewAddress = useNewAddress || !selectedAddressId;
   const subtotal = getTotal();
+  const selectedAddress = addressList.find(
+    (address) => address.id === selectedAddressId,
+  );
+  const shippingCountry = usingNewAddress
+    ? newAddressCountry
+    : (selectedAddress?.country ?? defaultCountry);
+  const selectedShippingQuote = shippingQuotes.find(
+    (quote) => quote.id === selectedShippingRateId,
+  );
+  const shippingCost = selectedShippingQuote?.price ?? 0;
   const total = subtotal + shippingCost;
 
-  const usingNewAddress = useNewAddress || !selectedAddressId;
+  useEffect(() => {
+    if (!mounted) return;
+
+    let cancelled = false;
+
+    async function loadQuotes() {
+      setLoadingQuotes(true);
+      setQuotesError(null);
+
+      try {
+        const quotes = await fetchShippingQuotes(shippingCountry, subtotal);
+        if (cancelled) return;
+
+        setShippingQuotes(quotes);
+        setSelectedShippingRateId((current) => {
+          if (current && quotes.some((quote) => quote.id === current)) {
+            return current;
+          }
+          return quotes[0]?.id ?? null;
+        });
+
+        if (quotes.length === 0) {
+          setQuotesError(
+            "No shipping options are available for this country yet.",
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setQuotesError("Could not load shipping options. Please try again.");
+          setShippingQuotes([]);
+          setSelectedShippingRateId(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingQuotes(false);
+        }
+      }
+    }
+
+    void loadQuotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted, shippingCountry, subtotal]);
 
   async function handleGoogle() {
     setLoading(true);
@@ -219,7 +287,7 @@ export function CheckoutForm({
         city: (formData.get("city") as string) || "",
         state: (formData.get("state") as string) || "",
         postalCode: (formData.get("postalCode") as string) || "",
-        country: (formData.get("country") as string) || "US",
+        country: (formData.get("country") as string) || defaultCountry,
         phone: (formData.get("phone") as string) || undefined,
       };
     }
@@ -268,6 +336,12 @@ export function CheckoutForm({
         }
       }
 
+      if (!selectedShippingRateId) {
+        setError("Please select a shipping method.");
+        setLoading(false);
+        return;
+      }
+
       const result = await createCheckoutSession({
         items: items.map((i) => ({
           variantId: i.variantId,
@@ -278,7 +352,7 @@ export function CheckoutForm({
         })),
         addressId: usingNewAddress ? undefined : selectedAddressId ?? undefined,
         guestEmail,
-        shippingCost,
+        shippingRateId: selectedShippingRateId,
         discountCode: (formData.get("discountCode") as string) || undefined,
         shippingAddress,
       });
@@ -757,9 +831,13 @@ export function CheckoutForm({
                   <input
                     id="country"
                     name="country"
-                    defaultValue="US"
+                    value={newAddressCountry}
+                    onChange={(event) =>
+                      setNewAddressCountry(event.target.value.toUpperCase())
+                    }
                     required
                     autoComplete="country-name"
+                    placeholder="CA"
                     className={inputCls}
                   />
                 </div>
@@ -787,46 +865,41 @@ export function CheckoutForm({
         {/* 3 — Delivery */}
         <StepCard step={3} title="Delivery method">
           <div className="space-y-3">
-            <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-navy/10 p-4 transition-colors has-[:checked]:border-coral has-[:checked]:bg-blush/15">
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="shipping"
-                  checked={shippingMethod === "standard"}
-                  onChange={() => setShippingMethod("standard")}
-                  className="accent-coral"
-                />
-                <div>
-                  <p className="text-sm font-bold text-navy">
-                    Standard shipping
-                  </p>
-                  <p className="text-xs text-navy/55">5–7 business days</p>
-                </div>
-              </div>
-              <span className="font-display font-bold text-navy">
-                {formatPrice(5.99)}
-              </span>
-            </label>
-            <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-navy/10 p-4 transition-colors has-[:checked]:border-coral has-[:checked]:bg-blush/15">
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="shipping"
-                  checked={shippingMethod === "express"}
-                  onChange={() => setShippingMethod("express")}
-                  className="accent-coral"
-                />
-                <div>
-                  <p className="text-sm font-bold text-navy">
-                    Express shipping
-                  </p>
-                  <p className="text-xs text-navy/55">2–3 business days</p>
-                </div>
-              </div>
-              <span className="font-display font-bold text-navy">
-                {formatPrice(12.99)}
-              </span>
-            </label>
+            {loadingQuotes ? (
+              <p className="text-sm text-navy/55">Loading shipping options…</p>
+            ) : quotesError ? (
+              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                {quotesError}
+              </p>
+            ) : (
+              shippingQuotes.map((quote) => (
+                <label
+                  key={quote.id}
+                  className="flex cursor-pointer items-center justify-between rounded-2xl border border-navy/10 p-4 transition-colors has-[:checked]:border-coral has-[:checked]:bg-blush/15"
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="shipping"
+                      checked={selectedShippingRateId === quote.id}
+                      onChange={() => setSelectedShippingRateId(quote.id)}
+                      className="accent-coral"
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-navy">{quote.name}</p>
+                      {quote.estimatedDays && (
+                        <p className="text-xs text-navy/55">
+                          {quote.estimatedDays}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <span className="font-display font-bold text-navy">
+                    {quote.price === 0 ? "Free" : formatPrice(quote.price)}
+                  </span>
+                </label>
+              ))
+            )}
           </div>
         </StepCard>
 
@@ -903,7 +976,7 @@ export function CheckoutForm({
           <Button
             type="submit"
             size="lg"
-            disabled={loading}
+            disabled={loading || loadingQuotes || !selectedShippingRateId}
             className="mt-6 flex w-full items-center justify-center gap-2 text-base shadow-[0_10px_28px_rgba(255,127,110,0.35)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]"
           >
             {loading ? (

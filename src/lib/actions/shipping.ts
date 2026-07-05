@@ -21,6 +21,9 @@ export async function createShippingZone(formData: FormData) {
   });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }
 
 export async function updateShippingZone(zoneId: string, formData: FormData) {
@@ -41,6 +44,9 @@ export async function updateShippingZone(zoneId: string, formData: FormData) {
   });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }
 
 export async function deleteShippingZone(zoneId: string) {
@@ -49,6 +55,9 @@ export async function deleteShippingZone(zoneId: string) {
   await prisma.shippingZone.delete({ where: { id: zoneId } });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }
 
 export async function createShippingRate(zoneId: string, formData: FormData) {
@@ -72,6 +81,9 @@ export async function createShippingRate(zoneId: string, formData: FormData) {
   });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }
 
 export async function updateShippingRate(rateId: string, formData: FormData) {
@@ -95,6 +107,9 @@ export async function updateShippingRate(rateId: string, formData: FormData) {
   });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }
 
 export async function deleteShippingRate(rateId: string) {
@@ -103,4 +118,7 @@ export async function deleteShippingRate(rateId: string) {
   await prisma.shippingRate.delete({ where: { id: rateId } });
 
   revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
+  revalidatePath("/shop");
 }

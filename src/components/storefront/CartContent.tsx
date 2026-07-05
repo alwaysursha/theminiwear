@@ -21,9 +21,11 @@ import { useCartStore, type CartItem } from "@/lib/cart-store";
 import { measurementLabel } from "@/lib/custom-size";
 import { cn, formatPrice } from "@/lib/utils";
 
-const FREE_SHIPPING_THRESHOLD = 100;
-
-export function CartContent() {
+export function CartContent({
+  freeShippingThreshold = null,
+}: {
+  freeShippingThreshold?: number | null;
+}) {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -62,8 +64,14 @@ export function CartContent() {
 
   const subtotal = getTotal();
   const itemCount = getItemCount();
-  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const threshold = freeShippingThreshold ?? 0;
+  const showFreeShippingProgress = freeShippingThreshold != null && threshold > 0;
+  const remaining = showFreeShippingProgress
+    ? Math.max(0, threshold - subtotal)
+    : 0;
+  const progress = showFreeShippingProgress
+    ? Math.min(100, (subtotal / threshold) * 100)
+    : 0;
 
   function confirmRemove() {
     if (!confirm) return;
@@ -216,28 +224,30 @@ export function CartContent() {
             Bag summary
           </h2>
 
-          <div className="mt-5 rounded-2xl bg-gradient-to-br from-mint/30 to-sky/25 p-4">
-            {remaining > 0 ? (
-              <p className="text-xs font-semibold text-navy">
-                You&apos;re{" "}
-                <span className="font-bold text-coral">
-                  {formatPrice(remaining)}
-                </span>{" "}
-                away from free shipping
-              </p>
-            ) : (
-              <p className="flex items-center gap-1.5 text-xs font-bold text-navy">
-                <Truck className="h-4 w-4 text-coral" />
-                You&apos;ve unlocked free shipping!
-              </p>
-            )}
-            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/70">
-              <div
-                className="bag-progress-fill h-full rounded-full bg-gradient-to-r from-coral to-[#ffb08f]"
-                style={{ width: `${progress}%` }}
-              />
+          {showFreeShippingProgress && (
+            <div className="mt-5 rounded-2xl bg-gradient-to-br from-mint/30 to-sky/25 p-4">
+              {remaining > 0 ? (
+                <p className="text-xs font-semibold text-navy">
+                  You&apos;re{" "}
+                  <span className="font-bold text-coral">
+                    {formatPrice(remaining)}
+                  </span>{" "}
+                  away from free shipping
+                </p>
+              ) : (
+                <p className="flex items-center gap-1.5 text-xs font-bold text-navy">
+                  <Truck className="h-4 w-4 text-coral" />
+                  You&apos;ve unlocked free shipping!
+                </p>
+              )}
+              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/70">
+                <div
+                  className="bag-progress-fill h-full rounded-full bg-gradient-to-r from-coral to-[#ffb08f]"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-5 space-y-2.5 text-sm">
             <div className="flex justify-between text-navy/65">

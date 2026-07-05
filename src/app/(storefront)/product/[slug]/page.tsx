@@ -16,6 +16,7 @@ import {
   serializeProductForCart,
 } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
+import { getFreeShippingThreshold } from "@/lib/shipping";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ type PageProps = {
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const [product, siteSale] = await Promise.all([
+  const [product, siteSale, freeShippingThreshold] = await Promise.all([
     prisma.product.findUnique({
       where: { slug, isActive: true },
       include: {
@@ -36,6 +37,7 @@ export default async function ProductPage({ params }: PageProps) {
       },
     }),
     getSiteSaleSettings(),
+    getFreeShippingThreshold(),
   ]);
 
   if (!product) {
@@ -147,7 +149,7 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
 
           <div className="product-detail-enter-5 order-5 lg:order-none lg:col-start-2">
-            <ProductTrustStrip />
+            <ProductTrustStrip freeShippingThreshold={freeShippingThreshold} />
           </div>
         </div>
         </ProductColorProvider>

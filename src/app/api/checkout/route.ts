@@ -3,6 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { STRIPE_CURRENCY } from "@/lib/currency";
+import { stripeCheckoutShippingLineItem } from "@/lib/stripe-checkout";
+import {
+  DEFAULT_SHIPPING_COUNTRY,
+  resolveCheckoutShipping,
+  resolveShippingCountry,
+} from "@/lib/shipping";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -14,7 +20,7 @@ const checkoutSchema = z.object({
   ),
   addressId: z.string().optional(),
   guestEmail: z.string().email().optional(),
-  shippingCost: z.number().min(0),
+  shippingRateId: z.string().min(1),
   discountCode: z.string().optional(),
   shippingAddress: z
     .object({
@@ -46,6 +52,7 @@ export async function POST(request: Request) {
 
     let discountId: string | undefined;
     let discountAmount = 0;
+    let freeShippingDiscount = false;
 
     if (body.discountCode) {
       const discount = await prisma.discount.findFirst({
@@ -100,11 +107,29 @@ export async function POST(request: Request) {
           discountAmount = subtotal * (Number(discount.value) / 100);
         } else if (discount.type === "FIXED") {
           discountAmount = Number(discount.value);
+        } else if (discount.type === "FREE_SHIPPING") {
+          freeShippingDiscount = true;
         }
       }
     }
 
-    const total = Math.max(0, subtotal + body.shippingCost - discountAmount);
+    const shippingCountry =
+      (await resolveShippingCountry({
+        addressId: body.addressId,
+        shippingAddress: body.shippingAddress,
+        userId: session?.user?.id,
+      })) ?? DEFAULT_SHIPPING_COUNTRY;
+
+    const shipping = await resolveCheckoutShipping({
+      shippingRateId: body.shippingRateId,
+      country: shippingCountry,
+      subtotal,
+      freeShippingDiscount,
+    });
+
+    if ("error" in shipping) {
+      return NextResponse.json({ error: shipping.error }, { status: 400 });
+    }
 
     let addressId = body.addressId;
 
@@ -126,10 +151,18 @@ export async function POST(request: Request) {
     }
 
     const stripe = await getStripe();
+    const shippingLineItem = stripeCheckoutShippingLineItem({
+      shippingCost: shipping.shippingCost,
+      label: shipping.shippingLabel,
+    });
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: session?.user?.email ?? body.guestEmail,
-      line_items: lineItems.map((i) => i.stripeItem),
+      line_items: [
+        ...lineItems.map((i) => i.stripeItem),
+        ...(shippingLineItem ? [shippingLineItem] : []),
+      ],
       success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
       metadata: {
@@ -137,7 +170,9 @@ export async function POST(request: Request) {
         addressId: addressId ?? "",
         discountId: discountId ?? "",
         subtotal: subtotal.toString(),
-        shippingCost: body.shippingCost.toString(),
+        shippingCost: shipping.shippingCost.toString(),
+        shippingRateId: shipping.shippingRateId,
+        shippingLabel: shipping.shippingLabel,
         discountAmount: discountAmount.toString(),
         taxAmount: "0",
         items: JSON.stringify(

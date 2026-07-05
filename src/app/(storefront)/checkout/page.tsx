@@ -2,6 +2,7 @@ import { Lock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
+import { DEFAULT_SHIPPING_COUNTRY } from "@/lib/shipping";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export default async function CheckoutPage() {
           userEmail={session?.user?.email}
           userName={session?.user?.name}
           isLoggedIn={!!session?.user}
+          defaultCountry={DEFAULT_SHIPPING_COUNTRY}
         />
       </div>
     </div>

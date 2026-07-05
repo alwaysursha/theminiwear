@@ -557,9 +557,20 @@ async function main() {
       rates: {
         create: [
           {
-            name: "Standard International",
-            price: 14.99,
-            estimatedDays: "7-14 business days",
+            name: "Standard Shipping",
+            price: 5.99,
+            estimatedDays: "5-7 business days",
+          },
+          {
+            name: "Express Shipping",
+            price: 12.99,
+            estimatedDays: "2-3 business days",
+          },
+          {
+            name: "Free Shipping",
+            price: 0,
+            minOrder: 100,
+            estimatedDays: "5-7 business days",
           },
         ],
       },

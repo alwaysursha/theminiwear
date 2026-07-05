@@ -2,12 +2,16 @@
 
 const SP = " ".repeat(20);
 
-const ANNOUNCEMENT = `Free shipping on orders over $100${SP}/${SP}Orders processed and shipped within 2-5 business days${SP}/${SP}`;
-
 const REPEATS_PER_TRACK = 10;
 
-function TickerTrack({ hidden }: { hidden?: boolean }) {
-  const content = ANNOUNCEMENT.repeat(REPEATS_PER_TRACK);
+function TickerTrack({
+  hidden,
+  announcement,
+}: {
+  hidden?: boolean;
+  announcement: string;
+}) {
+  const content = announcement.repeat(REPEATS_PER_TRACK);
 
   return (
     <span
@@ -19,7 +23,15 @@ function TickerTrack({ hidden }: { hidden?: boolean }) {
   );
 }
 
-export function AnnouncementTicker() {
+export function AnnouncementTicker({
+  freeShippingMessage,
+}: {
+  freeShippingMessage?: string | null;
+}) {
+  const announcement = freeShippingMessage
+    ? `${freeShippingMessage}${SP}/${SP}Orders processed and shipped within 2-5 business days${SP}/${SP}`
+    : `Orders processed and shipped within 2-5 business days${SP}/${SP}`;
+
   return (
     <div
       className="group relative overflow-hidden py-2.5 shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_3px_10px_rgba(0,0,0,0.22)]"
@@ -49,8 +61,8 @@ export function AnnouncementTicker() {
       </div>
 
       <div className="relative z-10 flex w-max animate-marquee group-hover:[animation-play-state:paused]">
-        <TickerTrack />
-        <TickerTrack hidden />
+        <TickerTrack announcement={announcement} />
+        <TickerTrack announcement={announcement} hidden />
       </div>
     </div>
   );

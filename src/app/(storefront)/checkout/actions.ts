@@ -8,6 +8,7 @@ import { getSiteUrl } from "@/emails/theme";
 import {
   stripeCheckoutErrorMessage,
   stripeCheckoutProductData,
+  stripeCheckoutShippingLineItem,
 } from "@/lib/stripe-checkout";
 import {
   CUSTOM_SIZE_FEE,
@@ -15,6 +16,12 @@ import {
   summarizeMeasurements,
   hasMeasurements,
 } from "@/lib/custom-size";
+import {
+  DEFAULT_SHIPPING_COUNTRY,
+  getShippingQuotes,
+  resolveCheckoutShipping,
+  resolveShippingCountry,
+} from "@/lib/shipping";
 import { z } from "zod";
 
 const checkoutInputSchema = z.object({
@@ -31,7 +38,7 @@ const checkoutInputSchema = z.object({
   ),
   addressId: z.string().optional(),
   guestEmail: z.string().email().optional(),
-  shippingCost: z.number().min(0),
+  shippingRateId: z.string().min(1),
   discountCode: z.string().optional(),
   shippingAddress: z
     .object({
@@ -88,6 +95,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
 
   let discountId: string | undefined;
   let discountAmount = 0;
+  let freeShippingDiscount = false;
 
   if (body.discountCode) {
     const discount = await prisma.discount.findFirst({
@@ -154,8 +162,28 @@ export async function createCheckoutSession(input: CheckoutInput) {
         discountAmount = subtotal * (Number(discount.value) / 100);
       } else if (discount.type === "FIXED") {
         discountAmount = Number(discount.value);
+      } else if (discount.type === "FREE_SHIPPING") {
+        freeShippingDiscount = true;
       }
     }
+  }
+
+  const shippingCountry =
+    (await resolveShippingCountry({
+      addressId: body.addressId,
+      shippingAddress: body.shippingAddress,
+      userId: session?.user?.id,
+    })) ?? DEFAULT_SHIPPING_COUNTRY;
+
+  const shipping = await resolveCheckoutShipping({
+    shippingRateId: body.shippingRateId,
+    country: shippingCountry,
+    subtotal,
+    freeShippingDiscount,
+  });
+
+  if ("error" in shipping) {
+    return { error: shipping.error };
   }
 
   let addressId = body.addressId;
@@ -224,10 +252,18 @@ export async function createCheckoutSession(input: CheckoutInput) {
 
   const stripe = await getStripe();
   const siteUrl = getSiteUrl();
+  const shippingLineItem = stripeCheckoutShippingLineItem({
+    shippingCost: shipping.shippingCost,
+    label: shipping.shippingLabel,
+  });
+
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: session?.user?.email ?? body.guestEmail,
-    line_items: lineItems.map((i) => i.stripeItem),
+    line_items: [
+      ...lineItems.map((i) => i.stripeItem),
+      ...(shippingLineItem ? [shippingLineItem] : []),
+    ],
     success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/cart`,
     metadata: {
@@ -235,7 +271,9 @@ export async function createCheckoutSession(input: CheckoutInput) {
       addressId: addressId ?? "",
       discountId: discountId ?? "",
       subtotal: subtotal.toString(),
-      shippingCost: body.shippingCost.toString(),
+      shippingCost: shipping.shippingCost.toString(),
+      shippingRateId: shipping.shippingRateId,
+      shippingLabel: shipping.shippingLabel,
       discountAmount: discountAmount.toString(),
       taxAmount: "0",
       items: JSON.stringify(
@@ -263,6 +301,10 @@ export async function createCheckoutSession(input: CheckoutInput) {
     console.error("createCheckoutSession failed:", error);
     return { error: stripeCheckoutErrorMessage(error) };
   }
+}
+
+export async function fetchShippingQuotes(country: string, subtotal: number) {
+  return getShippingQuotes(country, subtotal);
 }
 
 const addressUpdateSchema = z.object({
