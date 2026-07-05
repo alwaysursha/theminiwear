@@ -3,7 +3,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { toAbsoluteUrl, getSiteUrl } from "@/emails/theme";
+import { getSiteUrl } from "@/emails/theme";
+import {
+  stripeCheckoutErrorMessage,
+  stripeCheckoutProductData,
+} from "@/lib/stripe-checkout";
 import {
   CUSTOM_SIZE_FEE,
   sanitizeMeasurements,
@@ -109,6 +113,11 @@ export async function createCheckoutSession(input: CheckoutInput) {
     const unitPrice = Number(variant.price) + customFee;
 
     const baseName = `${variant.product.name} (${variant.size} / ${variant.color})`;
+    const description =
+      isCustom && measurements
+        ? summarizeMeasurements(measurements) || "Custom-fit tailoring"
+        : undefined;
+
     return {
       variantId: variant.id,
       quantity: item.quantity,
@@ -118,16 +127,11 @@ export async function createCheckoutSession(input: CheckoutInput) {
       stripeItem: {
         price_data: {
           currency: "usd",
-          product_data: {
+          product_data: stripeCheckoutProductData({
             name: isCustom ? `${baseName} — Custom fit` : baseName,
-            description:
-              isCustom && measurements
-                ? summarizeMeasurements(measurements) || "Custom-fit tailoring"
-                : undefined,
-            images: variant.product.images[0]?.url
-              ? [toAbsoluteUrl(variant.product.images[0].url)]
-              : undefined,
-          },
+            description,
+            imageUrl: variant.product.images[0]?.url,
+          }),
           unit_amount: Math.round(unitPrice * 100),
         },
         quantity: item.quantity,
@@ -256,17 +260,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
   return { url: checkoutSession.url };
   } catch (error) {
     console.error("createCheckoutSession failed:", error);
-    const message =
-      error instanceof Error ? error.message : "Checkout failed";
-    if (message.includes("STRIPE_SECRET_KEY")) {
-      return { error: "Payments are not configured yet. Please contact support." };
-    }
-    return {
-      error:
-        message.includes("Stripe") || message.includes("url")
-          ? "Could not start payment. Please try again or contact support."
-          : message,
-    };
+    return { error: stripeCheckoutErrorMessage(error) };
   }
 }
 
