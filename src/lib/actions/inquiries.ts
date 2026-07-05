@@ -61,9 +61,14 @@ export async function replyToInquiry(inquiryId: string, formData: FormData) {
 
 export async function updateInquiryStatus(
   inquiryId: string,
-  status: InquiryStatus,
+  formData: FormData,
 ) {
   await requireAdmin();
+
+  const status = formData.get("status") as InquiryStatus;
+  if (!status || !Object.values(InquiryStatus).includes(status)) {
+    throw new Error("Invalid status");
+  }
 
   await prisma.inquiry.update({
     where: { id: inquiryId },
@@ -74,8 +79,13 @@ export async function updateInquiryStatus(
   revalidatePath(`/admin/inquiries/${inquiryId}`);
 }
 
-export async function assignInquiry(inquiryId: string, assigneeId: string) {
+export async function assignInquiry(inquiryId: string, formData: FormData) {
   await requireAdmin();
+
+  const assigneeId = formData.get("assigneeId") as string;
+  if (!assigneeId) {
+    throw new Error("Assignee is required");
+  }
 
   await prisma.inquiry.update({
     where: { id: inquiryId },
@@ -85,5 +95,6 @@ export async function assignInquiry(inquiryId: string, assigneeId: string) {
     },
   });
 
+  revalidatePath("/admin/inquiries");
   revalidatePath(`/admin/inquiries/${inquiryId}`);
 }

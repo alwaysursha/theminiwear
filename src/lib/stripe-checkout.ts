@@ -1,4 +1,4 @@
-import { STRIPE_CURRENCY } from "@/lib/currency";
+import { toStripeCurrency } from "@/lib/currency";
 import { toAbsoluteUrl } from "@/emails/theme";
 
 /** Stripe must fetch product images over public HTTPS — skip app-proxied media. */
@@ -50,6 +50,7 @@ export function stripeCheckoutProductData(input: {
 export function stripeCheckoutShippingLineItem(input: {
   shippingCost: number;
   label: string;
+  currency?: string;
 }) {
   if (input.shippingCost <= 0) {
     return null;
@@ -57,7 +58,7 @@ export function stripeCheckoutShippingLineItem(input: {
 
   return {
     price_data: {
-      currency: STRIPE_CURRENCY,
+      currency: toStripeCurrency(input.currency),
       product_data: { name: input.label },
       unit_amount: Math.round(input.shippingCost * 100),
     },

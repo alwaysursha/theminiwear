@@ -6,8 +6,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount: number | string) {
-  return formatMoney(amount);
+export function formatPrice(amount: number | string, currency?: string) {
+  return formatMoney(amount, currency);
 }
 
 export function slugify(text: string) {

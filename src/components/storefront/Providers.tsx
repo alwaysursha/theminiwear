@@ -5,15 +5,24 @@ import { ChunkErrorRecovery } from "@/components/ChunkErrorRecovery";
 import { CartAddedCelebration } from "@/components/storefront/CartAddedCelebration";
 import { AuthToast } from "@/components/storefront/AuthToast";
 import { CartSync } from "@/components/storefront/CartSync";
+import { StoreConfigProvider } from "@/components/storefront/StoreConfigProvider";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  currency = "CAD",
+  children,
+}: {
+  currency?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <SessionProvider refetchOnWindowFocus>
-      <ChunkErrorRecovery />
-      <CartSync />
-      <CartAddedCelebration />
-      <AuthToast />
-      {children}
-    </SessionProvider>
+    <StoreConfigProvider currency={currency}>
+      <SessionProvider refetchOnWindowFocus>
+        <ChunkErrorRecovery />
+        <CartSync />
+        <CartAddedCelebration />
+        <AuthToast />
+        {children}
+      </SessionProvider>
+    </StoreConfigProvider>
   );
 }

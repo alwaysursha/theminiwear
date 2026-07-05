@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { deleteDiscount, toggleDiscountActive } from "@/lib/actions/discounts";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
+import { EditDiscountDialog } from "@/components/admin/discounts/EditDiscountDialog";
 import { formatPrice, cn } from "@/lib/utils";
 
 export type DiscountTypeValue = "PERCENTAGE" | "FIXED" | "FREE_SHIPPING";
@@ -280,7 +281,8 @@ export function DiscountsManager({
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-1">
+                          <EditDiscountDialog discount={d} />
                           <ConfirmSubmitButton
                             action={() => deleteDiscount(d.id)}
                             triggerLabel={<Trash2 className="h-4 w-4" />}
@@ -347,7 +349,8 @@ export function DiscountsManager({
                       {d.expiresAt ? formatDate(d.expiresAt) : "No expiry"}
                     </span>
                   </div>
-                  <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+                  <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+                    <EditDiscountDialog discount={d} />
                     <ConfirmSubmitButton
                       action={() => deleteDiscount(d.id)}
                       triggerLabel={

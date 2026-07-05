@@ -1,5 +1,4 @@
 import { formatDate, subMonths, startOfMonth, endOfMonth } from "@/lib/date";
-import { OrderStatus } from "@prisma/client";
 import {
   BarChart3,
   DollarSign,
@@ -9,6 +8,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { paidOrderWhere } from "@/lib/order-status";
 import { MetricCard } from "@/components/admin/dashboard/MetricCard";
 
 export const dynamic = "force-dynamic";
@@ -32,19 +32,15 @@ export default async function AdminAnalyticsPage() {
         prisma.order.aggregate({
           where: {
             createdAt: { gte: month.start, lte: month.end },
-            status: {
-              in: [
-                OrderStatus.PAID,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED,
-                OrderStatus.DELIVERED,
-              ],
-            },
+            ...paidOrderWhere,
           },
           _sum: { total: true },
         }),
         prisma.order.count({
-          where: { createdAt: { gte: month.start, lte: month.end } },
+          where: {
+            createdAt: { gte: month.start, lte: month.end },
+            ...paidOrderWhere,
+          },
         }),
       ]);
 
