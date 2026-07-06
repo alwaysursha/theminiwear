@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { KeyRound, Mail } from "lucide-react";
 import { updateAdminProfile } from "@/lib/actions/admin-profile";
 import { requestPasswordResetForCurrentUser } from "@/lib/actions/password-reset";
@@ -26,10 +27,17 @@ export function AdminProfileForm({
     updateAdminProfile,
     initialAdminSaveState,
   );
+  const { update: updateSession } = useSession();
   const [resetStatus, setResetStatus] = useState<{
     type: "idle" | "loading" | "success" | "error";
     message?: string;
   }>({ type: "idle" });
+
+  useEffect(() => {
+    if (saved && state.ok) {
+      void updateSession();
+    }
+  }, [saved, state.ok, updateSession]);
 
   async function handlePasswordReset() {
     setResetStatus({ type: "loading" });

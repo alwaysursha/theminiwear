@@ -66,6 +66,11 @@ export function ProductCardSaleOverlays({
 }) {
   return (
     <>
+      {saleEndsAt && (
+        <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-full bg-navy/92 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-300 shadow-sm ring-1 ring-white/20 sm:left-2.5 sm:top-2.5 sm:px-2.5 sm:py-1 sm:text-[9px]">
+          Limited Time Offer
+        </span>
+      )}
       {maxDiscountPercent != null && (
         <SaleOffBadge
           percent={maxDiscountPercent}
