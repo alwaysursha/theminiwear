@@ -4,6 +4,7 @@ import {
   ProductCardSaleOverlays,
   ProductCardStatusFlags,
 } from "@/components/storefront/ProductCardBadges";
+import { normalizeProductImageFraming } from "@/lib/product-image-display";
 import { getProductPriceRange } from "@/lib/product-utils";
 import { getProductSaleEndsAt } from "@/lib/sale-expiry";
 import { formatPrice } from "@/lib/utils";
@@ -24,6 +25,7 @@ export function ProductCard({
   siteSale?: SiteSaleSettings;
 }) {
   const image = product.images[0];
+  const framing = image ? normalizeProductImageFraming(image) : null;
   const pricing = getProductPriceRange(product.variants, product, siteSale);
   const saleEndsAt = getProductSaleEndsAt(product);
 
@@ -41,6 +43,10 @@ export function ProductCard({
                 alt={image.alt ?? product.name}
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 mode="cover"
+                focalX={framing?.focalX}
+                focalY={framing?.focalY}
+                zoom={framing?.zoom}
+                fitMode={framing?.fitMode}
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-neutral-100 text-4xl">

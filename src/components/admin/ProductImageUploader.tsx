@@ -1,8 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { GripVertical, ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
+import { Crop, GripVertical, ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 import type { ProductImageInput } from "@/lib/actions/products";
+import { ProductImageAdjustDialog } from "@/components/admin/ProductImageAdjustDialog";
+import { ProductFramedPreview } from "@/components/storefront/ProductFramedPreview";
+import {
+  defaultProductImageFraming,
+  normalizeProductImageFraming,
+} from "@/lib/product-image-display";
 
 type Props = {
   images: ProductImageInput[];
@@ -18,8 +24,7 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  // Local object-URL previews keyed by the uploaded R2 url, so thumbnails show
-  // instantly and reliably regardless of R2 public-URL propagation.
+  const [adjustIndex, setAdjustIndex] = useState<number | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   async function uploadOne(file: File): Promise<string | null> {
@@ -43,13 +48,23 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
     const results = await Promise.allSettled(files.map((f) => uploadOne(f)));
     setUploading((n) => Math.max(0, n - files.length));
 
+    const defaults = defaultProductImageFraming();
     const uploaded: ProductImageInput[] = [];
     const newPreviews: Record<string, string> = {};
     let hadFailure = false;
     results.forEach((result, i) => {
       if (result.status === "fulfilled" && result.value) {
         const url = result.value;
-        uploaded.push({ url, alt: "", color: "", sortOrder: "" });
+        uploaded.push({
+          url,
+          alt: "",
+          color: "",
+          sortOrder: "",
+          focalX: defaults.focalX,
+          focalY: defaults.focalY,
+          zoom: defaults.zoom,
+          fitMode: defaults.fitMode,
+        });
         newPreviews[url] = URL.createObjectURL(files[i]);
       } else {
         hadFailure = true;
@@ -66,6 +81,7 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
         ...images,
         ...uploaded.map((img, i) => ({ ...img, sortOrder: String(base + i) })),
       ]);
+      setAdjustIndex(base);
     }
   }
 
@@ -75,6 +91,7 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
   }
 
   function remove(index: number) {
+    if (adjustIndex === index) setAdjustIndex(null);
     onChange(images.filter((_, i) => i !== index));
   }
 
@@ -85,6 +102,8 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
     next.splice(to, 0, moved);
     onChange(next.map((img, i) => ({ ...img, sortOrder: String(i) })));
   }
+
+  const adjustingImage = adjustIndex !== null ? images[adjustIndex] : null;
 
   return (
     <div className="space-y-4">
@@ -118,7 +137,7 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
           Drag &amp; drop images here, or click to browse
         </p>
         <p className="text-xs text-slate-400">
-          PNG, JPG, WEBP or GIF · up to 5MB · multiple allowed
+          PNG, JPG, WEBP or GIF · up to 5MB · adjust framing before saving
         </p>
         <input
           ref={inputRef}
@@ -143,77 +162,104 @@ export function ProductImageUploader({ images, onChange, colors }: Props) {
 
       {images.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {images.map((image, index) => (
-            <div
-              key={image.id ?? `img-${index}-${image.url}`}
-              draggable
-              onDragStart={() => setDragIndex(index)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => {
-                if (dragIndex !== null) reorder(dragIndex, index);
-                setDragIndex(null);
-              }}
-              className={`group relative rounded-xl border bg-white p-2 shadow-sm transition-all ${
-                dragIndex === index ? "opacity-50" : "border-slate-200"
-              }`}
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100">
-                {image.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={previews[image.url] ?? image.url}
-                    alt={image.alt || "Product image"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-300">
-                    <ImagePlus className="h-8 w-8" />
-                  </div>
-                )}
-                <span className="absolute left-1.5 top-1.5 flex h-6 w-6 cursor-grab items-center justify-center rounded-md bg-white/90 text-slate-400 shadow-sm">
-                  <GripVertical className="h-3.5 w-3.5" />
-                </span>
-                {index === 0 && (
-                  <span className="absolute right-1.5 top-1.5 rounded-md bg-slate-900/85 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                    Cover
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-red-500 shadow-sm transition-colors hover:bg-red-500 hover:text-white"
-                  aria-label="Remove image"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+          {images.map((image, index) => {
+            const framing = normalizeProductImageFraming(image);
+            const previewUrl = previews[image.url] ?? image.url;
 
-              <div className="mt-2 space-y-1.5">
-                <select
-                  value={image.color ?? ""}
-                  onChange={(e) => update(index, { color: e.target.value })}
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
-                  title="Link this image to a color"
-                >
-                  <option value="">All colors</option>
-                  {colors.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  value={image.alt ?? ""}
-                  onChange={(e) => update(index, { alt: e.target.value })}
-                  placeholder="Alt text (optional)"
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600"
-                />
+            return (
+              <div
+                key={image.id ?? `img-${index}-${image.url}`}
+                draggable
+                onDragStart={() => setDragIndex(index)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  if (dragIndex !== null) reorder(dragIndex, index);
+                  setDragIndex(null);
+                }}
+                className={`group relative rounded-xl border bg-white p-2 shadow-sm transition-all ${
+                  dragIndex === index ? "opacity-50" : "border-slate-200"
+                }`}
+              >
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-slate-100">
+                  {image.url ? (
+                    <ProductFramedPreview
+                      src={previewUrl}
+                      alt={image.alt || "Product image"}
+                      focalX={framing.focalX}
+                      focalY={framing.focalY}
+                      zoom={framing.zoom}
+                      fitMode={framing.fitMode}
+                      className="h-full w-full"
+                      sizes="200px"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-slate-300">
+                      <ImagePlus className="h-8 w-8" />
+                    </div>
+                  )}
+                  <span className="absolute left-1.5 top-1.5 flex h-6 w-6 cursor-grab items-center justify-center rounded-md bg-white/90 text-slate-400 shadow-sm">
+                    <GripVertical className="h-3.5 w-3.5" />
+                  </span>
+                  {index === 0 && (
+                    <span className="absolute right-1.5 top-1.5 rounded-md bg-slate-900/85 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      Cover
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setAdjustIndex(index)}
+                    className="absolute bottom-1.5 left-1.5 flex h-7 items-center gap-1 rounded-md bg-white/90 px-2 text-[10px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-900 hover:text-white"
+                  >
+                    <Crop className="h-3 w-3" />
+                    Adjust
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-red-500 shadow-sm transition-colors hover:bg-red-500 hover:text-white"
+                    aria-label="Remove image"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-2 space-y-1.5">
+                  <select
+                    value={image.color ?? ""}
+                    onChange={(e) => update(index, { color: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+                    title="Link this image to a color"
+                  >
+                    <option value="">All colors</option>
+                    {colors.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={image.alt ?? ""}
+                    onChange={(e) => update(index, { alt: e.target.value })}
+                    placeholder="Alt text (optional)"
+                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <p className="text-sm text-slate-400">No images yet.</p>
+      )}
+
+      {adjustingImage && adjustIndex !== null && (
+        <ProductImageAdjustDialog
+          open
+          image={adjustingImage}
+          previewUrl={previews[adjustingImage.url] ?? adjustingImage.url}
+          onClose={() => setAdjustIndex(null)}
+          onSave={(patch) => update(adjustIndex, patch)}
+        />
       )}
     </div>
   );

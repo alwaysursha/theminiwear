@@ -8,6 +8,7 @@ import { ProductImageMagnifier } from "@/components/storefront/ProductImageMagni
 import { ProductImageZoomLightbox } from "@/components/storefront/ProductImageZoomLightbox";
 import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
 import { useProductColor } from "@/components/storefront/ProductColorContext";
+import { normalizeProductImageFraming } from "@/lib/product-image-display";
 import { cn, shouldBypassImageOptimization } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 48;
@@ -19,6 +20,10 @@ type GalleryImage = {
   url: string;
   alt: string | null;
   color?: string | null;
+  focalX?: number;
+  focalY?: number;
+  zoom?: number;
+  fitMode?: string | null;
 };
 
 type ImageGalleryProps = {
@@ -224,7 +229,10 @@ export function ImageGallery({
                   transform: `translate3d(calc(-${selected * 100}% + ${dragOffset}px), 0, 0)`,
                 }}
               >
-                {images.map((img, i) => (
+                {images.map((img, i) => {
+                  const framing = normalizeProductImageFraming(img);
+
+                  return (
                   <div
                     key={img.id}
                     className="relative h-full w-full shrink-0 basis-full"
@@ -236,10 +244,15 @@ export function ImageGallery({
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       fit="lg"
                       mode="cover"
+                      focalX={framing.focalX}
+                      focalY={framing.focalY}
+                      zoom={framing.zoom}
+                      fitMode={framing.fitMode}
                       className="h-full w-full"
                     />
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div
@@ -325,7 +338,10 @@ export function ImageGallery({
       {count > 1 && (
         <div className="product-gallery-thumbs -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {images.map((img, i) => (
+          {images.map((img, i) => {
+            const framing = normalizeProductImageFraming(img);
+
+            return (
             <button
               key={img.id}
               type="button"
@@ -341,12 +357,18 @@ export function ImageGallery({
                 src={img.url}
                 alt={img.alt ?? `${productName} thumbnail ${i + 1}`}
                 fill
-                className="object-cover"
+                className={framing.fitMode === "contain" ? "object-contain" : "object-cover"}
+                style={
+                  framing.fitMode === "cover"
+                    ? { objectPosition: `${framing.focalX}% ${framing.focalY}%` }
+                    : undefined
+                }
                 sizes="80px"
                 unoptimized={shouldBypassImageOptimization(img.url)}
               />
             </button>
-          ))}
+            );
+          })}
           </div>
         </div>
       )}
