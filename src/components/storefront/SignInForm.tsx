@@ -2,22 +2,42 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getDashboardPath } from "@/lib/constants";
+import {
+  resolvePostAuthDestination,
+  sanitizeAuthCallbackUrl,
+} from "@/lib/constants";
 import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
 
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { update } = useSession();
+  const { data: session, status, update } = useSession();
   const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+  const callbackUrl = sanitizeAuthCallbackUrl(
+    searchParams.get("callbackUrl"),
+    "/",
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const signUpHref =
+    callbackUrl && callbackUrl !== "/"
+      ? `/auth/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/auth/sign-up";
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) {
+      return;
+    }
+
+    router.replace(
+      resolvePostAuthDestination(callbackUrl, session.user.role),
+    );
+  }, [status, session, callbackUrl, router]);
 
   async function handleCredentials(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,21 +63,19 @@ export function SignInForm() {
       return;
     }
 
-    const session = await update();
+    const nextSession = await update();
     showAuthToast({
       kind: "signed-in",
-      firstName: firstNameOf(session?.user?.name),
+      firstName: firstNameOf(nextSession?.user?.name),
       fromX,
       fromY,
     });
 
-    const role = session?.user?.role;
-    const destination =
-      role &&
-      (callbackUrl === "/account" || callbackUrl.startsWith("/account/"))
-        ? getDashboardPath(role)
-        : callbackUrl;
-    router.push(destination);
+    const destination = resolvePostAuthDestination(
+      callbackUrl,
+      nextSession?.user?.role,
+    );
+    router.replace(destination);
     router.refresh();
   }
 
@@ -68,6 +86,14 @@ export function SignInForm() {
     await signIn("google", {
       callbackUrl: `/auth/redirect?callbackUrl=${redirectTarget}`,
     });
+  }
+
+  if (status === "authenticated") {
+    return (
+      <div className="py-8 text-center text-sm text-navy/60">
+        You&apos;re signed in. Redirecting…
+      </div>
+    );
   }
 
   return (
@@ -128,7 +154,7 @@ export function SignInForm() {
 
       <p className="text-center text-sm text-navy/60">
         Don&apos;t have an account?{" "}
-        <Link href="/auth/sign-up" className="font-semibold text-coral hover:underline">
+        <Link href={signUpHref} className="font-semibold text-coral hover:underline">
           Sign up
         </Link>
       </p>

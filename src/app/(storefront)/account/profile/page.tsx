@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, resolveSessionUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/storefront/ProfileForm";
+import { AccountChromeHidden } from "@/components/storefront/AccountPanelChrome";
+import { AccountPageHeader } from "@/components/storefront/AccountPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +21,12 @@ export default async function ProfilePage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold text-navy">Profile</h1>
-      <p className="mt-1 text-sm text-navy/60">Manage your account details</p>
+      <AccountChromeHidden>
+        <AccountPageHeader
+          title="Profile"
+          subtitle="Manage your account details"
+        />
+      </AccountChromeHidden>
       <div className="mt-6 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
         <ProfileForm name={name} email={email} phone={phone} />
       </div>

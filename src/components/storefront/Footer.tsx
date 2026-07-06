@@ -12,7 +12,7 @@ const footerLinks = {
   Help: [
     { href: "/contact", label: "Contact Us" },
     { href: "/account/orders", label: "Track Order" },
-    { href: "/account", label: "My Account" },
+    { href: "/account/profile", label: "My Account" },
   ],
 };
 
@@ -60,7 +60,7 @@ export function Footer({
               </h3>
               <ul className="mt-4 space-y-2">
                 {links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.label}>
                     <Link
                       href={link.href}
                       className="text-sm text-white/70 transition-colors hover:text-white"
