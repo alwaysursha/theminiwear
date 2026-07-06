@@ -10,6 +10,10 @@ import { SaleOffBadge } from "@/components/storefront/SaleOffBadge";
 import { useProductColor } from "@/components/storefront/ProductColorContext";
 import { cn, shouldBypassImageOptimization } from "@/lib/utils";
 
+const SWIPE_THRESHOLD_PX = 48;
+const SWIPE_AXIS_LOCK_PX = 12;
+const SWIPE_COMMIT_RATIO = 0.18;
+
 type GalleryImage = {
   id: string;
   url: string;
@@ -33,11 +37,15 @@ export function ImageGallery({
   const { selectedColor } = useProductColor();
   const [selected, setSelected] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const swipeRef = useRef<HTMLDivElement>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeAxis = useRef<"x" | "y" | null>(null);
 
   const count = images.length;
 
-  // Keep every image (and its thumbnail) visible. When a color is chosen, jump
-  // the main view to that color's first image instead of hiding the others.
   const [prevColor, setPrevColor] = useState<string | null>(selectedColor);
   if (prevColor !== selectedColor) {
     setPrevColor(selectedColor);
@@ -58,40 +66,104 @@ export function ImageGallery({
   const goPrev = useCallback(() => goTo(selected - 1), [goTo, selected]);
   const goNext = useCallback(() => goTo(selected + 1), [goTo, selected]);
 
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    const touch = event.touches[0];
-    if (!touch) return;
-    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  const resetTouch = useCallback(() => {
+    touchStart.current = null;
+    swipeAxis.current = null;
+    setIsDragging(false);
+    setDragOffset(0);
   }, []);
 
-  const handleTouchEnd = useCallback(
+  const handleTouchStart = useCallback(
     (event: React.TouchEvent) => {
-      if (!touchStart.current) return;
-      const touch = event.changedTouches[0];
+      if (count < 2) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+      touchStart.current = { x: touch.clientX, y: touch.clientY };
+      swipeAxis.current = null;
+      setIsDragging(false);
+      setDragOffset(0);
+    },
+    [count],
+  );
+
+  const handleTouchMove = useCallback(
+    (event: React.TouchEvent) => {
+      if (!touchStart.current || count < 2) return;
+
+      const touch = event.touches[0];
       if (!touch) return;
 
       const deltaX = touch.clientX - touchStart.current.x;
       const deltaY = touch.clientY - touchStart.current.y;
-      touchStart.current = null;
+
+      if (swipeAxis.current === null) {
+        if (
+          Math.abs(deltaX) >= SWIPE_AXIS_LOCK_PX ||
+          Math.abs(deltaY) >= SWIPE_AXIS_LOCK_PX
+        ) {
+          swipeAxis.current =
+            Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+        }
+      }
+
+      if (swipeAxis.current !== "x") return;
+
+      setIsDragging(true);
+
+      let offset = deltaX;
+      if (selected === 0 && offset > 0) {
+        offset *= 0.35;
+      } else if (selected === count - 1 && offset < 0) {
+        offset *= 0.35;
+      }
+
+      setDragOffset(offset);
+    },
+    [count, selected],
+  );
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (!touchStart.current) return;
+
+      const touch = event.changedTouches[0];
+      if (!touch) {
+        resetTouch();
+        return;
+      }
+
+      const deltaX = touch.clientX - touchStart.current.x;
+      const deltaY = touch.clientY - touchStart.current.y;
+      const width = swipeRef.current?.offsetWidth ?? 0;
+      const commitThreshold = Math.max(
+        SWIPE_THRESHOLD_PX,
+        width * SWIPE_COMMIT_RATIO,
+      );
 
       if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12) {
+        resetTouch();
         setZoomOpen(true);
         return;
       }
 
-      if (count < 2) return;
-      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY)) return;
-
-      if (deltaX < 0) {
-        goNext();
-      } else {
-        goPrev();
+      if (count >= 2 && swipeAxis.current === "x") {
+        if (Math.abs(deltaX) >= commitThreshold) {
+          if (deltaX < 0) {
+            goNext();
+          } else {
+            goPrev();
+          }
+        }
       }
+
+      resetTouch();
     },
-    [count, goNext, goPrev],
+    [count, goNext, goPrev, resetTouch],
   );
+
+  const handleTouchCancel = useCallback(() => {
+    resetTouch();
+  }, [resetTouch]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -135,31 +207,40 @@ export function ImageGallery({
             className="product-gallery-main h-full w-full"
           >
             <div
+              ref={swipeRef}
               className="product-gallery-swipe relative h-full w-full touch-pan-y overflow-hidden"
               onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
-              {images.map((img, i) => (
-                <div
-                  key={img.id}
-                  className={cn(
-                    "absolute inset-0 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                    selected === i
-                      ? "z-10 scale-100 opacity-100"
-                      : "z-0 scale-[1.03] opacity-0",
-                  )}
-                  aria-hidden={selected !== i}
-                >
-                  <ProductFitImage
-                    src={img.url}
-                    alt={img.alt ?? `${productName} — image ${i + 1}`}
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    fit="lg"
-                    mode="cover"
-                    className="duration-700 ease-out"
-                  />
-                </div>
-              ))}
+              <div
+                className={cn(
+                  "flex h-full w-full will-change-transform",
+                  !isDragging &&
+                    "transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                )}
+                style={{
+                  transform: `translate3d(calc(-${selected * 100}% + ${dragOffset}px), 0, 0)`,
+                }}
+              >
+                {images.map((img, i) => (
+                  <div
+                    key={img.id}
+                    className="relative h-full w-full shrink-0 basis-full"
+                    aria-hidden={selected !== i}
+                  >
+                    <ProductFitImage
+                      src={img.url}
+                      alt={img.alt ?? `${productName} — image ${i + 1}`}
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      fit="lg"
+                      mode="cover"
+                      className="h-full w-full"
+                    />
+                  </div>
+                ))}
+              </div>
 
               <div
                 className="product-gallery-shimmer pointer-events-none absolute inset-0 z-20"
@@ -193,18 +274,18 @@ export function ImageGallery({
                   <button
                     type="button"
                     onClick={goPrev}
-                    className="absolute left-2 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-navy shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:left-4 sm:h-11 sm:w-11"
+                    className="absolute left-2 top-1/2 z-30 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-navy shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral md:flex md:left-4 md:h-11 md:w-11"
                     aria-label="Previous image"
                   >
-                    <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                   <button
                     type="button"
                     onClick={goNext}
-                    className="absolute right-2 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-navy shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:right-4 sm:h-11 sm:w-11"
+                    className="absolute right-2 top-1/2 z-30 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-navy shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral md:flex md:right-4 md:h-11 md:w-11"
                     aria-label="Next image"
                   >
-                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
 
                   <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/60 bg-white/80 px-3 py-1.5 shadow-md backdrop-blur-sm">
