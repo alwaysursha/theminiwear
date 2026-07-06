@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendInquiryReceivedEmail } from "@/lib/email";
+import { sendInquiryReceivedEmail, sendAdminNewInquiryEmail } from "@/lib/email";
 import { z } from "zod";
 
 const inquirySchema = z.object({
@@ -44,6 +44,14 @@ export async function submitInquiry(formData: FormData) {
       to: recipientEmail,
       name: recipientName,
       subject: data.subject,
+    });
+
+    void sendAdminNewInquiryEmail({
+      inquiryId: inquiry.id,
+      subject: data.subject,
+      customerName: recipientName,
+      customerEmail: recipientEmail,
+      message: data.message,
     });
 
     return { success: true, inquiryId: inquiry.id };

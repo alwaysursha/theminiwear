@@ -1,6 +1,7 @@
 "use client";
 
 import { OrderStatus, ShipmentStatus } from "@prisma/client";
+import { useEffect, useState } from "react";
 import {
   updateOrderStatusFromForm,
   updateShipment,
@@ -99,10 +100,15 @@ export function OrderStatusForm({
   orderId,
   orderStatus,
 }: Pick<OrderDetailFormsProps, "orderId" | "orderStatus">) {
+  const [status, setStatus] = useState(orderStatus);
   const { state, formAction, pending, saved, markDirty } = useAdminSaveForm(
     updateOrderStatusFromForm,
     initialAdminSaveState,
   );
+
+  useEffect(() => {
+    setStatus(orderStatus);
+  }, [orderStatus]);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -120,13 +126,16 @@ export function OrderStatusForm({
         <select
           id="status"
           name="status"
-          defaultValue={orderStatus}
+          value={status}
           className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-          onChange={markDirty}
+          onChange={(event) => {
+            setStatus(event.target.value as OrderStatus);
+            markDirty();
+          }}
         >
-          {Object.values(OrderStatus).map((s) => (
-            <option key={s} value={s}>
-              {s}
+          {Object.values(OrderStatus).map((option) => (
+            <option key={option} value={option}>
+              {option}
             </option>
           ))}
         </select>

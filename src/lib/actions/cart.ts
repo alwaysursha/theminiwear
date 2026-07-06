@@ -202,6 +202,18 @@ export async function mergeUserCart(
   return { items: hydrated };
 }
 
+export async function clearUserCart(): Promise<
+  { success: true } | { error: string }
+> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "You must be signed in to sync your cart." };
+  }
+
+  await clearUserCartById(userId);
+  return { success: true };
+}
+
 export async function clearUserCartById(userId: string) {
   await prisma.cart.deleteMany({ where: { userId } });
 }

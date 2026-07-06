@@ -165,6 +165,9 @@ model Product {
   salePercent   Int?
   saleEndsAt    DateTime?
   isActive      Boolean        @default(true)
+  metaTitle     String?
+  metaDescription String?      @db.Text
+  ogImageUrl    String?
   categoryId    String?
   category      Category?      @relation(fields: [categoryId], references: [id])
   images        ProductImage[]

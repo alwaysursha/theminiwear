@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { CSSProperties } from "react";
@@ -17,12 +18,41 @@ import {
 } from "@/lib/product-utils";
 import { getSiteSaleSettings } from "@/lib/settings";
 import { getFreeShippingThreshold } from "@/lib/shipping";
+import { getProductRatingSummary } from "@/lib/review-utils";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  buildBreadcrumbJsonLd,
+  buildProductJsonLd,
+} from "@/lib/seo-jsonld";
+import { buildPageMetadata, getSeoStoreInfo, truncateForMeta } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug, isActive: true },
+    include: {
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
+  });
+
+  if (!product) {
+    return { title: "Product not found" };
+  }
+
+  return buildPageMetadata({
+    title: product.metaTitle || product.name,
+    description: truncateForMeta(product.metaDescription || product.description),
+    path: `/product/${product.slug}`,
+    image: product.ogImageUrl,
+    omitOgImage: !product.ogImageUrl,
+  });
+}
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
@@ -43,6 +73,11 @@ export default async function ProductPage({ params }: PageProps) {
   if (!product) {
     notFound();
   }
+
+  const [store, rating] = await Promise.all([
+    getSeoStoreInfo(),
+    getProductRatingSummary(product.id),
+  ]);
 
   const sameCategory = await prisma.product.findMany({
     where: {
@@ -78,8 +113,28 @@ export default async function ProductPage({ params }: PageProps) {
     product.isClearance ||
     (discountPercent != null && discountPercent > 0);
 
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Shop", path: "/shop" },
+    ...(product.category
+      ? [
+          {
+            name: product.category.name,
+            path: `/shop?category=${product.category.slug}`,
+          },
+        ]
+      : []),
+    { name: product.name, path: `/product/${product.slug}` },
+  ];
+
   return (
     <div className="product-detail-page relative overflow-hidden">
+      <JsonLd
+        data={[
+          buildProductJsonLd(product, store.name, store.currency, siteSale, rating),
+          buildBreadcrumbJsonLd(breadcrumbs),
+        ]}
+      />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-blush/50 blur-3xl product-detail-orb" />
         <div className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-sky/40 blur-3xl product-detail-orb-delay" />

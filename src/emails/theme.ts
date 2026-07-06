@@ -51,3 +51,12 @@ export function escapeHtml(text: string) {
 export function textToHtml(text: string) {
   return escapeHtml(text).replace(/\n/g, "<br />");
 }
+
+/** Short product label for customer email subjects (e.g. one item or "Dress & 2 more"). */
+export function formatOrderProductsSubject(productNames: string[]): string {
+  const names = [...new Set(productNames.map((name) => name.trim()).filter(Boolean))];
+  if (names.length === 0) return "your order";
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} & ${names[1]}`;
+  return `${names[0]} and ${names.length - 1} more`;
+}

@@ -6,7 +6,7 @@ import { renderOrderConfirmationEmail } from "../src/emails/templates/order-conf
 import { renderOrderShippedEmail } from "../src/emails/templates/order-shipped";
 import { renderReturnRequestedEmail } from "../src/emails/templates/return-requested";
 import { renderWelcomeEmail } from "../src/emails/templates/welcome";
-import { EMAIL_SENDERS } from "../src/emails/theme";
+import { EMAIL_SENDERS, formatOrderProductsSubject } from "../src/emails/theme";
 
 const SAMPLE_PRODUCT = {
   name: "Rainbow Stripe Tee",
@@ -74,9 +74,9 @@ const PREVIEWS = [
   {
     name: "Order confirmation",
     from: EMAIL_SENDERS.orders,
-    subject: "[Preview] Order confirmed — TM-00042",
+    subject: `[Preview] Order confirmed — ${formatOrderProductsSubject(["Rainbow Stripe Tee", "Cozy Fleece Joggers"])}`,
     html: renderOrderConfirmationEmail({
-      orderNumber: "TM-00042",
+      orderNumber: "TMW-00042",
       total: 68.5,
       items: [
         { name: "Rainbow Stripe Tee", quantity: 1, price: 24.99, size: "4T", color: "Multi" },
@@ -87,9 +87,9 @@ const PREVIEWS = [
   {
     name: "Order shipped",
     from: EMAIL_SENDERS.orders,
-    subject: "[Preview] Your order has shipped — TM-00042",
+    subject: `[Preview] Your order has shipped — ${formatOrderProductsSubject(["Rainbow Stripe Tee", "Cozy Fleece Joggers"])}`,
     html: renderOrderShippedEmail({
-      orderNumber: "TM-00042",
+      orderNumber: "TMW-00042",
       carrier: "Canada Post",
       trackingNumber: "1234567890123456",
     }),
@@ -116,9 +116,9 @@ const PREVIEWS = [
   {
     name: "Return requested",
     from: EMAIL_SENDERS.support,
-    subject: "[Preview] Return request received — TM-00042",
+    subject: `[Preview] Return request received — ${formatOrderProductsSubject(["Rainbow Stripe Tee"])}`,
     html: renderReturnRequestedEmail({
-      orderNumber: "TM-00042",
+      orderNumber: "TMW-00042",
       reason: "Ordered the wrong size — would like to exchange for 5T.",
     }),
   },

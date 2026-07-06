@@ -5,6 +5,7 @@ import { ReviewStatus } from "@prisma/client";
 import { auth, requireRoleAdmin } from "@/lib/auth";
 import type { AdminSaveState } from "@/lib/admin-form-state";
 import { prisma } from "@/lib/prisma";
+import { sendAdminNewReviewEmail } from "@/lib/email";
 import {
   canUserReviewProduct,
   validateReviewInput,
@@ -61,14 +62,14 @@ export async function submitProductReview(
 
   const product = await prisma.product.findUnique({
     where: { id: productId, isActive: true },
-    select: { slug: true },
+    select: { slug: true, name: true },
   });
 
   if (!product) {
     return { success: false, error: "Product not found." };
   }
 
-  await prisma.productReview.create({
+  const review = await prisma.productReview.create({
     data: {
       productId,
       userId: session.user.id,
@@ -78,6 +79,15 @@ export async function submitProductReview(
       body: parsed.body,
       status: ReviewStatus.PENDING,
     },
+  });
+
+  void sendAdminNewReviewEmail({
+    reviewId: review.id,
+    productName: product.name,
+    reviewerName: session.user.name ?? session.user.email ?? "Customer",
+    rating: parsed.rating,
+    title: parsed.title,
+    body: parsed.body,
   });
 
   revalidatePath(`/product/${product.slug}`);

@@ -281,7 +281,11 @@ export default async function AdminOrderDetailPage({
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h3 className="mb-4 font-semibold text-slate-900">Update status</h3>
-            <OrderStatusForm orderId={id} orderStatus={order.status} />
+            <OrderStatusForm
+              key={`${id}-${order.status}`}
+              orderId={id}
+              orderStatus={order.status}
+            />
           </div>
 
           {order.status !== OrderStatus.REFUNDED && refundAmount > 0 && (

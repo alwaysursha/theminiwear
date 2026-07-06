@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProductImageUploader } from "@/components/admin/ProductImageUploader";
+import { ProductSeoFields } from "@/components/admin/ProductSeoFields";
 import { COLORS, SIZES } from "@/lib/constants";
 import {
   ageGroupForSize,
@@ -38,6 +39,9 @@ interface ProductFormProps {
     salePercent: number | null;
     saleEndsAt: Date | null;
     isActive: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImageUrl?: string | null;
     variants: ProductVariantInput[];
     images: ProductImageInput[];
   };
@@ -290,6 +294,14 @@ export function ProductForm({
           className="rounded-md border-slate-200"
         />
       </div>
+
+      <ProductSeoFields
+        productName={name}
+        description={initialData?.description ?? ""}
+        initialMetaTitle={initialData?.metaTitle}
+        initialMetaDescription={initialData?.metaDescription}
+        initialOgImageUrl={initialData?.ogImageUrl}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="space-y-2">

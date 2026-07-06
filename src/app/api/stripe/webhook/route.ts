@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import {
+  notifyAdminCheckoutSessionIssue,
+  notifyAdminPaymentIntentFailed,
+} from "@/lib/checkout-admin-alerts";
+import { sendOrderConfirmationEmail, sendAdminNewOrderEmail, sendAdminLowStockEmail } from "@/lib/email";
 import { clearUserCartById } from "@/lib/actions/cart";
+import { findVariantsCrossedLowStock } from "@/lib/low-stock";
 import { generateOrderNumber } from "@/lib/utils";
 import type Stripe from "stripe";
 
@@ -47,6 +52,17 @@ export async function POST(request: Request) {
       customFee?: number;
       measurements?: Record<string, string>;
     }>;
+
+    const variantIds = [...new Set(items.map((item) => item.variantId))];
+    const stockBeforeRows = variantIds.length
+      ? await prisma.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: { id: true, stock: true },
+        })
+      : [];
+    const stockBefore = new Map(
+      stockBeforeRows.map((variant) => [variant.id, variant.stock]),
+    );
 
     const order = await prisma.order.create({
       data: {
@@ -95,6 +111,21 @@ export async function POST(request: Request) {
       });
     }
 
+    const lowStockVariants = await findVariantsCrossedLowStock(items, stockBefore);
+    if (lowStockVariants.length > 0) {
+      void sendAdminLowStockEmail({
+        orderNumber: order.orderNumber,
+        variants: lowStockVariants.map((variant) => ({
+          productName: variant.productName,
+          sku: variant.sku,
+          size: variant.size,
+          color: variant.color,
+          stock: variant.stock,
+          previousStock: variant.previousStock,
+        })),
+      });
+    }
+
     if (metadata.userId) {
       await clearUserCartById(metadata.userId);
     }
@@ -114,6 +145,25 @@ export async function POST(request: Request) {
         })),
       });
     }
+
+    void sendAdminNewOrderEmail({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.user?.name ?? "Guest",
+      customerEmail: email ?? "No email on file",
+      total: Number(order.total),
+      itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
+    });
+  }
+
+  if (event.type === "checkout.session.expired") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    await notifyAdminCheckoutSessionIssue("abandoned", session);
+  }
+
+  if (event.type === "payment_intent.payment_failed") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    await notifyAdminPaymentIntentFailed(paymentIntent);
   }
 
   return NextResponse.json({ received: true });

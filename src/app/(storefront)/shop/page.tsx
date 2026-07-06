@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense, type CSSProperties } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
@@ -13,20 +14,20 @@ import {
   sortShopCategories,
 } from "@/lib/shop-categories";
 import { cn } from "@/lib/utils";
+import { buildShopMetadata, type ShopSearchParams } from "@/lib/seo-shop";
 import type { Gender, Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{
-  category?: string;
-  gender?: string;
-  ageGroup?: string;
-  search?: string;
-  sort?: string;
-  new?: string;
-  sale?: string;
-  clearance?: string;
-}>;
+type SearchParams = Promise<ShopSearchParams>;
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  return buildShopMetadata(await searchParams);
+}
 
 export default async function ShopPage({
   searchParams,

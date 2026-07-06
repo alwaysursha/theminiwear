@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Lock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,8 +8,14 @@ import {
   defaultShippingCountries,
   getShippingCountries,
 } from "@/lib/shipping";
+import { noIndexMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Checkout",
+  "Secure checkout for your order.",
+);
 
 export default async function CheckoutPage() {
   const session = await auth();

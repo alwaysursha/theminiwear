@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendReturnRequestedEmail } from "@/lib/email";
+import { sendReturnRequestedEmail, sendAdminReturnRequestEmail } from "@/lib/email";
 
 export async function requestReturn(orderId: string, formData: FormData) {
   const session = await auth();
@@ -18,7 +18,15 @@ export async function requestReturn(orderId: string, formData: FormData) {
 
   const order = await prisma.order.findFirst({
     where: { id: orderId, userId: session.user.id },
-    include: { returnRequest: true, user: true },
+    include: {
+      returnRequest: true,
+      user: true,
+      items: {
+        include: {
+          variant: { include: { product: true } },
+        },
+      },
+    },
   });
 
   if (!order) {
@@ -42,6 +50,16 @@ export async function requestReturn(orderId: string, formData: FormData) {
     void sendReturnRequestedEmail({
       to: email,
       orderNumber: order.orderNumber,
+      productNames: order.items.map((item) => item.variant.product.name),
+      reason: reason.trim(),
+    });
+  }
+
+  if (email) {
+    void sendAdminReturnRequestEmail({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerEmail: email,
       reason: reason.trim(),
     });
   }

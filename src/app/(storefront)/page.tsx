@@ -1,13 +1,29 @@
+import type { Metadata } from "next";
 import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
 import { HeroSlider } from "@/components/storefront/HeroSlider";
 import { HomepageProductSection } from "@/components/storefront/HomepageProductSection";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getHeroSettings, getHomepageSection } from "@/lib/cms";
 import { getHomepageSectionProducts } from "@/lib/cms/products";
 import { buildHeroSlides } from "@/lib/hero-slider";
 import { prisma } from "@/lib/prisma";
 import { getSiteSaleSettings } from "@/lib/settings";
+import { buildOrganizationJsonLd, buildWebSiteJsonLd } from "@/lib/seo-jsonld";
+import { buildPageMetadata, getSeoStoreInfo, truncateForMeta } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [store, hero] = await Promise.all([getSeoStoreInfo(), getHeroSettings()]);
+  const description = truncateForMeta(hero.description || store.description);
+
+  return buildPageMetadata({
+    title: store.name,
+    description,
+    path: "/",
+    omitOgImage: true,
+  });
+}
 
 export default async function HomePage() {
   try {
@@ -55,8 +71,16 @@ export default async function HomePage() {
       newArrivalViewAllLabel: newSection.viewAllLabel ?? "View all",
     });
 
+    const store = await getSeoStoreInfo();
+
     return (
       <div>
+        <JsonLd
+          data={[
+            buildOrganizationJsonLd(store),
+            buildWebSiteJsonLd(store.name),
+          ]}
+        />
         <HeroSlider slides={heroSlides} />
 
         {categoriesSection.enabled && (

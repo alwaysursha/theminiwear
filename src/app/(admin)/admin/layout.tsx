@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { signOut, requireAdmin } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { noIndexMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = noIndexMetadata("Admin");
 
 async function handleSignOut() {
   "use server";

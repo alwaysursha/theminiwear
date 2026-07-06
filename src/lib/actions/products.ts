@@ -72,6 +72,9 @@ function parseProductFormData(formData: FormData) {
   const salePercent = salePercentRaw ? parseInt(salePercentRaw, 10) : null;
   const saleEndsAtRaw = (formData.get("saleEndsAt") as string)?.trim();
   const saleEndsAt = saleEndsAtRaw ? new Date(saleEndsAtRaw) : null;
+  const metaTitle = (formData.get("metaTitle") as string)?.trim() || null;
+  const metaDescription = (formData.get("metaDescription") as string)?.trim() || null;
+  const ogImageUrl = (formData.get("ogImageUrl") as string)?.trim() || null;
 
   const variantsJson = formData.get("variants") as string;
   const imagesJson = formData.get("images") as string;
@@ -94,6 +97,9 @@ function parseProductFormData(formData: FormData) {
     isActive,
     salePercent,
     saleEndsAt,
+    metaTitle,
+    metaDescription,
+    ogImageUrl,
     variants,
     images,
   };
@@ -125,6 +131,9 @@ export async function createProduct(formData: FormData) {
       salePercent: data.salePercent,
       saleEndsAt: data.saleEndsAt,
       isActive: data.isActive,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      ogImageUrl: data.ogImageUrl,
       images: {
         create: data.images.map((img, index) => imageCreateData(img, index, data.name)),
       },
@@ -199,6 +208,9 @@ export async function updateProduct(productId: string, formData: FormData) {
         salePercent: data.salePercent,
         saleEndsAt: data.saleEndsAt,
         isActive: data.isActive,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
+        ogImageUrl: data.ogImageUrl,
       },
     }),
     ...variantsToDelete.map((v) =>
@@ -251,6 +263,8 @@ export async function updateProduct(productId: string, formData: FormData) {
 
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${productId}/edit`);
+  revalidatePath(`/product/${slug}`);
+  revalidatePath("/shop");
   redirect("/admin/products");
 }
 
@@ -316,6 +330,9 @@ export async function duplicateProduct(productId: string) {
       salePercent: product.salePercent,
       saleEndsAt: product.saleEndsAt,
       isActive: false,
+      metaTitle: product.metaTitle,
+      metaDescription: product.metaDescription,
+      ogImageUrl: product.ogImageUrl,
       images: {
         create: product.images.map((img) => ({
           url: img.url,

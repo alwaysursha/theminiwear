@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { isAdminRole } from "@/lib/constants";
 import { AccountNav } from "@/components/storefront/AccountNav";
+import { noIndexMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = noIndexMetadata(
+  "My account",
+  "Manage your orders, addresses, and profile.",
+);
 
 export default async function AccountLayout({
   children,

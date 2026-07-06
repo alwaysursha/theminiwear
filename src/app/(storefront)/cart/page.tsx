@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { CartContent } from "@/components/storefront/CartContent";
 import { getFreeShippingThreshold } from "@/lib/shipping";
+import { noIndexMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Shopping cart",
+  "Review items in your cart before checkout.",
+);
 
 export default async function CartPage() {
   let freeShippingThreshold: number | null = null;

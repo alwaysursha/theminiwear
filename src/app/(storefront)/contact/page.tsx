@@ -1,10 +1,16 @@
+import type { Metadata } from "next";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { ContactForm } from "@/components/storefront/ContactForm";
 import { WorkInProgress } from "@/components/storefront/WorkInProgress";
 import { auth } from "@/lib/auth";
 import { getSitePage } from "@/lib/cms";
+import { buildSitePageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildSitePageMetadata("contact");
+}
 
 export default async function ContactPage() {
   const session = await auth();

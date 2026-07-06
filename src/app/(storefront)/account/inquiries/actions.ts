@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendAdminInquiryReplyEmail } from "@/lib/email";
 import { z } from "zod";
 
 const messageSchema = z.object({
@@ -22,6 +23,7 @@ export async function replyToInquiry(formData: FormData) {
 
     const inquiry = await prisma.inquiry.findFirst({
       where: { id: data.inquiryId, userId: session.user.id },
+      include: { user: true },
     });
 
     if (!inquiry) return { error: "Inquiry not found" };
@@ -40,7 +42,17 @@ export async function replyToInquiry(formData: FormData) {
       data: { updatedAt: new Date() },
     });
 
+    void sendAdminInquiryReplyEmail({
+      inquiryId: inquiry.id,
+      subject: inquiry.subject,
+      customerName: session.user.name ?? inquiry.user?.name ?? "Customer",
+      customerEmail: session.user.email ?? inquiry.guestEmail ?? "",
+      message: data.content,
+    });
+
     revalidatePath(`/account/inquiries/${data.inquiryId}`);
+    revalidatePath("/admin/inquiries");
+    revalidatePath(`/admin/inquiries/${data.inquiryId}`);
     return { success: true };
   } catch {
     return { error: "Failed to send message" };

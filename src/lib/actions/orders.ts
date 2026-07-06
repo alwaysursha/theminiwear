@@ -9,6 +9,14 @@ import { sendShippingUpdateEmail } from "@/lib/email";
 import { productRefundAmount } from "@/lib/order-refund";
 import { getStripe } from "@/lib/stripe";
 
+function parseOrderStatus(value: FormDataEntryValue | null): OrderStatus | null {
+  const status = String(value ?? "").trim();
+  if (!status) return null;
+  return Object.values(OrderStatus).includes(status as OrderStatus)
+    ? (status as OrderStatus)
+    : null;
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
@@ -16,22 +24,38 @@ export async function updateOrderStatus(
 ) {
   await requireAdmin();
 
-  await prisma.$transaction([
-    prisma.order.update({
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, status: true },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.status === status) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
       where: { id: orderId },
       data: { status },
-    }),
-    prisma.orderStatusHistory.create({
+    });
+    await tx.orderStatusHistory.create({
       data: {
         orderId,
         status,
         note: note || null,
       },
-    }),
-  ]);
+    });
+  });
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/admin");
+  revalidatePath("/account/orders");
+  revalidatePath(`/account/orders/${orderId}`);
 }
 
 export async function updateOrderStatusFromForm(
@@ -43,13 +67,18 @@ export async function updateOrderStatusFromForm(
     return { error: "Order not found." };
   }
 
-  const status = formData.get("status") as OrderStatus;
-  const note = formData.get("note") as string;
+  const status = parseOrderStatus(formData.get("status"));
+  if (!status) {
+    return { error: "Choose a valid order status." };
+  }
+
+  const note = String(formData.get("note") ?? "").trim();
 
   try {
     await updateOrderStatus(orderId, status, note || undefined);
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("updateOrderStatusFromForm failed:", error);
     return { error: "Could not update order status. Please try again." };
   }
 }
@@ -110,13 +139,21 @@ export async function updateShipment(
       if (!wasInTransit) {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { user: true },
+          include: {
+            user: true,
+            items: {
+              include: {
+                variant: { include: { product: true } },
+              },
+            },
+          },
         });
         const email = order?.user?.email ?? order?.guestEmail;
         if (email && order) {
           void sendShippingUpdateEmail({
             to: email,
             orderNumber: order.orderNumber,
+            productNames: order.items.map((item) => item.variant.product.name),
             trackingNumber,
             carrier,
           });

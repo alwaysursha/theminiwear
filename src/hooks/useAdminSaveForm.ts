@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import type { AdminSaveState } from "@/lib/admin-form-state";
 
 export function useAdminSaveForm(
@@ -14,19 +14,19 @@ export function useAdminSaveForm(
   const router = useRouter();
   const [showSaved, setShowSaved] = useState(false);
   const [state, formAction, pending] = useActionState(action, initialState);
+  const wasPending = useRef(false);
 
   useEffect(() => {
-    if (state.ok && !pending) {
-      setShowSaved(true);
-      router.refresh();
+    if (wasPending.current && !pending) {
+      if (state.ok) {
+        setShowSaved(true);
+        router.refresh();
+      } else if (state.error) {
+        setShowSaved(false);
+      }
     }
-  }, [state.ok, pending, router]);
-
-  useEffect(() => {
-    if (state.error) {
-      setShowSaved(false);
-    }
-  }, [state.error]);
+    wasPending.current = pending;
+  }, [pending, state.ok, state.error, router]);
 
   const markDirty = useCallback(() => {
     setShowSaved(false);

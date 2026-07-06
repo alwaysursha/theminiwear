@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ClearCartOnSuccess } from "@/components/storefront/ClearCartOnSuccess";
 import { cn } from "@/lib/utils";
+import { noIndexMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Order confirmed",
+  "Thank you for your purchase.",
+);
 
 type SearchParams = Promise<{ session_id?: string }>;
 

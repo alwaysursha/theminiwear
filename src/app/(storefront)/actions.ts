@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { sendAdminNewsletterSignupEmail } from "@/lib/email";
 import { z } from "zod";
 
 export async function subscribeNewsletter(formData: FormData) {
@@ -12,11 +13,20 @@ export async function subscribeNewsletter(formData: FormData) {
   }
 
   try {
+    const existing = await prisma.newsletterSubscriber.findUnique({
+      where: { email: parsed.data },
+    });
+
     await prisma.newsletterSubscriber.upsert({
       where: { email: parsed.data },
       create: { email: parsed.data },
       update: {},
     });
+
+    if (!existing) {
+      void sendAdminNewsletterSignupEmail({ email: parsed.data });
+    }
+
     return { success: true };
   } catch {
     return { success: false };

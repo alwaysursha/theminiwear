@@ -1,5 +1,6 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { getEmbeddedCheckoutClientSecret } from "@/app/(storefront)/checkout/actions";
@@ -9,8 +10,14 @@ import {
   EmbeddedCheckoutPanel,
 } from "@/components/storefront/EmbeddedCheckoutPanel";
 import { readStripePublishableKey } from "@/lib/stripe-publishable-key";
+import { noIndexMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Payment",
+  "Complete your secure payment.",
+);
 
 type SearchParams = Promise<{ session_id?: string }>;
 

@@ -7,7 +7,7 @@ import type { Provider } from "next-auth/providers";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole } from "@/lib/constants";
 import { authConfig } from "@/lib/auth.config";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, sendAdminNewAccountEmail } from "@/lib/email";
 import type { Role } from "@prisma/client";
 import { Role as RoleEnum } from "@prisma/client";
 
@@ -81,6 +81,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       void sendWelcomeEmail({
         to: user.email,
         name: user.name ?? "there",
+      });
+      void sendAdminNewAccountEmail({
+        name: user.name ?? "New customer",
+        email: user.email,
       });
     },
   },

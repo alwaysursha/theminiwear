@@ -64,6 +64,9 @@ export default async function EditProductPage({
           salePercent: product.salePercent,
           saleEndsAt: product.saleEndsAt,
           isActive: product.isActive,
+          metaTitle: product.metaTitle,
+          metaDescription: product.metaDescription,
+          ogImageUrl: product.ogImageUrl,
           variants: product.variants.map((v) => ({
             id: v.id,
             size: v.size,

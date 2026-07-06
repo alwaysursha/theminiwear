@@ -32,7 +32,7 @@ const prisma = new PrismaClient({ adapter });
 const PASSWORD = "password123";
 
 function orderNumber(n: number) {
-  return `TM-${String(n).padStart(5, "0")}`;
+  return `TMW-${String(n).padStart(5, "0")}`;
 }
 
 async function clearDatabase() {
