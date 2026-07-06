@@ -6,6 +6,7 @@ import {
   type OrderLineItem,
 } from "@/emails/templates/order-confirmation";
 import { renderOrderShippedEmail } from "@/emails/templates/order-shipped";
+import { renderPasswordResetEmail } from "@/emails/templates/password-reset";
 import { renderReturnRequestedEmail } from "@/emails/templates/return-requested";
 import { renderWelcomeEmail } from "@/emails/templates/welcome";
 import { EMAIL_SENDERS } from "@/emails/theme";
@@ -171,6 +172,24 @@ export async function sendReturnRequestedEmail({
     to,
     subject: `Return request received — ${orderNumber}`,
     html: renderReturnRequestedEmail({ orderNumber, reason }),
+    replyTo: "support@theminiwear.com",
+  });
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+}: {
+  to: string;
+  name: string;
+  resetUrl: string;
+}) {
+  await sendEmail({
+    from: EMAIL_SENDERS.support,
+    to,
+    subject: "Reset your The Mini Wear password",
+    html: renderPasswordResetEmail({ name, resetUrl }),
     replyTo: "support@theminiwear.com",
   });
 }

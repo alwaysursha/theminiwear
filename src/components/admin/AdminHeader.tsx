@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
@@ -17,6 +18,7 @@ const titleMap: Record<string, string> = {
   "/admin/discounts": "Discounts",
   "/admin/analytics": "Analytics",
   "/admin/settings": "Settings",
+  "/admin/profile": "My profile",
 };
 
 function getPageTitle(pathname: string): string {
@@ -64,17 +66,22 @@ export function AdminHeader({
       </div>
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <div className="hidden text-right sm:block">
-          <p className="text-sm font-medium text-slate-900">
-            {userName ?? "Admin User"}
-          </p>
-          <p className="text-xs text-slate-500">
-            {userEmail}
-            {userRole && (
-              <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
-                {userRole.replace("_", " ")}
-              </span>
-            )}
-          </p>
+          <Link
+            href="/admin/profile"
+            className="block rounded-md transition-colors hover:bg-slate-50"
+          >
+            <p className="text-sm font-medium text-slate-900">
+              {userName ?? "Admin User"}
+            </p>
+            <p className="text-xs text-slate-500">
+              {userEmail}
+              {userRole && (
+                <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
+                  {userRole.replace("_", " ")}
+                </span>
+              )}
+            </p>
+          </Link>
         </div>
         <Button
           type="button"

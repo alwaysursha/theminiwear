@@ -44,7 +44,7 @@ export function AdminShell({
     <div className="flex min-h-screen bg-slate-50">
       {/* Desktop sidebar */}
       <div className="sticky top-0 hidden h-screen shrink-0 lg:block">
-        <AdminSidebar role={role} />
+        <AdminSidebar role={role} userName={userName} />
       </div>
 
       {/* Mobile drawer */}
@@ -70,7 +70,11 @@ export function AdminShell({
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <AdminSidebar role={role} onClose={() => setMobileOpen(false)} />
+          <AdminSidebar
+            role={role}
+            userName={userName}
+            onClose={() => setMobileOpen(false)}
+          />
         </div>
       </div>
 

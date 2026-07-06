@@ -86,7 +86,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      email: "admin@theminiwear.com",
+      email: "faiza.farook85@gmail.com",
       name: "Faiza Farooq",
       password: hashed,
       role: Role.ADMIN,
@@ -1181,7 +1181,7 @@ async function main() {
 
   console.log("\n✅ Seed complete!\n");
   console.log("Accounts (password for all: password123):");
-  console.log("  Admin:          admin@theminiwear.com");
+  console.log("  Admin:          faiza.farook85@gmail.com");
   console.log("  Order Manager:  orders@theminiwear.com");
   console.log("  Support Agent:  support@theminiwear.com");
   console.log("  Customer:       customer@example.com");

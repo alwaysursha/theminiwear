@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   Star,
   Truck,
+  UserCircle,
   Users,
   X,
 } from "lucide-react";
@@ -38,13 +39,29 @@ const navItems = [
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "newsletter" as const },
   { href: "/admin/developer", label: "Developer", icon: Code2, section: "developer" as const },
   { href: "/admin/settings", label: "Settings", icon: Settings, section: "settings" as const },
+  { href: "/admin/profile", label: "My profile", icon: UserCircle, section: "profile" as const },
 ];
+
+function adminRoleLabel(role: Role): string {
+  switch (role) {
+    case "ADMIN":
+      return "ADMIN, CEO";
+    case "ORDER_MANAGER":
+      return "ORDER MANAGER";
+    case "SUPPORT_AGENT":
+      return "SUPPORT AGENT";
+    default:
+      return role;
+  }
+}
 
 export function AdminSidebar({
   role,
+  userName,
   onClose,
 }: {
   role: Role;
+  userName?: string | null;
   onClose?: () => void;
 }) {
   const pathname = usePathname();
@@ -56,10 +73,13 @@ export function AdminSidebar({
     <aside className="flex h-full w-64 max-w-full flex-col border-r border-slate-200 bg-slate-900 text-white">
       <div className="flex items-start justify-between border-b border-slate-700 px-6 py-5">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            Admin
+          <p className="text-lg font-semibold text-white">
+            {userName?.trim() || "Admin"}
           </p>
-          <p className="mt-1 text-lg font-semibold text-white">{SITE_NAME}</p>
+          <p className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-400">
+            {adminRoleLabel(role)}
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-300">{SITE_NAME}</p>
         </div>
         {onClose && (
           <button

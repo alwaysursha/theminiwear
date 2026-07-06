@@ -13,7 +13,8 @@ export type AdminSection =
   | "reviews"
   | "developer"
   | "returns"
-  | "newsletter";
+  | "newsletter"
+  | "profile";
 
 const rolePermissions: Record<Role, AdminSection[]> = {
   ADMIN: [
@@ -30,6 +31,7 @@ const rolePermissions: Record<Role, AdminSection[]> = {
     "developer",
     "returns",
     "newsletter",
+    "profile",
   ],
   ORDER_MANAGER: [
     "dashboard",
@@ -37,8 +39,9 @@ const rolePermissions: Record<Role, AdminSection[]> = {
     "shipping",
     "analytics",
     "returns",
+    "profile",
   ],
-  SUPPORT_AGENT: ["dashboard", "inquiries", "customers", "returns"],
+  SUPPORT_AGENT: ["dashboard", "inquiries", "customers", "returns", "profile"],
   USER: [],
 };
 
@@ -63,6 +66,7 @@ const PATH_SEGMENT_TO_SECTION: Record<string, AdminSection> = {
   settings: "settings",
   returns: "returns",
   newsletter: "newsletter",
+  profile: "profile",
 };
 
 /** Resolve admin nav section from a pathname like /admin/orders/abc. */

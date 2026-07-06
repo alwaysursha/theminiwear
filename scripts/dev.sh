@@ -35,7 +35,7 @@ fi
 echo ""
 echo "→ Starting Next.js at http://127.0.0.1:3000"
 echo "  All accounts use password: password123"
-echo "  Admin: admin@theminiwear.com"
+echo "  Admin: faiza.farook85@gmail.com"
 echo ""
 
 for p in 3000 3001 3002 3003; do

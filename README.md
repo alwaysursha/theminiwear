@@ -31,7 +31,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | admin@theminiwear.com | password123 |
+| Admin | faiza.farook85@gmail.com | password123 |
 | Order Manager | orders@theminiwear.com | password123 |
 | Support Agent | support@theminiwear.com | password123 |
 | Customer | customer@example.com | password123 |
