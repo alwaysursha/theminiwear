@@ -6,6 +6,7 @@ import { Gender, type Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { normalizeProductImageFraming } from "@/lib/product-image-display";
 import { ageGroupForSize, sortShopCategories } from "@/lib/shop-categories";
 
 export type ProductVariantInput = {
@@ -26,7 +27,35 @@ export type ProductImageInput = {
   /** Color this image represents (empty = shown for every color). */
   color?: string;
   sortOrder?: string;
+  focalX?: number | string;
+  focalY?: number | string;
+  zoom?: number | string;
+  fitMode?: string;
 };
+
+function imageCreateData(
+  img: ProductImageInput,
+  index: number,
+  fallbackAlt: string,
+) {
+  return {
+    url: img.url,
+    alt: img.alt || fallbackAlt,
+    color: img.color?.trim() ? img.color.trim() : null,
+    sortOrder: img.sortOrder ? parseInt(img.sortOrder, 10) : index,
+    ...normalizeImageFramingFields(img),
+  };
+}
+
+function normalizeImageFramingFields(img: ProductImageInput) {
+  const framing = normalizeProductImageFraming(img);
+  return {
+    focalX: framing.focalX,
+    focalY: framing.focalY,
+    zoom: framing.zoom,
+    fitMode: framing.fitMode,
+  };
+}
 
 function parseProductFormData(formData: FormData) {
   const name = formData.get("name") as string;
@@ -97,12 +126,7 @@ export async function createProduct(formData: FormData) {
       saleEndsAt: data.saleEndsAt,
       isActive: data.isActive,
       images: {
-        create: data.images.map((img, index) => ({
-          url: img.url,
-          alt: img.alt || data.name,
-          color: img.color?.trim() ? img.color.trim() : null,
-          sortOrder: img.sortOrder ? parseInt(img.sortOrder, 10) : index,
-        })),
+        create: data.images.map((img, index) => imageCreateData(img, index, data.name)),
       },
       variants: {
         create: data.variants.map((v) => ({
@@ -211,12 +235,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   }
 
   for (const [index, image] of data.images.entries()) {
-    const imageData = {
-      url: image.url,
-      alt: image.alt || data.name,
-      color: image.color?.trim() ? image.color.trim() : null,
-      sortOrder: image.sortOrder ? parseInt(image.sortOrder, 10) : index,
-    };
+    const imageData = imageCreateData(image, index, data.name);
 
     if (image.id) {
       await prisma.productImage.update({
@@ -303,6 +322,10 @@ export async function duplicateProduct(productId: string) {
           alt: img.alt,
           color: img.color,
           sortOrder: img.sortOrder,
+          focalX: img.focalX,
+          focalY: img.focalY,
+          zoom: img.zoom,
+          fitMode: img.fitMode,
         })),
       },
       variants: {

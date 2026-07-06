@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, shouldBypassImageOptimization } from "@/lib/utils";
+import type { ProductImageFitMode } from "@/lib/product-image-display";
 
 export type ProductImageFrameTone = "warm" | "cool" | "sale" | "neutral" | "light";
 
@@ -25,6 +26,10 @@ type ProductFitImageProps = {
   sizes: string;
   fit?: keyof typeof fitZoom;
   mode?: "contain" | "cover";
+  focalX?: number;
+  focalY?: number;
+  zoom?: number;
+  fitMode?: ProductImageFitMode;
   className?: string;
 };
 
@@ -35,9 +40,46 @@ export function ProductFitImage({
   sizes,
   fit = "md",
   mode = "contain",
+  focalX = 50,
+  focalY = 50,
+  zoom = 100,
+  fitMode,
   className,
 }: ProductFitImageProps) {
-  const zoom = fitZoom[fit];
+  const zoomConfig = fitZoom[fit];
+  const effectiveMode = fitMode ?? mode;
+  const scale = effectiveMode === "cover" ? Math.max(1, zoom / 100) : 1;
+
+  if (effectiveMode === "cover") {
+    return (
+      <div className="product-fit-image relative h-full min-h-0 w-full overflow-hidden">
+        <div
+          className={cn(
+            "absolute inset-0 transition-transform duration-500 ease-out group-hover/frame:scale-[1.03]",
+            scale > 1 && "will-change-transform",
+          )}
+          style={
+            scale > 1
+              ? {
+                  transform: `scale(${scale})`,
+                  transformOrigin: `${focalX}% ${focalY}%`,
+                }
+              : undefined
+          }
+        >
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            unoptimized={shouldBypassImageOptimization(src)}
+            className={cn("object-cover", className)}
+            style={{ objectPosition: `${focalX}% ${focalY}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="product-fit-image relative h-full min-h-0 w-full overflow-hidden">
@@ -46,16 +88,12 @@ export function ProductFitImage({
         alt={alt}
         fill
         sizes={sizes}
-        unoptimized
+        unoptimized={shouldBypassImageOptimization(src)}
         className={cn(
           "object-center transition-transform duration-500 ease-out",
-          mode === "cover"
-            ? "object-cover group-hover/frame:scale-[1.03]"
-            : cn(
-                "origin-center object-contain",
-                zoom.base,
-                zoom.hover,
-              ),
+          "origin-center object-contain",
+          zoomConfig.base,
+          zoomConfig.hover,
           className,
         )}
       />

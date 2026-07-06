@@ -182,6 +182,10 @@ model ProductImage {
   alt       String?
   color     String?
   sortOrder Int     @default(0)
+  focalX    Int     @default(50)
+  focalY    Int     @default(50)
+  zoom      Int     @default(100)
+  fitMode   String  @default("cover")
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 

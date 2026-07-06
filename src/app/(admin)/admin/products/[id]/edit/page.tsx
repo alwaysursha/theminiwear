@@ -80,6 +80,10 @@ export default async function EditProductPage({
             alt: img.alt ?? "",
             color: img.color ?? "",
             sortOrder: String(img.sortOrder),
+            focalX: img.focalX,
+            focalY: img.focalY,
+            zoom: img.zoom,
+            fitMode: img.fitMode,
           })),
         }}
       />

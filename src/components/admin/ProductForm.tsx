@@ -412,7 +412,8 @@ export function ProductForm({
       <div>
         <h3 className="text-sm font-semibold text-slate-900">Images</h3>
         <p className="mb-3 mt-1 text-xs text-slate-500">
-          First image is the cover. Link an image to a color so it shows when
+          First image is the cover. Use Adjust on each image to control how it
+          appears in the storefront. Link an image to a color so it shows when
           shoppers pick that color.
         </p>
         <ProductImageUploader
