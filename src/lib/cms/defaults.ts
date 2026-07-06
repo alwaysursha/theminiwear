@@ -3,6 +3,9 @@ import type {
   HomepageSectionData,
   SitePageData,
 } from "@/lib/cms/types";
+import { defaultPrivacyPolicyBody } from "@/lib/cms/privacy-policy-body";
+import { defaultTermsOfUseBody } from "@/lib/cms/terms-of-use-body";
+import { defaultReturnsPolicyBody } from "@/lib/cms/returns-policy-body";
 
 export const defaultHero: HeroSettingsData = {
   eyebrow: "Spring Collection is here!",
@@ -88,9 +91,9 @@ export const defaultSitePages: SitePageData[] = [
   {
     slug: "privacy",
     title: "Privacy Policy",
-    subtitle: null,
-    body: "",
-    published: false,
+    subtitle: "How we collect, use, and protect your information",
+    body: defaultPrivacyPolicyBody,
+    published: true,
     showInNav: true,
     contactEmail: null,
     contactPhone: null,
@@ -100,9 +103,9 @@ export const defaultSitePages: SitePageData[] = [
   {
     slug: "terms",
     title: "Terms of Use",
-    subtitle: null,
-    body: "",
-    published: false,
+    subtitle: "Rules for shopping and using our website",
+    body: defaultTermsOfUseBody,
+    published: true,
     showInNav: true,
     contactEmail: null,
     contactPhone: null,
@@ -112,9 +115,9 @@ export const defaultSitePages: SitePageData[] = [
   {
     slug: "returns",
     title: "Returns & Exchanges",
-    subtitle: null,
-    body: "",
-    published: false,
+    subtitle: "How to return an item or request a refund",
+    body: defaultReturnsPolicyBody,
+    published: true,
     showInNav: true,
     contactEmail: null,
     contactPhone: null,

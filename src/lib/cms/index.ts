@@ -158,12 +158,19 @@ function mapSitePageRow(row: {
   contactAddress: string | null;
   contactHours: string | null;
 }): SitePageData {
+  const fallback = defaultSitePages.find((page) => page.slug === row.slug);
+  const usingFallbackBody =
+    !row.body.trim() && Boolean(fallback?.body?.trim());
+  const body = row.body.trim() || fallback?.body || "";
+
   return {
     slug: row.slug as SitePageSlug,
     title: row.title,
-    subtitle: row.subtitle,
-    body: row.body,
-    published: row.published,
+    subtitle: row.subtitle ?? fallback?.subtitle ?? null,
+    body,
+    published:
+      row.published ||
+      (usingFallbackBody && Boolean(fallback?.published)),
     showInNav: row.showInNav,
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
