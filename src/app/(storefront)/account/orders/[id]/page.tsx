@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/date";
 import { Check, Circle, Package, Truck } from "lucide-react";
@@ -7,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ReturnRequestForm } from "@/components/storefront/ReturnRequestForm";
+import { OrderDetailPageHeader } from "@/components/storefront/OrderDetailPageHeader";
 import type { OrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -63,22 +63,14 @@ export default async function OrderDetailPage({
   const currentStepIndex = statusSteps.indexOf(order.status);
   const isCancelled = order.status === "CANCELLED" || order.status === "REFUNDED";
 
+  const placedAt = formatDate(order.createdAt, "MMMM d, yyyy 'at' h:mm a");
+
   return (
     <div className="space-y-8">
-      <div>
-        <Link
-          href="/account/orders"
-          className="text-sm font-semibold text-coral hover:underline"
-        >
-          ← Back to orders
-        </Link>
-        <h1 className="mt-4 font-display text-2xl font-extrabold text-navy">
-          Order {order.orderNumber}
-        </h1>
-        <p className="mt-1 text-sm text-navy/60">
-          Placed {formatDate(order.createdAt, "MMMM d, yyyy 'at' h:mm a")}
-        </p>
-      </div>
+      <OrderDetailPageHeader
+        orderNumber={order.orderNumber}
+        placedAt={placedAt}
+      />
 
       {!isCancelled && (
         <div className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">

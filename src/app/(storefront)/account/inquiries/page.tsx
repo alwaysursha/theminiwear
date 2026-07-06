@@ -3,6 +3,8 @@ import { formatDate } from "@/lib/date";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
+import { AccountChromeHidden } from "@/components/storefront/AccountPanelChrome";
+import { AccountPageHeader } from "@/components/storefront/AccountPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -26,26 +28,24 @@ export default async function InquiriesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-navy">
-            Inquiries
-          </h1>
-          <p className="mt-1 text-sm text-navy/60">
-            Your support conversations
-          </p>
-        </div>
-        <Link
-          href="/contact"
-          className="text-sm font-semibold text-coral hover:underline"
-        >
-          New inquiry
-        </Link>
-      </div>
+      <AccountChromeHidden>
+        <AccountPageHeader
+          title="Messages"
+          subtitle="Your support conversations"
+          action={
+            <Link
+              href="/contact"
+              className="text-sm font-semibold text-coral hover:underline"
+            >
+              New message
+            </Link>
+          }
+        />
+      </AccountChromeHidden>
 
       {inquiries.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-navy/20 bg-blush/20 py-16 text-center">
-          <p className="text-navy/60">No inquiries yet</p>
+          <p className="text-navy/60">No messages yet</p>
           <Link
             href="/contact"
             className="mt-2 inline-block text-sm font-semibold text-coral hover:underline"

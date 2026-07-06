@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LayoutDashboard, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useCartUiStore } from "@/lib/cart-ui-store";
 import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
+import { useAccountPanelStore } from "@/lib/account-panel-store";
+import {
+  AccountLoginHint,
+  AccountOpenChevron,
+} from "@/components/storefront/AccountLoginHint";
 import { SiteLogo } from "@/components/storefront/SiteLogo";
 import { getDashboardPath, isAdminRole } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -19,6 +25,7 @@ const baseNavLinks = [
 ];
 
 export function Header({ showContact = true }: { showContact?: boolean }) {
+  const pathname = usePathname();
   const navLinks = showContact
     ? [...baseNavLinks, { href: "/contact", label: "Contact" }]
     : baseNavLinks;
@@ -27,17 +34,28 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
   const itemCount = useCartStore((s) => s.getItemCount());
   const cartPulse = useCartUiStore((s) => s.cartPulse);
   const accountPulse = useAuthToastStore((s) => s.accountPulse);
+  const showLoginHint = useAccountPanelStore((s) => s.showLoginHint);
+  const hintMessageVisible = useAccountPanelStore((s) => s.hintMessageVisible);
+  const isPanelOpen = useAccountPanelStore((s) => s.isOpen);
+  const openPanel = useAccountPanelStore((s) => s.open);
+  const closePanel = useAccountPanelStore((s) => s.close);
+  const dismissLoginHint = useAccountPanelStore((s) => s.dismissLoginHint);
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
   const isAdmin =
     isAuthenticated && session?.user?.role
       ? isAdminRole(session.user.role)
       : false;
+  const isCustomer = isAuthenticated && !isAdmin;
   const firstName = isAuthenticated ? firstNameOf(session?.user?.name) : null;
-  const accountHref =
-    isAuthenticated && session?.user?.role
-      ? getDashboardPath(session.user.role)
-      : "/auth/sign-in";
+  const safeCallbackPath =
+    pathname && pathname !== "/" && !pathname.startsWith("/auth/")
+      ? pathname
+      : null;
+  const signInHref = safeCallbackPath
+    ? `/auth/sign-in?callbackUrl=${encodeURIComponent(safeCallbackPath)}`
+    : "/auth/sign-in";
+  const adminHref = getDashboardPath(session?.user?.role ?? "USER");
   const AccountIcon = isAdmin ? LayoutDashboard : User;
   const accountLabel = isAdmin ? "Admin dashboard" : "Account";
 
@@ -46,6 +64,22 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
   }, []);
 
   const showCartCount = cartReady && itemCount > 0;
+
+  function handleAccountOpen() {
+    dismissLoginHint();
+    if (isPanelOpen) {
+      closePanel();
+      return;
+    }
+    openPanel("orders");
+  }
+
+  const accountButtonClass = cn(
+    "relative flex h-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60",
+    firstName ? "gap-1.5 pl-3 pr-2" : "w-10",
+    accountPulse && "cart-anchor-pulse",
+    isPanelOpen && isCustomer && "bg-coral/10 text-coral",
+  );
 
   return (
     <header className="border-b border-navy/10 bg-white/90 backdrop-blur-md">
@@ -75,29 +109,66 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
               Admin
             </Link>
           )}
-          <Link
-            id="site-account-anchor"
-            href={accountHref}
-            className={cn(
-              "relative flex h-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-blush/60",
-              firstName ? "gap-2 pl-3 pr-2" : "w-10",
-              accountPulse && "cart-anchor-pulse",
-            )}
-            aria-label={firstName ? `${accountLabel} — ${firstName}` : accountLabel}
-          >
-            {firstName && (
-              <span className="hidden max-w-[7rem] truncate text-sm font-semibold leading-none sm:inline">
-                Hi, {firstName}
-              </span>
-            )}
-            <AccountIcon className="h-5 w-5 shrink-0" />
-            {accountPulse && (
-              <span
-                className="cart-anchor-ring pointer-events-none absolute inset-0 rounded-full"
-                aria-hidden
+
+          {isCustomer ? (
+            <button
+              type="button"
+              id="site-account-anchor"
+              onClick={handleAccountOpen}
+              className={cn(accountButtonClass, "group/account overflow-visible")}
+              aria-label={
+                firstName ? `View dashboard — ${firstName}` : "View dashboard"
+              }
+              aria-expanded={isPanelOpen}
+            >
+              {firstName && (
+                <span className="hidden max-w-[7rem] truncate text-sm font-semibold leading-none sm:inline">
+                  Hi, {firstName}
+                </span>
+              )}
+              <AccountOpenChevron
+                highlighted={showLoginHint && hintMessageVisible && !isPanelOpen}
+                panelOpen={isPanelOpen}
               />
-            )}
-          </Link>
+              <AccountIcon className="h-5 w-5 shrink-0" />
+              {!isPanelOpen && !hintMessageVisible && (
+                <span
+                  className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-full border border-navy/10 bg-navy px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-[0_10px_24px_rgba(30,42,74,0.22)] transition-all duration-200 group-hover/account:translate-y-0 group-hover/account:opacity-100"
+                  role="tooltip"
+                >
+                  View dashboard
+                </span>
+              )}
+              {accountPulse && (
+                <span
+                  className="cart-anchor-ring pointer-events-none absolute inset-0 rounded-full"
+                  aria-hidden
+                />
+              )}
+              <AccountLoginHint />
+            </button>
+          ) : (
+            <Link
+              id="site-account-anchor"
+              href={isAdmin ? adminHref : signInHref}
+              className={accountButtonClass}
+              aria-label={firstName ? `${accountLabel} — ${firstName}` : accountLabel}
+            >
+              {firstName && (
+                <span className="hidden max-w-[7rem] truncate text-sm font-semibold leading-none sm:inline">
+                  Hi, {firstName}
+                </span>
+              )}
+              <AccountIcon className="h-5 w-5 shrink-0" />
+              {accountPulse && (
+                <span
+                  className="cart-anchor-ring pointer-events-none absolute inset-0 rounded-full"
+                  aria-hidden
+                />
+              )}
+            </Link>
+          )}
+
           <Link
             id="site-cart-anchor"
             href="/cart"
@@ -155,6 +226,18 @@ export function Header({ showContact = true }: { showContact?: boolean }) {
               {link.label}
             </Link>
           ))}
+          {isCustomer && (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                handleAccountOpen();
+              }}
+              className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-coral hover:bg-blush/40"
+            >
+              My Account
+            </button>
+          )}
           {isAdmin && (
             <Link
               href="/admin"

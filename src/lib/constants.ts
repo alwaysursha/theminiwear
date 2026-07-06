@@ -79,5 +79,34 @@ export function isAdminRole(role: string) {
 }
 
 export function getDashboardPath(role: string) {
-  return isAdminRole(role) ? "/admin" : "/account";
+  return isAdminRole(role) ? "/admin" : "/account/orders";
+}
+
+/** Avoid sending logged-in users back to auth or admin routes after sign-in. */
+export function sanitizeAuthCallbackUrl(
+  callbackUrl: string | null | undefined,
+  fallback = "/",
+): string {
+  if (!callbackUrl || !callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) {
+    return fallback;
+  }
+  if (callbackUrl.startsWith("/auth/")) {
+    return fallback;
+  }
+  return callbackUrl;
+}
+
+export function resolvePostAuthDestination(
+  callbackUrl: string | null | undefined,
+  role: string | undefined,
+  fallback = "/",
+): string {
+  const safeCallback = sanitizeAuthCallbackUrl(callbackUrl, fallback);
+  if (role && safeCallback === "/account") {
+    return getDashboardPath(role);
+  }
+  if (role && isAdminRole(role) && safeCallback.startsWith("/account")) {
+    return getDashboardPath(role);
+  }
+  return safeCallback;
 }

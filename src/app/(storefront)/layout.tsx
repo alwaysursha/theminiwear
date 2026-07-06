@@ -1,3 +1,5 @@
+import { AccountPanelHost } from "@/components/storefront/AccountPanelHost";
+import { MemberOrderBanner } from "@/components/storefront/MemberOrderBanner";
 import { AnnouncementTicker } from "@/components/storefront/AnnouncementTicker";
 import { SiteWideSaleBanner } from "@/components/storefront/SiteWideSaleBanner";
 import { Footer } from "@/components/storefront/Footer";
@@ -57,14 +59,17 @@ export default async function StorefrontLayout({
         )}
         <Header showContact={showContact} />
       </StorefrontHeaderChrome>
-      <main className="flex-1">
-        <PageTransition>{children}</PageTransition>
-      </main>
-      <Footer
-        legalLinks={legalLinks}
-        storeName={store.name}
-        storeDescription={store.description}
-      />
+      <AccountPanelHost>
+        <MemberOrderBanner />
+        <main className="flex-1">
+          <PageTransition>{children}</PageTransition>
+        </main>
+        <Footer
+          legalLinks={legalLinks}
+          storeName={store.name}
+          storeDescription={store.description}
+        />
+      </AccountPanelHost>
       <WhatsAppChatButton
         phoneE164={store.whatsappE164}
         intro={store.whatsappIntro}

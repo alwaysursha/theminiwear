@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/app/(storefront)/auth/actions";
@@ -9,12 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthToastStore, firstNameOf } from "@/lib/auth-toast-store";
+import { sanitizeAuthCallbackUrl } from "@/lib/constants";
 
 export function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
+  const callbackUrl = sanitizeAuthCallbackUrl(
+    searchParams.get("callbackUrl"),
+    "/",
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const signInHref =
+    callbackUrl && callbackUrl !== "/"
+      ? `/auth/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/auth/sign-in";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,7 +58,7 @@ export function SignUpForm() {
     setLoading(false);
 
     if (signInResult?.error) {
-      router.push("/auth/sign-in");
+      router.push(signInHref);
       return;
     }
 
@@ -59,7 +69,7 @@ export function SignUpForm() {
       fromY,
     });
 
-    router.push("/account");
+    router.replace(callbackUrl);
     router.refresh();
   }
 
@@ -97,7 +107,7 @@ export function SignUpForm() {
       </Button>
       <p className="text-center text-sm text-navy/60">
         Already have an account?{" "}
-        <Link href="/auth/sign-in" className="font-semibold text-coral hover:underline">
+        <Link href={signInHref} className="font-semibold text-coral hover:underline">
           Sign in
         </Link>
       </p>

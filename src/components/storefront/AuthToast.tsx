@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useSession } from "next-auth/react";
 import { Check, LogOut, UserRound, X } from "lucide-react";
 import { useAuthToastStore, firstNameOf, AUTH_WELCOME_KEY, consumePendingSignedOutToast } from "@/lib/auth-toast-store";
+import { useAccountPanelStore } from "@/lib/account-panel-store";
 import { cn } from "@/lib/utils";
 
 type FlyTarget = { dx: number; dy: number };
@@ -18,6 +19,7 @@ export function AuthToast() {
   const dismiss = useAuthToastStore((s) => s.dismissAuthToast);
   const showAuthToast = useAuthToastStore((s) => s.showAuthToast);
   const setAccountPulse = useAuthToastStore((s) => s.setAccountPulse);
+  const showPostLoginHint = useAccountPanelStore((s) => s.showPostLoginHint);
 
   const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
   const [flyTarget, setFlyTarget] = useState<FlyTarget | null>(null);
@@ -80,11 +82,15 @@ export function AuthToast() {
           setFlying(false);
           setVisible(true);
           setAccountPulse(true);
+          showPostLoginHint();
           timers.push(window.setTimeout(() => setAccountPulse(false), 1200));
         }, FLY_MS),
       );
     } else {
       setVisible(true);
+      if (isWelcome) {
+        showPostLoginHint();
+      }
     }
 
     timers.push(window.setTimeout(() => setLeaving(true), showDelay + HOLD_MS));
@@ -93,7 +99,7 @@ export function AuthToast() {
     );
 
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [toast, dismiss, setAccountPulse]);
+  }, [toast, dismiss, setAccountPulse, showPostLoginHint]);
 
   if (!toast) return null;
 

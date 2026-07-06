@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AddressesManager } from "@/components/storefront/AddressesManager";
+import { AccountChromeHidden } from "@/components/storefront/AccountPanelChrome";
+import { AccountPageHeader } from "@/components/storefront/AccountPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +15,12 @@ export default async function AddressesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold text-navy">
-        Addresses
-      </h1>
-      <p className="mt-1 text-sm text-navy/60">Manage your shipping addresses</p>
+      <AccountChromeHidden>
+        <AccountPageHeader
+          title="Addresses"
+          subtitle="Manage your shipping addresses"
+        />
+      </AccountChromeHidden>
       <div className="mt-6">
         <AddressesManager addresses={addresses} />
       </div>
