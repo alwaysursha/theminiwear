@@ -77,8 +77,12 @@ export async function fetchAccountPanelOrders() {
       total: Number(order.total),
       createdAt: order.createdAt.toISOString(),
       itemCount: order.items.length,
-      leadProductName: order.items[0]?.variant.product.name ?? "Order items",
-      leadImageUrl: order.items[0]?.variant.product.images[0]?.url ?? null,
+      leadProductName:
+        order.items[0]?.variant?.product.name ??
+        order.items[0]?.productName ??
+        "Order items",
+      leadImageUrl:
+        order.items[0]?.variant?.product.images[0]?.url ?? null,
       trackingNumber: order.shipment?.trackingNumber ?? null,
       carrier: order.shipment?.carrier ?? null,
     })),
