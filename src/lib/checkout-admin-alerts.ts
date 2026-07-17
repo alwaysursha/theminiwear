@@ -52,7 +52,7 @@ export async function notifyAdminCheckoutSessionIssue(
     session.amount_total,
   );
 
-  void sendAdminCheckoutIssueEmail({
+  await sendAdminCheckoutIssueEmail({
     type,
     customerEmail: session.customer_email ?? session.customer_details?.email ?? "Unknown",
     itemSummary,
@@ -82,7 +82,7 @@ export async function notifyAdminPaymentIntentFailed(
   }
 
   const amount = (paymentIntent.amount ?? 0) / 100;
-  void sendAdminCheckoutIssueEmail({
+  await sendAdminCheckoutIssueEmail({
     type: "payment_failed",
     customerEmail: paymentIntent.receipt_email ?? "Unknown",
     itemSummary: "Checkout session not found",

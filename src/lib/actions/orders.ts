@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import type { AdminSaveState } from "@/lib/admin-form-state";
 import { prisma } from "@/lib/prisma";
 import { sendShippingUpdateEmail } from "@/lib/email";
+import { orderItemProductName } from "@/lib/order-item-display";
 import { productRefundAmount } from "@/lib/order-refund";
 import { getStripe } from "@/lib/stripe";
 
@@ -153,7 +154,7 @@ export async function updateShipment(
           void sendShippingUpdateEmail({
             to: email,
             orderNumber: order.orderNumber,
-            productNames: order.items.map((item) => item.variant.product.name),
+            productNames: order.items.map((item) => orderItemProductName(item)),
             trackingNumber,
             carrier,
           });

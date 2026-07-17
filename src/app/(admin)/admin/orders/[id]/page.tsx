@@ -13,6 +13,10 @@ import {
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import {
+  orderItemProductName,
+  orderItemVariantLabel,
+} from "@/lib/order-item-display";
 import { measurementLabel } from "@/lib/custom-size";
 import { productRefundAmount } from "@/lib/order-refund";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
@@ -107,11 +111,11 @@ export default async function AdminOrderDetailPage({
                   <li key={item.id} className="flex justify-between py-3 text-sm">
                     <div className="min-w-0 pr-3">
                       <p className="font-medium text-slate-900">
-                        {item.variant.product.name}
+                        {orderItemProductName(item)}
                       </p>
                       <p className="text-slate-500">
-                        {item.variant.size} / {item.variant.color} /{" "}
-                        {item.variant.ageGroup} × {item.quantity}
+                        {orderItemVariantLabel(item, { includeAgeGroup: true })} ×{" "}
+                        {item.quantity}
                       </p>
                       {item.customFee != null && (
                         <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2">

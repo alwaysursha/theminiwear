@@ -42,6 +42,15 @@ function whereForSection(
   }
 }
 
+/** Stable daily rotation so homepage trending slots cycle through all flagged products. */
+function rotateForDay<T>(items: T[]): T[] {
+  if (items.length <= 1) return items;
+  const daySeed = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+  const offset = daySeed % items.length;
+  if (offset === 0) return items;
+  return [...items.slice(offset), ...items.slice(0, offset)];
+}
+
 export async function getHomepageSectionProducts(
   key: Exclude<HomepageSectionKey, "CATEGORIES">,
   options?: { minimum?: number },
@@ -51,6 +60,17 @@ export async function getHomepageSectionProducts(
   const take = options?.minimum
     ? Math.max(config.productLimit, options.minimum)
     : config.productLimit;
+
+  // Trending: load all flagged products, rotate daily, then take the section limit.
+  // Stops high seed scores from permanently blocking newly marked items.
+  if (key === "TRENDING") {
+    const allTrending = await prisma.product.findMany({
+      where: whereForSection(key),
+      include: productInclude,
+      orderBy: [{ updatedAt: "desc" }, { trendingScore: "desc" }],
+    });
+    return rotateForDay(allTrending).slice(0, take);
+  }
 
   let products = await prisma.product.findMany({
     where: whereForSection(key),

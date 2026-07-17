@@ -105,6 +105,15 @@ function parseProductFormData(formData: FormData) {
   };
 }
 
+/** Newly marked trending products get a fresh score so they aren't stuck behind old seed data. */
+async function nextTrendingScore(current?: number | null) {
+  if (current != null && current > 0) return current;
+  const { _max } = await prisma.product.aggregate({
+    _max: { trendingScore: true },
+  });
+  return (_max.trendingScore ?? 0) + 1;
+}
+
 export async function createProduct(formData: FormData) {
   await requireAdmin();
 
@@ -116,6 +125,8 @@ export async function createProduct(formData: FormData) {
     throw new Error("A product with this name already exists");
   }
 
+  const trendingScore = data.isTrending ? await nextTrendingScore() : 0;
+
   await prisma.product.create({
     data: {
       name: data.name,
@@ -126,6 +137,7 @@ export async function createProduct(formData: FormData) {
       categoryId: data.categoryId,
       isNewArrival: data.isNewArrival,
       isTrending: data.isTrending,
+      trendingScore,
       isOnSale: data.isOnSale,
       isClearance: data.isClearance,
       salePercent: data.salePercent,
@@ -151,7 +163,9 @@ export async function createProduct(formData: FormData) {
     },
   });
 
+  revalidatePath("/");
   revalidatePath("/admin/products");
+  revalidatePath("/shop");
   redirect("/admin/products");
 }
 
@@ -191,6 +205,12 @@ export async function updateProduct(productId: string, formData: FormData) {
     (img) => !submittedImageIds.includes(img.id),
   );
 
+  const trendingScore = data.isTrending
+    ? await nextTrendingScore(
+        product.isTrending ? product.trendingScore : null,
+      )
+    : 0;
+
   await prisma.$transaction([
     prisma.product.update({
       where: { id: productId },
@@ -203,6 +223,7 @@ export async function updateProduct(productId: string, formData: FormData) {
         categoryId: data.categoryId,
         isNewArrival: data.isNewArrival,
         isTrending: data.isTrending,
+        trendingScore,
         isOnSale: data.isOnSale,
         isClearance: data.isClearance,
         salePercent: data.salePercent,
@@ -261,6 +282,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     }
   }
 
+  revalidatePath("/");
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${productId}/edit`);
   revalidatePath(`/product/${slug}`);
@@ -271,9 +293,62 @@ export async function updateProduct(productId: string, formData: FormData) {
 export async function deleteProduct(productId: string) {
   await requireAdmin();
 
-  await prisma.product.delete({ where: { id: productId } });
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      variants: { select: { id: true, size: true, color: true } },
+    },
+  });
 
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const variantIds = product.variants.map((v) => v.id);
+  const variantLabelById = new Map(
+    product.variants.map((v) => [v.id, `${v.size} / ${v.color}`]),
+  );
+
+  await prisma.$transaction(async (tx) => {
+    if (variantIds.length > 0) {
+      // Snapshot labels onto order lines so history survives product removal.
+      const orderItems = await tx.orderItem.findMany({
+        where: { variantId: { in: variantIds } },
+        select: { id: true, variantId: true },
+      });
+
+      for (const item of orderItems) {
+        if (!item.variantId) continue;
+        await tx.orderItem.update({
+          where: { id: item.id },
+          data: {
+            productName: product.name,
+            variantLabel: variantLabelById.get(item.variantId) ?? null,
+          },
+        });
+      }
+
+      // Clear cart lines that still point at these variants.
+      await tx.cartItem.deleteMany({
+        where: { variantId: { in: variantIds } },
+      });
+    }
+
+    // Clear discount product targeting (no FK, but keep codes valid).
+    await tx.discount.updateMany({
+      where: { productId },
+      data: { productId: null },
+    });
+
+    // Images, variants, wishlist, reviews cascade from Product.
+    // Order items keep history via SetNull on variantId.
+    await tx.product.delete({ where: { id: productId } });
+  });
+
+  revalidatePath("/");
+  revalidatePath("/shop");
   revalidatePath("/admin/products");
+  revalidatePath(`/product/${product.slug}`);
 }
 
 export async function toggleProductActive(productId: string) {

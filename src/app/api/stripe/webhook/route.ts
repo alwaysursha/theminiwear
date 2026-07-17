@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import {
-  notifyAdminCheckoutSessionIssue,
   notifyAdminPaymentIntentFailed,
 } from "@/lib/checkout-admin-alerts";
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail, sendAdminLowStockEmail } from "@/lib/email";
@@ -57,11 +56,26 @@ export async function POST(request: Request) {
     const stockBeforeRows = variantIds.length
       ? await prisma.productVariant.findMany({
           where: { id: { in: variantIds } },
-          select: { id: true, stock: true },
+          select: {
+            id: true,
+            stock: true,
+            size: true,
+            color: true,
+            product: { select: { name: true } },
+          },
         })
       : [];
     const stockBefore = new Map(
       stockBeforeRows.map((variant) => [variant.id, variant.stock]),
+    );
+    const variantMeta = new Map(
+      stockBeforeRows.map((variant) => [
+        variant.id,
+        {
+          productName: variant.product.name,
+          variantLabel: `${variant.size} / ${variant.color}`,
+        },
+      ]),
     );
 
     const order = await prisma.order.create({
@@ -80,13 +94,18 @@ export async function POST(request: Request) {
         discountId: metadata.discountId || null,
         addressId: metadata.addressId || null,
         items: {
-          create: items.map((item) => ({
-            variantId: item.variantId,
-            quantity: item.quantity,
-            price: item.price,
-            customFee: item.customFee ?? null,
-            customMeasurements: item.measurements ?? undefined,
-          })),
+          create: items.map((item) => {
+            const meta = variantMeta.get(item.variantId);
+            return {
+              variantId: item.variantId,
+              quantity: item.quantity,
+              price: item.price,
+              customFee: item.customFee ?? null,
+              customMeasurements: item.measurements ?? undefined,
+              productName: meta?.productName ?? null,
+              variantLabel: meta?.variantLabel ?? null,
+            };
+          }),
         },
         statusHistory: {
           create: { status: "PAID", note: "Payment received via Stripe" },
@@ -113,7 +132,7 @@ export async function POST(request: Request) {
 
     const lowStockVariants = await findVariantsCrossedLowStock(items, stockBefore);
     if (lowStockVariants.length > 0) {
-      void sendAdminLowStockEmail({
+      await sendAdminLowStockEmail({
         orderNumber: order.orderNumber,
         variants: lowStockVariants.map((variant) => ({
           productName: variant.productName,
@@ -137,16 +156,16 @@ export async function POST(request: Request) {
         orderNumber: order.orderNumber,
         total: Number(order.total),
         items: order.items.map((item) => ({
-          name: item.variant.product.name,
+          name: item.variant?.product.name ?? item.productName ?? "Product",
           quantity: item.quantity,
           price: Number(item.price),
-          size: item.variant.size,
-          color: item.variant.color,
+          size: item.variant?.size ?? item.variantLabel?.split(" / ")[0] ?? "",
+          color: item.variant?.color ?? item.variantLabel?.split(" / ")[1] ?? "",
         })),
       });
     }
 
-    void sendAdminNewOrderEmail({
+    await sendAdminNewOrderEmail({
       orderId: order.id,
       orderNumber: order.orderNumber,
       customerName: order.user?.name ?? "Guest",
@@ -157,8 +176,7 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "checkout.session.expired") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    await notifyAdminCheckoutSessionIssue("abandoned", session);
+    // Abandoned-checkout admin emails are disabled.
   }
 
   if (event.type === "payment_intent.payment_failed") {

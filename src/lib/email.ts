@@ -346,12 +346,12 @@ export async function sendAdminReturnRequestEmail({
 }
 
 export async function sendAdminNewReviewEmail({
-  reviewId,
-  productName,
-  reviewerName,
-  rating,
-  title,
-  body,
+  reviewId: _reviewId,
+  productName: _productName,
+  reviewerName: _reviewerName,
+  rating: _rating,
+  title: _title,
+  body: _body,
 }: {
   reviewId: string;
   productName: string;
@@ -360,21 +360,8 @@ export async function sendAdminNewReviewEmail({
   title: string | null;
   body: string;
 }) {
-  const preview = body.length > 220 ? `${body.slice(0, 217).trimEnd()}…` : body;
-
-  await sendAdminAlert({
-    subject: `New review — ${productName}`,
-    title: "New product review",
-    intro: "A customer left a review that is waiting for moderation.",
-    details: `
-      <p style="margin: 0 0 10px;"><strong>Product:</strong> ${escapeHtml(productName)}</p>
-      <p style="margin: 0 0 10px;"><strong>Customer:</strong> ${escapeHtml(reviewerName)}</p>
-      <p style="margin: 0 0 10px;"><strong>Rating:</strong> ${rating}/5</p>
-      ${title ? `<p style="margin: 0 0 10px;"><strong>Title:</strong> ${escapeHtml(title)}</p>` : ""}
-      <p style="margin: 0;"><strong>Review:</strong><br />${textToHtml(preview)}</p>
-    `,
-    adminPath: `/admin/reviews/${reviewId}`,
-  });
+  // Disabled: admin asked not to receive new-review emails.
+  return;
 }
 
 export async function sendAdminNewsletterSignupEmail({ email }: { email: string }) {
@@ -392,24 +379,14 @@ export async function sendAdminNewsletterSignupEmail({ email }: { email: string 
 }
 
 export async function sendAdminNewAccountEmail({
-  name,
-  email,
+  name: _name,
+  email: _email,
 }: {
   name: string;
   email: string;
 }) {
-  await sendAdminAlert({
-    from: EMAIL_SENDERS.hello,
-    subject: `New account — ${name}`,
-    title: "New customer account",
-    intro: "Someone created a store account on your website.",
-    details: `
-      <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(name)}</p>
-      <p style="margin: 0;"><strong>Email:</strong> ${escapeHtml(email)}</p>
-    `,
-    adminPath: "/admin/customers",
-    replyTo: email,
-  });
+  // Disabled: admin asked not to receive new-account emails.
+  return;
 }
 
 export async function sendAdminInquiryReplyEmail({
@@ -511,11 +488,12 @@ export async function sendAdminCheckoutIssueEmail({
   failureMessage?: string;
   stripeSessionId: string;
 }) {
-  const isFailed = type === "payment_failed";
-  const title = isFailed ? "Checkout payment failed" : "Checkout abandoned";
-  const intro = isFailed
-    ? "A customer attempted checkout but the payment did not go through."
-    : "A customer started checkout but did not complete payment before the session expired.";
+  // Abandoned checkout emails disabled per admin request; payment failures still notify.
+  if (type === "abandoned") return;
+
+  const title = "Checkout payment failed";
+  const intro =
+    "A customer attempted checkout but the payment did not go through.";
 
   const failureBlock = failureMessage
     ? `<p style="margin: 0 0 10px;"><strong>Reason:</strong> ${escapeHtml(failureMessage)}</p>`
@@ -523,9 +501,7 @@ export async function sendAdminCheckoutIssueEmail({
 
   await sendAdminAlert({
     from: EMAIL_SENDERS.orders,
-    subject: isFailed
-      ? `Payment failed — ${customerEmail}`
-      : `Abandoned checkout — ${customerEmail}`,
+    subject: `Payment failed — ${customerEmail}`,
     title,
     intro,
     details: `

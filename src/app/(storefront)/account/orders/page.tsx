@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/date";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { orderItemProductName } from "@/lib/order-item-display";
 import { Badge } from "@/components/ui/badge";
 import { AccountChromeHidden } from "@/components/storefront/AccountPanelChrome";
 import { AccountPageHeader } from "@/components/storefront/AccountPageHeader";
@@ -60,8 +61,10 @@ export default async function OrdersPage() {
         <div className="mt-6 space-y-3">
           {orders.map((order) => {
             const leadItem = order.items[0];
-            const image = leadItem?.variant.product.images[0];
-            const productNames = order.items.map((item) => item.variant.product.name);
+            const image = leadItem?.variant?.product.images[0];
+            const productNames = order.items.map((item) =>
+              orderItemProductName(item),
+            );
             const summaryLabel =
               productNames.length <= 1
                 ? productNames[0] ?? "Order items"
@@ -77,7 +80,7 @@ export default async function OrdersPage() {
                   {image ? (
                     <Image
                       src={image.url}
-                      alt={image.alt ?? leadItem.variant.product.name}
+                      alt={image.alt ?? orderItemProductName(leadItem)}
                       fill
                       className="object-cover"
                       sizes="96px"

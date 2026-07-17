@@ -149,6 +149,11 @@ export function ProductsManager({
     startTransition(() => {
       action(id)
         .then(() => router.refresh())
+        .catch((err: unknown) => {
+          const message =
+            err instanceof Error ? err.message : "Something went wrong";
+          window.alert(message);
+        })
         .finally(() => setBusyId(null));
     });
   }

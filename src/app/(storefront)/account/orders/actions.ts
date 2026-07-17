@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendReturnRequestedEmail, sendAdminReturnRequestEmail } from "@/lib/email";
+import { orderItemProductName } from "@/lib/order-item-display";
 
 export async function requestReturn(orderId: string, formData: FormData) {
   const session = await auth();
@@ -50,7 +51,7 @@ export async function requestReturn(orderId: string, formData: FormData) {
     void sendReturnRequestedEmail({
       to: email,
       orderNumber: order.orderNumber,
-      productNames: order.items.map((item) => item.variant.product.name),
+      productNames: order.items.map((item) => orderItemProductName(item)),
       reason: reason.trim(),
     });
   }

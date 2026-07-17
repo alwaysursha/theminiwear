@@ -4,6 +4,10 @@ import { Check, Circle, Package, Truck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import {
+  orderItemProductName,
+  orderItemVariantLabel,
+} from "@/lib/order-item-display";
 import { Badge } from "@/components/ui/badge";
 import { ReturnRequestForm } from "@/components/storefront/ReturnRequestForm";
 import { OrderDetailPageHeader } from "@/components/storefront/OrderDetailPageHeader";
@@ -137,10 +141,10 @@ export default async function OrderDetailPage({
             >
               <div>
                 <p className="font-semibold text-navy">
-                  {item.variant.product.name}
+                  {orderItemProductName(item)}
                 </p>
                 <p className="text-sm text-navy/60">
-                  {item.variant.size} / {item.variant.color} · Qty {item.quantity}
+                  {orderItemVariantLabel(item)} · Qty {item.quantity}
                 </p>
               </div>
               <p className="font-semibold text-coral">

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { isAdminRole } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { formatOrderProductsSubject } from "@/emails/theme";
+import { orderItemProductName } from "@/lib/order-item-display";
 
 export async function MemberOrderBanner() {
   const session = await auth();
@@ -40,7 +41,7 @@ export async function MemberOrderBanner() {
   }
 
   const productLabel = formatOrderProductsSubject(
-    order.items.map((item) => item.variant.product.name),
+    order.items.map((item) => orderItemProductName(item)),
   );
 
   return (
